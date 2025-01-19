@@ -8,37 +8,19 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
 <body class="bg-light">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+            <a class="navbar-brand">Pokémon Trade Platform</a>
+        </div>
+    </nav>
     <div class="container mt-5">
         <h1 class="text-center">Pokémon Trade Platform</h1>
 
-        <!-- Registration and Login Section -->
+        <!-- Login Section -->
         <div class="card mt-4">
             <div class="card-body">
-                <h3>Register or Login</h3>
-                
-                <!-- Registration -->
-                <form id="registerForm">
-                    <h5>Register</h5>
-                    <div class="mb-3">
-                        <label for="reg_username" class="form-label">Username</label>
-                        <input type="text" class="form-control" id="reg_username" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="reg_password" class="form-label">Password</label>
-                        <input type="password" class="form-control" id="reg_password" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="reg_pokemon_id" class="form-label">Pokémon ID</label>
-                        <input type="text" class="form-control" id="reg_pokemon_id" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Register</button>
-                </form>
-
-                <hr>
-
-                <!-- Login -->
+                <h3>Login</h3>
                 <form id="loginForm">
-                    <h5>Login</h5>
                     <div class="mb-3">
                         <label for="login_username" class="form-label">Username</label>
                         <input type="text" class="form-control" id="login_username" required>
@@ -49,12 +31,43 @@
                     </div>
                     <button type="submit" class="btn btn-success">Login</button>
                 </form>
+
+                <!-- Registration Button -->
+                <div class="text-center mt-3">
+                    <button class="btn btn-link" id="showRegisterBtn">Click here to register</button>
+                </div>
+
+                <!-- Hidden Registration Section -->
+                <div id="registrationSection" style="display: none;" class="mt-4">
+                    <h3>Register</h3>
+                    <form id="registerForm">
+                        <div class="mb-3">
+                            <label for="reg_username" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="reg_username" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="reg_password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="reg_password" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="reg_pokemon_id" class="form-label">Pokémon ID</label>
+                            <input type="text" class="form-control" id="reg_pokemon_id" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Register</button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
         let currentUser = null; // To store user data after login/registration
+
+        // Show/hide the registration form
+        document.getElementById('showRegisterBtn').addEventListener('click', function () {
+            const registrationSection = document.getElementById('registrationSection');
+            registrationSection.style.display = registrationSection.style.display === 'none' ? 'block' : 'none';
+        });
 
         // Navigate to features after registration or login
         function navigateToFeatures(username, pokemonId, password) {
@@ -63,7 +76,7 @@
                 <nav class="navbar navbar-expand-lg navbar-light bg-light">
                     <div class="container-fluid">
                         <a class="navbar-brand">Pokémon Trade Platform</a>
-                        <button class="btn btn-outline-primary" onclick="showProfile()">Profile</button>
+                        <button class="btn btn-outline-primary ms-auto" onclick="showProfile()">Profile</button>
                     </div>
                 </nav>
                 <div class="container mt-5">
@@ -80,6 +93,12 @@
         // Show Profile with logout and update options
         function showProfile() {
             document.body.innerHTML = `
+                <nav class="navbar navbar-expand-lg navbar-light bg-light">
+                    <div class="container-fluid">
+                        <a class="navbar-brand">Pokémon Trade Platform</a>
+                        <button class="btn btn-danger ms-auto" onclick="logout()">Logout</button>
+                    </div>
+                </nav>
                 <div class="container mt-5">
                     <h1 class="text-center">Your Profile</h1>
                     <form id="updateProfileForm">
@@ -96,7 +115,6 @@
                             <input type="password" class="form-control" id="profile_password" value="${currentUser.password}" required>
                         </div>
                         <button type="submit" class="btn btn-primary">Update Profile</button>
-                        <button type="button" class="btn btn-danger mt-3" onclick="logout()">Logout</button>
                     </form>
                 </div>`;
 
