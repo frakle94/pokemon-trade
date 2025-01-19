@@ -115,7 +115,7 @@ function searchPokemon() {
                 <label for="searchPokemonName" class="form-label">Pokémon Name</label>
                 <input type="text" class="form-control" id="searchPokemonName" required>
             </div>
-            <button type="submit" class="btn btn-success">Search</button>
+            <button type="submit" class="btn btn-primary">Search</button> <!-- Use btn-primary for same color -->
         </form>
         <div id="searchResults" class="mt-3"></div>
     `;
@@ -136,6 +136,7 @@ function searchPokemon() {
                     resultsDiv.innerHTML = '<p>No matches found.</p>';
                 }
             })
-            .catch(error => alert('Error searching Pokémon: ' + (error.response?.data?.message || error.message)));
+            .catch(error => alert('Error searching for Pokémon: ' + (error.response?.data?.message || error.message)));
     });
 }
+

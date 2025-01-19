@@ -1,0 +1,13 @@
+/* Ensure greyed-out buttons have black text */
+.btn-secondary {
+    color: black !important; /* Force black text */
+    background-color: #e0e0e0 !important; /* Soft grey background */
+    border-color: #d6d6d6 !important; /* Soft grey border */
+}
+
+/* Hover state for secondary buttons */
+.btn-secondary:hover {
+    color: black !important; /* Keep text black on hover */
+    background-color: #d6d6d6 !important; /* Slightly darker grey */
+    border-color: #cfcfcf !important;
+}
