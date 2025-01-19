@@ -10,7 +10,7 @@
 <body class="bg-light">
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <div class="container-fluid">
-            <a class="navbar-brand">Pokémon Trade Platform</a>
+            <!--<a class="navbar-brand">Pokémon Trade Platform</a>-->
         </div>
     </nav>
     <div class="container mt-5">
@@ -90,13 +90,14 @@
                 </div>`;
         }
 
-        // Show Profile with logout and update options
+        // Show Profile with logout, back button, and update options
         function showProfile() {
             document.body.innerHTML = `
                 <nav class="navbar navbar-expand-lg navbar-light bg-light">
                     <div class="container-fluid">
                         <a class="navbar-brand">Pokémon Trade Platform</a>
-                        <button class="btn btn-danger ms-auto" onclick="logout()">Logout</button>
+                        <button class="btn btn-secondary ms-auto me-2" onclick="navigateToFeatures(currentUser.username, currentUser.pokemonId, currentUser.password)">Back</button>
+                        <button class="btn btn-danger" onclick="logout()">Logout</button>
                     </div>
                 </nav>
                 <div class="container mt-5">
