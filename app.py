@@ -1,10 +1,10 @@
 from flask import Flask, request, jsonify, render_template
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
+import os
 
 app = Flask(__name__)
-#app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////home/CescoT/mysite/Trade_Pokemon/pokemon-trade/database.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -29,6 +29,14 @@ class Want(db.Model):
 @app.route('/')
 def index():
     return render_template('index.html')
+
+# Webhook route for GitHub
+@app.route('/hooks/github', methods=['POST'])
+def github_webhook():
+    # Pull the latest changes from GitHub
+    os.system("cd /home/frakle94/mysite/Trade_Pokemon && git pull origin main")
+    os.system("touch /var/www/frakle94_pythonanywhere_com_wsgi.py")  # Reload the web app
+    return "Webhook received and processed.", 200
 
 # Registration route
 @app.route('/register', methods=['POST'])
