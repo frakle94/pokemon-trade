@@ -3,8 +3,14 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 
+# Base directory of your project
+basedir = os.path.abspath(os.path.dirname(__file__))
+# Absolute path to the database file
+db_path = os.path.join(basedir, 'database.db')
+
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+# Configure the database URI
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -30,12 +36,11 @@ class Want(db.Model):
 def index():
     return render_template('index.html')
 
-# Webhook route for GitHub
 @app.route('/hooks/github', methods=['POST'])
 def github_webhook():
     # Pull the latest changes from GitHub
-    os.system("cd /home/frakle94/mysite/Trade_Pokemon && git pull origin main")
-    os.system("touch /var/www/frakle94_pythonanywhere_com_wsgi.py")  # Reload the web app
+    os.system("cd /home/cescot/mysite/Trade_Pokemon && git pull origin main")
+    os.system("touch /var/www/cescot_pythonanywhere_com_wsgi.py")  # Reload the web app
     return "Webhook received and processed.", 200
 
 # Registration route
@@ -109,12 +114,12 @@ def get_offered_pokemon():
 def delete_offer():
     offer_id = request.json.get('offer_id')
     offer = Offer.query.filter_by(id=offer_id).first()
-    
+
     if offer:
         db.session.delete(offer)
         db.session.commit()
         return jsonify({"message": "Offer deleted successfully!"})
-    
+
     return jsonify({"message": "Offer not found!"}), 404
 
 # Add wanted Pokémon
