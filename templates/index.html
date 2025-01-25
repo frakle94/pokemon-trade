@@ -8,53 +8,51 @@
     <link rel="stylesheet" href="/static/css/styles.css">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <style>
-        .container-flex {
+        .centered-container {
             display: flex;
-            align-items: stretch;
-            height: 100vh;
-        }
-
-        .left-section {
-            flex: 1;
-            display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            background: url('/static/img/card_back.png') no-repeat center center;
-            background-size: 50%; /* Scale the image to 50% of its original size */
-        }        
-
-        .right-section {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            height: 100vh; /* Full-screen height */
+            margin: 0;
             padding: 2rem;
         }
 
         .card {
             width: 100%;
-            max-width: 600px;
+            max-width: 400px; /* Restrict the card's width for a better look */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
         body {
             margin: 0;
             font-family: Arial, sans-serif;
         }
+
+        .hidden {
+            display: none; /* Hides elements */
+        }
+
+        .go-back {
+            color: #007bff;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .go-back:hover {
+            text-decoration: none;
+        }
     </style>
 </head>
 <body class="bg-light">
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <div class="container-fluid"></div>
-    </nav>
-    <div class="container-flex">
-        <!-- Left Section: Image -->
-        <div class="left-section"></div>
+    <div class="centered-container">
+        <!-- Login and Registration Card -->
+        <div class="card">
+            <div class="card-body">
+                <h1 class="text-center mb-4">Pokémon Trade Platform</h1>
 
-        <!-- Right Section: Login and Register -->
-        <div class="right-section">
-            <div class="card">
-                <div class="card-body">
-                    <h1 class="text-center mb-4">Pokémon Trade Platform</h1>
+                <!-- Login Form -->
+                <div id="loginFormContainer">
                     <h3>Login</h3>
                     <form id="loginForm">
                         <div class="mb-3">
@@ -68,29 +66,34 @@
                         <button type="submit" class="btn btn-success w-100">Login</button>
                     </form>
 
-                    <!-- Registration Button -->
+                    <!-- Registration Toggle Button -->
                     <div class="text-center mt-3">
-                        <button class="btn btn-link" id="showRegisterBtn">Click here to register</button>
+                        <span class="btn btn-link" id="showRegisterBtn">Click here to register</span>
                     </div>
+                </div>
 
-                    <!-- Hidden Registration Section -->
-                    <div id="registrationSection" style="display: none;" class="mt-4">
-                        <h3>Register</h3>
-                        <form id="registerForm">
-                            <div class="mb-3">
-                                <label for="reg_username" class="form-label">Username</label>
-                                <input type="text" class="form-control" id="reg_username" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="reg_password" class="form-label">Password</label>
-                                <input type="password" class="form-control" id="reg_password" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="reg_pokemon_id" class="form-label">Pokémon ID</label>
-                                <input type="text" class="form-control" id="reg_pokemon_id" required>
-                            </div>
-                            <button type="submit" class="btn btn-primary w-100">Register</button>
-                        </form>
+                <!-- Registration Form -->
+                <div id="registrationFormContainer" class="hidden">
+                    <h3>Register</h3>
+                    <form id="registerForm">
+                        <div class="mb-3">
+                            <label for="reg_username" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="reg_username" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="reg_password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="reg_password" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="reg_pokemon_id" class="form-label">Pokémon ID</label>
+                            <input type="text" class="form-control" id="reg_pokemon_id" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Register</button>
+                    </form>
+
+                    <!-- Go Back Link -->
+                    <div class="text-center mt-3">
+                        <span class="go-back" id="goBackBtn">Go back to Login</span>
                     </div>
                 </div>
             </div>
@@ -102,5 +105,25 @@
     <script src="/static/js/navigation.js"></script>
     <script src="/static/js/profile.js"></script>
     <script src="/static/js/main.js"></script>
+
+    <script>
+        // DOM elements
+        const loginFormContainer = document.getElementById('loginFormContainer');
+        const registrationFormContainer = document.getElementById('registrationFormContainer');
+        const showRegisterBtn = document.getElementById('showRegisterBtn');
+        const goBackBtn = document.getElementById('goBackBtn');
+
+        // Show registration form and hide login form
+        showRegisterBtn.addEventListener('click', () => {
+            loginFormContainer.classList.add('hidden');
+            registrationFormContainer.classList.remove('hidden');
+        });
+
+        // Go back to login form
+        goBackBtn.addEventListener('click', () => {
+            registrationFormContainer.classList.add('hidden');
+            loginFormContainer.classList.remove('hidden');
+        });
+    </script>
 </body>
 </html>
