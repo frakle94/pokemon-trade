@@ -23,7 +23,7 @@ function handleLogin(e) {
 
     axios.post('/login', { username, password })
         .then(response => {
-            alert(response.data.message);
+            // Directly navigate to the app without showing an alert
             navigateToFeatures(response.data.username, response.data.pokemon_id, password);
         })
         .catch(error => alert('Invalid username or password. Please try again.'));
@@ -64,16 +64,20 @@ function offerPokemon() {
         <ul id="offeredPokemonList" class="list-group"></ul>
     `;
 
+    // Load the list of offered Pokémon
     fetchOfferedPokemon();
 
+    // Handle form submission
     document.getElementById('offerPokemonForm').addEventListener('submit', function (e) {
         e.preventDefault();
         const pokemon = document.getElementById('offerPokemonName').value;
 
         axios.post('/pokemon/offer', { username: currentUser.username, pokemon })
-            .then(response => {
-                alert(response.data.message);
-                fetchOfferedPokemon(); // Refresh the offered Pokémon list
+            .then(() => {
+                // Refresh the offered Pokémon list after a successful offer
+                fetchOfferedPokemon();
+                // Clear the input field for a better user experience
+                document.getElementById('offerPokemonName').value = '';
             })
             .catch(error => alert('Error: ' + (error.response?.data?.message || error.message)));
     });
@@ -139,4 +143,3 @@ function searchPokemon() {
             .catch(error => alert('Error searching for Pokémon: ' + (error.response?.data?.message || error.message)));
     });
 }
-
