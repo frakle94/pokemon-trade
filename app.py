@@ -38,8 +38,16 @@ def index():
 
 @app.route('/hooks/github', methods=['POST'])
 def github_webhook():
+    # Log webhook activity for debugging
+    with open('/home/cescot/mysite/Trade_Pokemon/pokemon-trade/webhook.log', 'a') as log_file:
+        log_file.write("Webhook triggered\n")
+    # Pull the latest changes
+    pull_result = os.system("cd /home/cescot/mysite/Trade_Pokemon/pokemon-trade && git pull origin main >> /home/cescot/mysite/Trade_Pokemon/pokemon-trade/webhook.log 2>&1")
+    # Log the result of the git pull command
+    with open('/home/cescot/mysite/Trade_Pokemon/pokemon-trade/webhook.log', 'a') as log_file:
+        log_file.write(f"Git pull result: {pull_result}\n")
     # Pull the latest changes from GitHub
-    os.system("cd /home/cescot/mysite/Trade_Pokemon/pokemon-trade && git pull origin main")
+    # os.system("cd /home/cescot/mysite/Trade_Pokemon/pokemon-trade && git pull origin main")
     os.system("touch /var/www/cescot_pythonanywhere_com_wsgi.py")  # Reload the web app
     return "Webhook received and processed.", 200
 
