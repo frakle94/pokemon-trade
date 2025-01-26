@@ -40,8 +40,10 @@ def index():
 def github_webhook():
     # Pull the latest changes from GitHub
     os.system("cd /home/cescot/mysite/Trade_Pokemon/pokemon-trade && git pull origin main")
-    os.system("touch /var/www/cescot_pythonanywhere_com_wsgi.py")  # Reload the web app
+    # Reload the web app
+    os.system("touch /var/www/cescot_pythonanywhere_com_wsgi.py")
     return "Webhook received and processed.", 200
+
 
 # Registration route
 @app.route('/register', methods=['POST'])
