@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, render_template
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
-import os, sys
+import os
 
 # Base directory of your project
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -35,16 +35,6 @@ class Want(db.Model):
 @app.route('/')
 def index():
     return render_template('index.html')
-
-@app.route('/hooks/github', methods=['POST'])
-def github_webhook():
-    sys.addpath('/home/cescot/mysite/Trade_Pokemon/pokemon-trade')
-    # Pull the latest changes from GitHub
-    os.system("cd /home/cescot/mysite/Trade_Pokemon/pokemon-trade && git pull origin main")
-    # Reload the web app
-    os.system("touch /var/www/cescot_pythonanywhere_com_wsgi.py")
-    return "Webhook received and processed.", 200
-
 
 # Registration route
 @app.route('/register', methods=['POST'])
