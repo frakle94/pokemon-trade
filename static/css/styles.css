@@ -1,13 +1,182 @@
-/* Ensure greyed-out buttons have black text */
-.btn-secondary {
-    color: black !important; /* Force black text */
-    background-color: #e0e0e0 !important; /* Soft grey background */
-    border-color: #d6d6d6 !important; /* Soft grey border */
+/* Stile uniforme per i campi input e pulsanti */
+.form-control,
+.btn {
+    width: 100%; /* Stessa larghezza per box e pulsanti */
+    max-width: 300px; /* Limita la larghezza massima */
+    margin: 0 auto 1rem; /* Centra e aggiunge margine inferiore */
+    padding: 0.5rem; /* Spazio interno */
+    border-radius: 0.25rem; /* Angoli arrotondati */
+    display: block; /* Assicura che siano elementi di blocco */
 }
 
-/* Hover state for secondary buttons */
-.btn-secondary:hover {
-    color: black !important; /* Keep text black on hover */
-    background-color: #d6d6d6 !important; /* Slightly darker grey */
-    border-color: #cfcfcf !important;
+/* Campi input con sfondo nero e testo bianco */
+.form-control {
+    background-color: #000; /* Sfondo nero */
+    color: #fff; /* Testo bianco */
+    border: 1px solid #ced4da; /* Bordo */
 }
+
+/* Placeholder bianco con trasparenza */
+.form-control::placeholder {
+    color: rgba(255, 255, 255, 0.7); /* Placeholder bianco */
+}
+
+/* Stato Focus per input */
+.form-control:focus {
+    background-color: #000; /* Mantiene sfondo nero */
+    color: #fff; /* Testo bianco */
+    border-color: #80bdff; /* Bordo blu in focus */
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25); /* Effetto focus */
+    outline: none; /* Rimuove il bordo predefinito */
+}
+
+/* Gestione auto-compilazione da Google Chrome */
+.form-control:-webkit-autofill {
+    background-color: #000 !important; /* Sfondo nero */
+    color: #fff !important; /* Testo bianco */
+    -webkit-box-shadow: 0 0 0px 1000px #000 inset !important; /* Rimuove il colore predefinito di Google */
+    box-shadow: 0 0 0px 1000px #000 inset !important; /* Rimuove il colore predefinito di Google */
+}
+
+/* Gestione auto-compilazione per altri browser */
+.form-control:-webkit-autofill::first-line {
+    color: #fff !important; /* Testo bianco anche nella prima riga */
+}
+
+/* Disabilita l'animazione di riempimento automatico */
+input:-webkit-autofill {
+    -webkit-text-fill-color: #fff !important; /* Testo bianco */
+    transition: background-color 5000s ease-in-out 0s !important; /* Mantiene il nero */
+}
+
+/* Stile per i pulsanti */
+.btn {
+    font-weight: bold; /* Testo in grassetto */
+}
+
+/* Pulsante Login (verde) */
+.btn-success {
+    background-color: #28a745; /* Verde */
+    border-color: #28a745; /* Bordo verde */
+    color: white; /* Testo bianco */
+}
+
+/* Hover per pulsante Login */
+.btn-success:hover {
+    background-color: #218838; /* Verde più scuro */
+    border-color: #1e7e34;
+}
+
+/* Pulsante Register (blu) */
+.btn-primary {
+    background-color: #007bff; /* Blu */
+    border-color: #007bff;
+    color: white; /* Testo bianco */
+}
+
+/* Hover per pulsante Register */
+.btn-primary:hover {
+    background-color: #0056b3; /* Blu più scuro */
+    border-color: #004085;
+}
+
+/* Center align the heading */
+.text-center h3 {
+    text-align: center; /* Ensures the heading is centered */
+    margin-bottom: 1rem; /* Adds spacing below the heading */
+}
+
+/* Flexbox container for buttons */
+.d-flex {
+    display: flex;
+    align-items: center; /* Centers buttons vertically */
+    justify-content: center; /* Centers buttons horizontally */
+}
+
+.d-flex .btn {
+    margin: 0; /* Removes default margins */
+    margin-right: 5px; /* Adds minimal spacing between buttons */
+}
+
+.d-flex .btn:last-child {
+    margin-right: 0; /* Ensures no margin on the last button */
+}
+
+
+html, body {
+    height: 100%; /* Ensure full-height layout */
+    margin: 0;
+    padding: 0;
+}
+
+.centered-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 2rem;
+    text-align: center;
+}
+
+
+
+/* Form styling */
+form {
+    max-width: 400px;
+    width: 100%;
+}
+
+/* Tiny button styling */
+/* Custom styles for a smaller button */
+.tiny-btn {
+    width: 50px !important;/* Explicitly set the button width */
+    height: 30px !important;/* Explicitly set the button height */
+    font-size: 0.6rem; /* Smaller text size */
+    padding: 0; /* Remove extra padding */
+    display: inline-flex; /* Ensures content is properly aligned */
+    justify-content: center; /* Centers the text horizontally */
+    align-items: center; /* Centers the text vertically */
+    line-height: 1; /* Ensures compact height for the text */
+    border-radius: 0.2rem; /* Optional: Adjust border radius for a sharper look */
+}
+
+/* Profile Card Styling */
+.profile-card {
+    position: fixed; /* Ensures the card stays fixed on the screen */
+    top: 1rem; /* Distance from the top */
+    right: 1rem; /* Distance from the right */
+    z-index: 1050; /* Keeps it above other elements */
+    background-color: white; /* Background color */
+    border: 1px solid #dee2e6; /* Light border */
+    border-radius: 0.25rem; /* Rounded corners */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    width: 300px; /* Fixed width */
+    padding: 1rem; /* Inner spacing */
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Centered Heading */
+#offerHeading {
+    text-align: center; /* Ensures the heading is centered */
+    margin-bottom: 1rem; /* Adds spacing below the heading */
+}
+
+/* Flexbox Container for Buttons */
+.button-container {
+    display: flex;
+    justify-content: center; /* Centers buttons horizontally */
+    align-items: center; /* Aligns buttons vertically */
+    gap: 5px; /* Minimal space between buttons */
+}
+
+/* Button Styling for Consistency */
+.button-container .btn {
+    min-width: 150px; /* Ensures consistent button width */
+    padding: 0.5rem 1rem; /* Adds spacing inside buttons */
+    text-align: center; /* Ensures text inside buttons is centered */
+}
+

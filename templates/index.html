@@ -8,31 +8,30 @@
     <link rel="stylesheet" href="/static/css/styles.css">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <style>
+        /* Centered Container for Login/Registration */
         .centered-container {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh; /* Full-screen height */
+            height: 100vh;
             margin: 0;
             padding: 2rem;
         }
 
+        /* Card Styling */
         .card {
             width: 100%;
-            max-width: 400px; /* Restrict the card's width for a better look */
+            max-width: 400px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-        }
-
+        /* Hidden Elements */
         .hidden {
-            display: none; /* Hides elements */
+            display: none;
         }
 
+        /* Go Back Link Styling */
         .go-back {
             color: #007bff;
             cursor: pointer;
@@ -42,31 +41,40 @@
         .go-back:hover {
             text-decoration: none;
         }
+
+        /* Profile Card Styling */
+        .profile-card {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 1050;
+            background-color: white;
+            border: 1px solid #dee2e6;
+            border-radius: 0.25rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            padding: 1rem;
+        }
     </style>
 </head>
 <body class="bg-light">
-    <div class="centered-container">
-        <!-- Login and Registration Card -->
+    <!-- Login and Registration Container -->
+    <div class="centered-container" id="authContainer">
         <div class="card">
             <div class="card-body">
-                <h1 class="text-center mb-4">Pokémon Trade Platform TEST9</h1>
+                <h1 class="text-center mb-4"><strong>Pokémon Trade Platform</strong></h1>
 
                 <!-- Login Form -->
                 <div id="loginFormContainer">
-                    <h3>Login</h3>
                     <form id="loginForm">
                         <div class="mb-3">
-                            <label for="login_username" class="form-label">Username</label>
-                            <input type="text" class="form-control" id="login_username" required>
+                            <input type="text" class="form-control" id="login_username" placeholder="Username" required>
                         </div>
                         <div class="mb-3">
-                            <label for="login_password" class="form-label">Password</label>
-                            <input type="password" class="form-control" id="login_password" required>
+                            <input type="password" class="form-control" id="login_password" placeholder="Password" required>
                         </div>
                         <button type="submit" class="btn btn-success w-100">Login</button>
                     </form>
-
-                    <!-- Registration Toggle Button -->
                     <div class="text-center mt-3">
                         <span class="btn btn-link" id="showRegisterBtn">Click here to register</span>
                     </div>
@@ -74,24 +82,18 @@
 
                 <!-- Registration Form -->
                 <div id="registrationFormContainer" class="hidden">
-                    <h3>Register</h3>
                     <form id="registerForm">
                         <div class="mb-3">
-                            <label for="reg_username" class="form-label">Username</label>
-                            <input type="text" class="form-control" id="reg_username" required>
+                            <input type="text" class="form-control" id="reg_username" placeholder="Username" required>
                         </div>
                         <div class="mb-3">
-                            <label for="reg_password" class="form-label">Password</label>
-                            <input type="password" class="form-control" id="reg_password" required>
+                            <input type="password" class="form-control" id="reg_password" placeholder="Password" required>
                         </div>
                         <div class="mb-3">
-                            <label for="reg_pokemon_id" class="form-label">Pokémon ID</label>
-                            <input type="text" class="form-control" id="reg_pokemon_id" required>
+                            <input type="text" class="form-control" id="reg_pokemon_id" placeholder="Pokémon Pocket ID" required>
                         </div>
                         <button type="submit" class="btn btn-primary w-100">Register</button>
                     </form>
-
-                    <!-- Go Back Link -->
                     <div class="text-center mt-3">
                         <span class="go-back" id="goBackBtn">Go back to Login</span>
                     </div>
@@ -100,20 +102,49 @@
         </div>
     </div>
 
-    <!-- JavaScript Files -->
+    <!-- Main App Container -->
+    <div class="hidden" id="mainAppContainer">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <div class="container-fluid">
+                <a class="navbar-brand">Pokémon Trade Platform</a>
+                <button class="btn btn-outline-primary ms-auto" onclick="showProfile()">Profile</button>
+            </div>
+        </nav>
+        <div class="container mt-5">
+            <h1 class="text-center">Welcome, <span id="username"></span>!</h1>
+            <p class="text-center">Now you can offer and search for Pokémon.</p>
+            <div class="d-flex justify-content-center mb-4 align-items-center">
+                <button id="offerPokemonBtn" class="btn btn-primary me-1">Offer Pokémon</button>
+                <button id="searchPokemonBtn" class="btn btn-secondary">Search Pokémon</button>
+            </div>                       
+            <div id="actionArea" class="mt-4"></div>
+        </div>
+    </div>
+
+    <!-- Profile Card -->
+    <div id="profileCard" class="hidden profile-card">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Profile</h5>
+                <p><strong>Username:</strong> <span id="profileUsername"></span></p>
+                <p><strong>Pokémon Pocket ID:</strong> <span id="profilePokemonId"></span></p>
+                <button class="btn btn-secondary btn-sm" onclick="closeProfileCard()">Close</button>
+            </div>
+        </div>
+    </div>
+
     <script src="/static/js/api.js"></script>
     <script src="/static/js/navigation.js"></script>
-    <script src="/static/js/profile.js"></script>
     <script src="/static/js/main.js"></script>
 
     <script>
-        // DOM elements
+        // Toggle Registration and Login Forms
         const loginFormContainer = document.getElementById('loginFormContainer');
         const registrationFormContainer = document.getElementById('registrationFormContainer');
         const showRegisterBtn = document.getElementById('showRegisterBtn');
         const goBackBtn = document.getElementById('goBackBtn');
 
-        // Show registration form and hide login form
+        // Show registration form
         showRegisterBtn.addEventListener('click', () => {
             loginFormContainer.classList.add('hidden');
             registrationFormContainer.classList.remove('hidden');
@@ -124,6 +155,32 @@
             registrationFormContainer.classList.add('hidden');
             loginFormContainer.classList.remove('hidden');
         });
+
+        // Handle Login Form Submission
+        document.getElementById('loginForm').addEventListener('submit', handleLogin);
+
+        // Handle Registration Form Submission
+        document.getElementById('registerForm').addEventListener('submit', handleRegistration);
+
+        // Show Profile Card
+        function showProfile() {
+            const profileCard = document.getElementById('profileCard');
+            const profileUsername = document.getElementById('profileUsername');
+            const profilePokemonId = document.getElementById('profilePokemonId');
+
+            // Set user details dynamically
+            profileUsername.textContent = currentUser?.username || 'Unknown';
+            profilePokemonId.textContent = currentUser?.pokemonId || 'N/A';
+
+            // Show the profile card
+            profileCard.classList.remove('hidden');
+        }
+
+        // Close Profile Card
+        function closeProfileCard() {
+            const profileCard = document.getElementById('profileCard');
+            profileCard.classList.add('hidden');
+        }
     </script>
 </body>
 </html>

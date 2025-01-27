@@ -1,25 +1,28 @@
 function navigateToFeatures(username, pokemonId, password) {
     currentUser = { username, pokemonId, password };
 
-    document.body.innerHTML = `
-        <nav class="navbar navbar-expand-lg navbar-light bg-light">
-            <div class="container-fluid">
-                <a class="navbar-brand">Pokémon Trade Platform</a>
-                <button class="btn btn-outline-primary ms-auto" onclick="showProfile()">Profile</button>
-            </div>
-        </nav>
-        <div class="container mt-5">
-            <h1 class="text-center">Welcome, ${username}!</h1>
-            <p class="text-center">Now you can offer and search for Pokémon.</p>
-            <div class="text-center">
-                <button id="offerPokemonBtn" class="btn btn-primary" onclick="setActiveButton('offer')">Offer Pokémon</button>
-                <button id="searchPokemonBtn" class="btn btn-secondary" onclick="setActiveButton('search')">Search Pokémon</button>
-            </div>
-            <div id="actionArea" class="mt-4"></div>
-        </div>`;
+    // Replace the login/registration content with the main app content
+    document.getElementById('authContainer').classList.add('hidden');
+    document.getElementById('mainAppContainer').classList.remove('hidden');
 
-    // Automatically activate "Offer Pokémon"
-    offerPokemon();
+    // Update the username dynamically
+    document.getElementById('username').textContent = username;
+
+    // Ensure buttons are properly placed
+    const actionArea = document.getElementById('actionArea');
+    actionArea.innerHTML = `
+        <div class="button-container d-flex justify-content-center mb-4">
+            <button id="offerPokemonBtn" class="btn btn-primary me-2">Offer Pokémon</button>
+            <button id="searchPokemonBtn" class="btn btn-secondary">Search Pokémon</button>
+        </div>
+    `;
+
+    // Add event listeners for the buttons
+    document.getElementById('offerPokemonBtn').addEventListener('click', activateOfferPokemon);
+    document.getElementById('searchPokemonBtn').addEventListener('click', activateSearchPokemon);
+
+    // Automatically activate Offer Pokémon
+    activateOfferPokemon();
 }
 
 
