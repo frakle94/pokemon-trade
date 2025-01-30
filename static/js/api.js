@@ -254,42 +254,49 @@ function activateMagicalMatch() {
 }
 
 function magicalMatch() {
-    const actionArea = document.getElementById('actionArea');
-    actionArea.innerHTML = `
-        <div class="centered-content">
-            <h3 class="mb-4">Magical Match Results</h3>
-            <div id="magicalMatchResults"></div>
-        </div>
-    `;
-
+    // 1. Grab the container from your HTML
+    const someContainer = document.getElementById('actionArea');
+  
+    // 2. Optionally clear it and add a heading
+    someContainer.innerHTML = '<h3>Two-Sided Magical Match Results</h3>';
+  
+    // 3. Make the request to your Flask route
     axios.get(`/pokemon/magical_match?username=${currentUser.username}`)
-        .then(response => {
-            const resultsContainer = document.getElementById('magicalMatchResults');
-            const matches = response.data;
-
-            if (!matches || matches.length === 0) {
-                resultsContainer.innerHTML = '<p class="text-muted">No matches found.</p>';
-                return;
-            }
-
-            let output = '';
-            matches.forEach(match => {
-                output += `
-                    <div class="card my-3">
-                        <div class="card-body">
-                            <h5 class="card-title">Pokémon: ${match.pokemon}</h5>
-                            <p class="card-text">Offered By: ${match.offered_by}</p>
-                            <p class="card-text">Other User's Pokémon ID: ${match.other_user_pokemon_id}</p>
-                        </div>
-                    </div>
-                `;
-            });
-            resultsContainer.innerHTML = output;
-        })
-        .catch(error => {
-            alert('Error fetching Magical Match results: ' + (error.response?.data?.message || error.message));
+      .then(response => {
+        const data = response.data; // an array of match objects
+        if (!data || data.length === 0) {
+          someContainer.innerHTML += '<p>No two-sided matches found.</p>';
+          return;
+        }
+  
+        let html = '';
+        data.forEach(item => {
+          // item might look like:
+          // {
+          //   "other_user": "User_2",
+          //   "other_user_pokemon_id": "XYZ123",
+          //   "mySearch_TheirOffer": ["E"],
+          //   "theirSearch_MyOffer": ["A"]
+          // }
+          html += `
+            <div class="card my-3">
+              <div class="card-body">
+                <h5 class="card-title">Match with ${item.other_user}</h5>
+                <p>Other User's Pokémon ID: ${item.other_user_pokemon_id}</p>
+                <p>You want from them: ${item.mySearch_TheirOffer.join(', ')}</p>
+                <p>They want from you: ${item.theirSearch_MyOffer.join(', ')}</p>
+              </div>
+            </div>
+          `;
         });
-}
+  
+        // 4. Add all match cards to the container
+        someContainer.innerHTML += html;
+      })
+      .catch(error => {
+        alert('Error fetching two-sided match: ' + (error.response?.data?.message || error.message));
+      });
+  }
 
 function showProfile() {
     const profileCard = document.getElementById('profileCard');

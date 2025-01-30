@@ -188,54 +188,71 @@ def delete_search():
 @app.route('/pokemon/magical_match', methods=['GET'])
 def magical_match():
     """
-    Finds all the Pokémon that the given user is searching for
-    and matches them with offers from other users.
-    Query param: username=<the_user_who_wants_matches>
-    
-    Returns: JSON list of matches, each with:
-      {
-        "pokemon": <matching_pokemon>,
-        "offered_by": <other_user's_username>,
-        "other_user_pokemon_id": <other_user's_pokemon_id>
-      }
+    Finds TWO-SIDED matches for the given user.
+    A two-sided match means:
+      - The user has at least one search that matches the other user's offer.
+      - The other user has at least one search that matches the user's offer.
+
+    Query param: ?username=<the_user_who_wants_matches>
+
+    Returns a JSON list; each item looks like:
+    {
+      "other_user": "User2",
+      "other_user_pokemon_id": "XYZ123",
+      "mySearch_TheirOffer": ["E"],        # what I want from them
+      "theirSearch_MyOffer": ["A", "B"]    # what they want from me
+    }
     """
-    # 1. Extract the username from query parameters
+    # 1. Get the username from query params
     username = request.args.get('username')
     if not username:
-        return jsonify({"message": "Username query param is required: ?username=<value>"}), 400
+        return jsonify({"message": "Please specify ?username=<value>"}), 400
 
-    # 2. Find the user in the database
+    # 2. Find the user
     user = User.query.filter_by(username=username).first()
     if not user:
-        return jsonify({"message": f"User '{username}' not found!"}), 404
+        return jsonify({"message": f"User '{username}' not found"}), 404
 
-    # 3. Gather all Pokémon that this user is searching for
-    user_searches = Search.query.filter_by(user_id=user.id).all()
-    # If the user hasn't searched for anything, return early
-    if not user_searches:
-        return jsonify([])  # No searches => no matches
+    # 3. Gather this user's offers and searches
+    user_offers = Offer.query.filter_by(user_id=user.id).all()   # e.g. A, B, C
+    user_searches = Search.query.filter_by(user_id=user.id).all() # e.g. D, E, F
 
-    # Convert the list of Search objects into a set of Pokémon names
-    search_pokemon_names = set([s.pokemon for s in user_searches])
+    # Convert to sets of strings
+    user_offers_set = {o.pokemon for o in user_offers}
+    user_searches_set = {s.pokemon for s in user_searches}
 
-    # 4. Find Offers from OTHER users where the offered Pokémon is in this user's search list
-    matching_offers = Offer.query.filter(
-        Offer.pokemon.in_(search_pokemon_names),
-        Offer.user_id != user.id
-    ).all()
+    # 4. Check every other user for two-sided matches
+    all_users = User.query.all()
+    matches = []
 
-    # 5. Build a list of match results
-    results = []
-    for offer in matching_offers:
-        # The "other user" is the user who placed this Offer
-        other_user = User.query.get(offer.user_id)
-        results.append({
-            "pokemon": offer.pokemon,
-            "offered_by": other_user.username,
-            "other_user_pokemon_id": other_user.pokemon_id,
-        })
+    for other_user in all_users:
+        if other_user.id == user.id:
+            continue  # skip myself
 
-    return jsonify(results)
+        # Gather other user's offers and searches
+        other_offers = Offer.query.filter_by(user_id=other_user.id).all()   # e.g. E, G, H
+        other_searches = Search.query.filter_by(user_id=other_user.id).all() # e.g. A, E, F
+
+        other_offers_set = {o.pokemon for o in other_offers}
+        other_searches_set = {s.pokemon for s in other_searches}
+
+        # 5. Two-sided intersection
+        # What do *I* want from them? Intersection of my searches & their offers
+        mySearch_TheirOffer = user_searches_set.intersection(other_offers_set)
+        # What do *they* want from me? Intersection of their searches & my offers
+        theirSearch_MyOffer = other_searches_set.intersection(user_offers_set)
+
+        if mySearch_TheirOffer and theirSearch_MyOffer:
+            # We have a two-sided match
+            matches.append({
+                "other_user": other_user.username,
+                "other_user_pokemon_id": other_user.pokemon_id,  # included as requested
+                "mySearch_TheirOffer": list(mySearch_TheirOffer),
+                "theirSearch_MyOffer": list(theirSearch_MyOffer)
+            })
+
+    return jsonify(matches)
+
 
 
 if __name__ == '__main__':
