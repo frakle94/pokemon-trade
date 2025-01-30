@@ -204,37 +204,86 @@ function deleteOffer(offerId) {
 function searchPokemon() {
     const actionArea = document.getElementById('actionArea');
     actionArea.innerHTML = `
-        <div class="centered-content">
-            <h3 class="mb-4">Search for a Pokémon</h3>
-            <form id="searchPokemonForm" class="mx-auto">
-                <div class="mb-3">
-                    <input type="text" class="form-control" id="searchPokemonName" placeholder="Enter Pokémon name" required>
-                </div>
-                <button type="submit" class="btn btn-primary">Submit Search</button>
-            </form>
-            <h4 class="mt-4">Your Searched Pokémon</h4>
-            <ul id="searchedPokemonList" class="list-group"></ul>
-        </div>
+      <div class="centered-content">
+        <h3 class="mb-4">Search for a Pokémon</h3>
+        <!-- Disable browser autocomplete to avoid old inputs -->
+        <form id="searchPokemonForm" class="mx-auto" autocomplete="off">
+          <div class="mb-3">
+            <!-- Use list for the datalist -->
+            <input 
+              type="text" 
+              class="form-control" 
+              id="searchPokemonName" 
+              list="pokemonListSearch"
+              placeholder="Enter Pokémon name" 
+              required 
+              autocomplete="off"
+            >
+            <!-- Datalist for valid Pokémon names -->
+            <datalist id="pokemonListSearch"></datalist>
+          </div>
+          <button type="submit" class="btn btn-primary">Submit Search</button>
+        </form>
+        <h4 class="mt-4">Your Searched Pokémon</h4>
+        <ul id="searchedPokemonList" class="list-group"></ul>
+      </div>
     `;
-
-    // Fetch the list of already searched Pokémon for this user
+  
+    // 1) Load valid Pokémon names for the datalist
+    loadPokemonNamesDatalistSearch();
+  
+    // 2) Fetch the user's previously searched Pokémon
     fetchSearchedPokemon();
-
-    // Handle form submission to search/add a new Pokémon
+  
+    // 3) Handle the form submission
     document.getElementById('searchPokemonForm').addEventListener('submit', function (e) {
-        e.preventDefault();
-        const pokemonName = document.getElementById('searchPokemonName').value;
-
-        axios.post('/pokemon/search', { username: currentUser.username, pokemon: pokemonName })
-            .then(() => {
-                fetchSearchedPokemon();
-                document.getElementById('searchPokemonName').value = '';
-            })
-            .catch(error => {
-                alert('Error: ' + (error.response?.data?.message || error.message));
-            });
+      e.preventDefault();
+      const pokemonName = document.getElementById('searchPokemonName').value;
+  
+      // Collect all valid <option> values
+      const allOptions = [...document.querySelectorAll('#pokemonListSearch option')]
+        .map(opt => opt.value);
+  
+      // Block if it's not in the valid list
+      if (!allOptions.includes(pokemonName)) {
+        alert("Invalid Pokémon name! Please select a name from the list.");
+        return;
+      }
+  
+      // If valid, proceed with adding the new 'searched' Pokémon
+      axios.post('/pokemon/search', {
+        username: currentUser.username,
+        pokemon: pokemonName
+      })
+      .then(() => {
+        fetchSearchedPokemon();
+        document.getElementById('searchPokemonName').value = '';
+      })
+      .catch(error => {
+        alert('Error: ' + (error.response?.data?.message || error.message));
+      });
     });
-}
+  }
+  
+  // Loads valid Pokémon names into the <datalist> for searching
+  function loadPokemonNamesDatalistSearch() {
+    // Change '/pokemon/get_pokemon_names' to your actual endpoint if needed
+    axios.get('/get_pokemon_names') 
+      .then(response => {
+        const validNames = response.data; // e.g. ["Bulbasaur", "Charmander", ...]
+        const dataList = document.getElementById('pokemonListSearch');
+        dataList.innerHTML = '';
+  
+        validNames.forEach(nome => {
+          const opt = document.createElement('option');
+          opt.value = nome;
+          dataList.appendChild(opt);
+        });
+      })
+      .catch(error => {
+        console.error("Error loading Pokémon names:", error);
+      });
+  }
 
 // Fetches the list of searched Pokémon
 function fetchSearchedPokemon() {
