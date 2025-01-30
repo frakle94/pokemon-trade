@@ -198,3 +198,15 @@ form {
     border: none !important; /* Remove borders if desired */
   }
   
+  .profile-centered-container {
+    /* Use Flexbox to center horizontally & vertically */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  
+    /* Ensure there's enough vertical space to center */
+    min-height: 80vh; 
+    margin-top: 1rem; /* Add some spacing below the navbar if you like */
+  }
+  

@@ -36,13 +36,15 @@ function showProfile() {
                 </div>
                 <button type="submit" class="btn btn-primary w-100">Update Profile</button>
             </form>
-        </div>`;
+        </div>
+    `;
 
     // Show the Profile View
     profileViewContainer.classList.remove('hidden');
 
     // Add event listener for updating profile
-    document.getElementById('updateProfileForm').addEventListener('submit', updateProfile);
+    document.getElementById('updateProfileForm')
+            .addEventListener('submit', updateProfile);
 }
 
 // Handle Logout

@@ -70,7 +70,7 @@ def login():
         })
     return jsonify({"message": "Invalid username or password"}), 401
 
-# Update user profile
+# Updates user credentials
 @app.route('/user/update', methods=['PUT'])
 def update_user():
     data = request.json
@@ -79,18 +79,18 @@ def update_user():
     new_pokemon_id = data.get('pokemon_id')
     new_password = data.get('password')
 
-    # Find the user by the old username
     user = User.query.filter_by(username=old_username).first()
     if not user:
         return jsonify({"message": "User not found!"}), 404
 
-    # Update the user's details
+    # Update fields
     user.username = new_username
     user.pokemon_id = new_pokemon_id
     user.password = generate_password_hash(new_password)
     db.session.commit()
 
     return jsonify({"message": "Profile updated successfully!"})
+
 
 # Add a Pokémon offer
 @app.route('/pokemon/offer', methods=['POST'])

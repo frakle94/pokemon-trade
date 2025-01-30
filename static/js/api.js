@@ -302,6 +302,35 @@ function showProfile() {
     profileCard.classList.remove('hidden'); // Show the profile card
 }
 
+function updateProfile(event) {
+    event.preventDefault();
+  
+    const newUsername = document.getElementById('profile_username').value;
+    const newPokemonId = document.getElementById('profile_pokemon_id').value;
+    const newPassword = document.getElementById('profile_password').value;
+  
+    axios.put('/user/update', {
+      old_username: currentUser.username,
+      username: newUsername,
+      pokemon_id: newPokemonId,
+      password: newPassword
+    })
+    .then(response => {
+      alert(response.data.message || 'Profile updated successfully!');
+  
+      // Update currentUser in the client
+      currentUser.username = newUsername;
+      currentUser.pokemonId = newPokemonId;
+      currentUser.password = newPassword;
+  
+      navigateToMainApp();
+    })
+    .catch(error => {
+      alert('Error updating profile: ' + (error.response?.data?.message || error.message));
+    });
+  }  
+
+
 function closeProfileCard() {
     const profileCard = document.getElementById('profileCard');
     profileCard.classList.add('hidden'); // Hide the profile card
