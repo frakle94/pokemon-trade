@@ -102,37 +102,71 @@ function activateSearchPokemon() {
 function offerPokemon() {
     const actionArea = document.getElementById('actionArea');
     actionArea.innerHTML = `
-        <div class="centered-content">
-            <h3 class="mb-4">Offer a Pokémon</h3>
-            <form id="offerPokemonForm" class="mx-auto">
-                <div class="mb-3">
-                    <input type="text" class="form-control" id="offerPokemonName" placeholder="Enter Pokémon name" required>
-                </div>
-                <button type="submit" class="btn btn-primary">Submit Offer</button>
-            </form>
-            <h4 class="mt-4">Your Offered Pokémon</h4>
-            <ul id="offeredPokemonList" class="list-group"></ul>
-        </div>
+      <div class="centered-content">
+        <h3 class="mb-4">Offer a Pokémon</h3>
+        <form id="offerPokemonForm" class="mx-auto" autocomplete="off">
+          <div class="mb-3">
+            <input 
+              type="text" 
+              class="form-control"
+              id="offerPokemonName" 
+              list="pokemonList"
+              placeholder="Enter Pokémon name"
+              required
+              autocomplete="off"
+            >
+            <datalist id="pokemonList"></datalist>
+          </div>
+          <button type="submit" class="btn btn-primary">Submit Offer</button>
+        </form>
+        <h4 class="mt-4">Your Offered Pokémon</h4>
+        <ul id="offeredPokemonList" class="list-group"></ul>
+      </div>
     `;
+  
+    loadPokemonNamesDatalist();
     fetchOfferedPokemon();
-
+  
     document.getElementById('offerPokemonForm').addEventListener('submit', function (e) {
-        e.preventDefault();
-        const pokemonName = document.getElementById('offerPokemonName').value;
-
-        axios.post('/pokemon/offer', { username: currentUser.username, pokemon: pokemonName })
-            .then(() => {
-                fetchOfferedPokemon();
-                document.getElementById('offerPokemonName').value = '';
-            })
-            .catch(error => {
-                alert('Error: ' + (error.response?.data?.message || error.message));
-            });
+      e.preventDefault();
+      const pokemonName = document.getElementById('offerPokemonName').value;
+  
+      const allOptions = [...document.querySelectorAll('#pokemonList option')].map(opt => opt.value);
+      if (!allOptions.includes(pokemonName)) {
+        alert("Nome Pokémon non valido! Seleziona un nome presente nell'elenco.");
+        return;
+      }
+  
+      axios.post('/pokemon/offer', { username: currentUser.username, pokemon: pokemonName })
+        .then(() => {
+          fetchOfferedPokemon();
+          document.getElementById('offerPokemonName').value = '';
+        })
+        .catch(error => {
+          alert('Error: ' + (error.response?.data?.message || error.message));
+        });
     });
-}
-
-
-
+  }
+  
+  function loadPokemonNamesDatalist() {
+    axios.get('/get_pokemon_names')
+      .then(response => {
+        const validNames = response.data;
+        const dataList = document.getElementById('pokemonList');
+        dataList.innerHTML = '';
+  
+        validNames.forEach(nome => {
+          const opt = document.createElement('option');
+          opt.value = nome;
+          dataList.appendChild(opt);
+        });
+      })
+      .catch(error => {
+        console.error("Errore caricamento nomi Pokémon:", error);
+      });
+  }
+  
+  
 
 // Fetches the list of offered Pokémon
 function fetchOfferedPokemon() {

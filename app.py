@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, render_template
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
+import csv
 
 # Base directory of your project
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -253,7 +254,23 @@ def magical_match():
 
     return jsonify(matches)
 
+@app.route('/get_pokemon_names', methods=['GET'])
+def get_pokemon_names():
+    csv_path = os.path.join(app.root_path, 'static/files/Anagrafica_Pokemon.csv')
+    nomi_pokemon = []
 
+    try:
+        with open(csv_path, 'r') as file:
+            csv_reader = csv.reader(file, delimiter=';')
+            next(csv_reader)  # Skip the header row if there is one
+            for row in csv_reader:
+                nomi_pokemon.append(row[1])
+    except FileNotFoundError:
+        return jsonify({"error": "File not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    return jsonify(nomi_pokemon)
 
 if __name__ == '__main__':
     with app.app_context():
