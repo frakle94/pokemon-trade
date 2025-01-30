@@ -166,7 +166,7 @@ function deleteOffer(offerId) {
         });
 }
 
-// Searches for Pokémon
+// Searches for Pokémon (behaves like offerPokemon)
 function searchPokemon() {
     const actionArea = document.getElementById('actionArea');
     actionArea.innerHTML = `
@@ -176,39 +176,119 @@ function searchPokemon() {
                 <div class="mb-3">
                     <input type="text" class="form-control" id="searchPokemonName" placeholder="Enter Pokémon name" required>
                 </div>
-                <button type="submit" class="btn btn-primary">Search</button>
+                <button type="submit" class="btn btn-primary">Submit Search</button>
             </form>
-            <div id="searchResults" class="mt-4"></div>
+            <h4 class="mt-4">Your Searched Pokémon</h4>
+            <ul id="searchedPokemonList" class="list-group"></ul>
         </div>
     `;
 
+    // Fetch the list of already searched Pokémon for this user
+    fetchSearchedPokemon();
+
+    // Handle form submission to search/add a new Pokémon
     document.getElementById('searchPokemonForm').addEventListener('submit', function (e) {
         e.preventDefault();
         const pokemonName = document.getElementById('searchPokemonName').value;
 
-        axios.get(`/pokemon/search?name=${pokemonName}`)
-            .then(response => {
-                const resultsDiv = document.getElementById('searchResults');
-                resultsDiv.innerHTML = '<h4>Results:</h4>';
-                if (response.data.length > 0) {
-                    response.data.forEach(result => {
-                        resultsDiv.innerHTML += `
-                            <div class="card my-3">
-                                <div class="card-body">
-                                    <h5 class="card-title">User: ${result.username}</h5>
-                                    <p class="card-text">Pokémon Pocket ID: ${result.pokemon_id}</p>
-                                </div>
-                            </div>
-                        `;
-                    });
-                } else {
-                    resultsDiv.innerHTML = '<p class="text-muted">No matches found.</p>';
-                }
+        axios.post('/pokemon/search', { username: currentUser.username, pokemon: pokemonName })
+            .then(() => {
+                fetchSearchedPokemon();
+                document.getElementById('searchPokemonName').value = '';
             })
             .catch(error => {
-                alert('Error searching for Pokémon: ' + (error.response?.data?.message || error.message));
+                alert('Error: ' + (error.response?.data?.message || error.message));
             });
     });
+}
+
+// Fetches the list of searched Pokémon
+function fetchSearchedPokemon() {
+    axios.get(`/pokemon/searched?username=${currentUser.username}`)
+        .then(response => {
+            const searchedList = document.getElementById('searchedPokemonList');
+            searchedList.innerHTML = ''; // Clear previous list
+            response.data.forEach(search => {
+                const listItem = document.createElement('li');
+                listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+                listItem.innerHTML = `
+                    ${search.pokemon}
+                    <button class="btn btn-danger tiny-btn" onclick="deleteSearch(${search.id})">Delete</button>
+                `;
+                searchedList.appendChild(listItem);
+            });
+        })
+        .catch(error => {
+            alert('Error fetching searched Pokémon: ' + (error.response?.data?.message || error.message));
+        });
+}
+
+// Deletes a searched Pokémon entry
+function deleteSearch(searchId) {
+    axios.delete('/pokemon/search/delete', { data: { search_id: searchId } })
+        .then(() => {
+            fetchSearchedPokemon(); // Refresh the list after deletion
+        })
+        .catch(error => {
+            alert('Error deleting search: ' + (error.response?.data?.message || error.message));
+        });
+}
+
+function activateMagicalMatch() {
+    const offerButton = document.getElementById('offerPokemonBtn');
+    const searchButton = document.getElementById('searchPokemonBtn');
+    const matchButton = document.getElementById('magicalMatchBtn');
+
+    // Make Magical Match button primary
+    matchButton.classList.remove('btn-secondary');
+    matchButton.classList.add('btn-primary');
+
+    // Make Offer and Search buttons secondary
+    offerButton.classList.remove('btn-primary');
+    offerButton.classList.add('btn-secondary');
+    searchButton.classList.remove('btn-primary');
+    searchButton.classList.add('btn-secondary');
+
+    // Load Magical Match functionality
+    magicalMatch();
+}
+
+function magicalMatch() {
+    const actionArea = document.getElementById('actionArea');
+    actionArea.innerHTML = `
+        <div class="centered-content">
+            <h3 class="mb-4">Magical Match Results</h3>
+            <div id="magicalMatchResults"></div>
+        </div>
+    `;
+
+    axios.get(`/pokemon/magical_match?username=${currentUser.username}`)
+        .then(response => {
+            const resultsContainer = document.getElementById('magicalMatchResults');
+            const matches = response.data;
+
+            if (!matches || matches.length === 0) {
+                resultsContainer.innerHTML = '<p class="text-muted">No matches found.</p>';
+                return;
+            }
+
+            let output = '';
+            matches.forEach(match => {
+                output += `
+                    <div class="card my-3">
+                        <div class="card-body">
+                            <h5 class="card-title">Pokémon: ${match.pokemon}</h5>
+                            <p class="card-text">Offered By: ${match.offered_by}</p>
+                            <p class="card-text">Other User's Pokémon ID: ${match.other_user_pokemon_id}</p>
+                        </div>
+                    </div>
+                `;
+            });
+            resultsContainer.innerHTML = output;
+        })
+        .catch(error => {
+            alert('Error fetching Magical Match results: ' + (error.response?.data?.message || error.message));
+        });
 }
 
 function showProfile() {

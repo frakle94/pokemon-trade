@@ -1,57 +1,80 @@
 function navigateToFeatures(username, pokemonId, password) {
+    // Store the current user
     currentUser = { username, pokemonId, password };
 
-    // Replace the login/registration content with the main app content
+    // Hide login/registration and show the main app container
     document.getElementById('authContainer').classList.add('hidden');
     document.getElementById('mainAppContainer').classList.remove('hidden');
 
-    // Update the username dynamically
+    // Update the username display
     document.getElementById('username').textContent = username;
 
-    // Ensure buttons are properly placed
-    const actionArea = document.getElementById('actionArea');
-    actionArea.innerHTML = `
-        <div class="button-container d-flex justify-content-center mb-4">
-            <button id="offerPokemonBtn" class="btn btn-primary me-2">Offer Pokémon</button>
-            <button id="searchPokemonBtn" class="btn btn-secondary">Search Pokémon</button>
-        </div>
-    `;
+    // Attach event listeners to the existing HTML buttons
+    document.getElementById('offerPokemonBtn')
+        .addEventListener('click', () => setActiveButton('offer'));
 
-    // Add event listeners for the buttons
-    document.getElementById('offerPokemonBtn').addEventListener('click', activateOfferPokemon);
-    document.getElementById('searchPokemonBtn').addEventListener('click', activateSearchPokemon);
+    document.getElementById('searchPokemonBtn')
+        .addEventListener('click', () => setActiveButton('search'));
 
-    // Automatically activate Offer Pokémon
-    activateOfferPokemon();
+    document.getElementById('magicalMatchBtn')
+        .addEventListener('click', () => setActiveButton('match'));
+
+    // Activate "Offer Pokémon" by default
+    setActiveButton('offer');
 }
+
 
 
 function setActiveButton(activeButton) {
     const offerButton = document.getElementById('offerPokemonBtn');
     const searchButton = document.getElementById('searchPokemonBtn');
+    const matchButton = document.getElementById('magicalMatchBtn');
 
     if (activeButton === 'offer') {
-        // Activate "Offer Pokémon"
+        // Offer active
         offerButton.classList.remove('btn-secondary');
         offerButton.classList.add('btn-primary');
 
-        // Deactivate "Search Pokémon"
+        // Search inactive
         searchButton.classList.remove('btn-primary');
         searchButton.classList.add('btn-secondary');
 
-        // Load the Offer Pokémon functionality
+        // Match inactive
+        matchButton.classList.remove('btn-primary');
+        matchButton.classList.add('btn-secondary');
+
         offerPokemon();
+
     } else if (activeButton === 'search') {
-        // Activate "Search Pokémon"
+        // Search active
         searchButton.classList.remove('btn-secondary');
         searchButton.classList.add('btn-primary');
 
-        // Deactivate "Offer Pokémon"
+        // Offer inactive
         offerButton.classList.remove('btn-primary');
         offerButton.classList.add('btn-secondary');
 
-        // Load the Search Pokémon functionality
+        // Match inactive
+        matchButton.classList.remove('btn-primary');
+        matchButton.classList.add('btn-secondary');
+
         searchPokemon();
+
+    } else if (activeButton === 'match') {
+        // Match active
+        matchButton.classList.remove('btn-secondary');
+        matchButton.classList.add('btn-primary');
+
+        // Offer inactive
+        offerButton.classList.remove('btn-primary');
+        offerButton.classList.add('btn-secondary');
+
+        // Search inactive
+        searchButton.classList.remove('btn-primary');
+        searchButton.classList.add('btn-secondary');
+
+        magicalMatch();
     }
 }
+
 
