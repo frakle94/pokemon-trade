@@ -1,114 +1,63 @@
+<!-- Updated HTML for Pokémon Trade Platform -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
+  <!-- Favicons and Metadata -->
   <link rel="apple-touch-icon" sizes="180x180" href="static/files/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="static/files/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="static/files/favicon-16x16.png">
   <link rel="manifest" href="static/files/site.webmanifest">
-
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Pokémon Trade Platform</title>
 
-  <!-- Bootstrap + your CSS -->
-  <link
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-  />
+  <!-- Bootstrap & Custom Styles -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
   <link rel="stylesheet" href="/static/css/styles.css" />
-
-  <!-- Axios -->
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-
-  <!-- Inline Styles for convenience -->
   <style>
-    /* Centered Container for Login/Registration */
     .centered-container {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       height: 100vh;
-      margin: 0;
       padding: 2rem;
     }
-
-    /* Card Styling */
-    .card {
-      width: 100%;
-      max-width: 400px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-
-    /* Hidden Elements */
-    .hidden {
-      display: none;
-    }
-
-    /* Go Back Link Styling */
-    .go-back {
-      color: #007bff;
-      cursor: pointer;
-      text-decoration: underline;
-    }
-
-    .go-back:hover {
-      text-decoration: none;
-    }
-
-    /* If you want a rainbow button (example) */
+    .card { max-width: 400px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .hidden { display: none; }
+    .go-back { color: #007bff; cursor: pointer; text-decoration: underline; }
+    .go-back:hover { text-decoration: none; }
     @keyframes rainbow {
-      0%   { background-color: red; }
-      14%  { background-color: orange; }
-      28%  { background-color: yellow; }
-      42%  { background-color: green; }
-      56%  { background-color: blue; }
-      70%  { background-color: indigo; }
-      84%  { background-color: violet; }
-      100% { background-color: red; }
+      0% { background-color: red; } 14% { background-color: orange; } 28% { background-color: yellow; }
+      42% { background-color: green; } 56% { background-color: blue; } 70% { background-color: indigo; }
+      84% { background-color: violet; } 100% { background-color: red; }
     }
-    .btn-rainbow {
-      animation: rainbow 3s linear infinite;
-      color: #fff !important;
-      border: none !important;
-    }
+    .btn-rainbow { animation: rainbow 3s linear infinite; color: #fff; border: none; }
   </style>
 </head>
 <body class="bg-light">
-  <!-- Login and Registration Container -->
   <div class="centered-container" id="authContainer">
     <div class="card">
       <div class="card-body">
         <h1 class="text-center mb-4"><strong>Pokémon Trade Platform</strong></h1>
 
-        <!-- Login Form -->
+        <!-- Login Form (now uses email) -->
         <div id="loginFormContainer">
           <form id="loginForm">
             <div class="mb-3">
-              <input
-                type="text"
-                class="form-control"
-                id="login_username"
-                placeholder="Username"
-                required
-              />
+              <input type="email" class="form-control" id="login_email" placeholder="Email" required />
             </div>
             <div class="mb-3">
-              <input
-                type="password"
-                class="form-control"
-                id="login_password"
-                placeholder="Password"
-                required
-              />
+              <input type="password" class="form-control" id="login_password" placeholder="Password" required />
             </div>
             <button type="submit" class="btn btn-success w-100">Login</button>
           </form>
           <div class="text-center mt-3">
-            <span class="btn btn-link" id="showRegisterBtn"
-              >Click here to register</span
-            >
+            <span class="btn btn-link" id="showRegisterBtn">Click here to register</span>
+          </div>
+          <div class="text-center">
+            <span class="btn btn-link text-danger" id="showForgotPasswordBtn">Forgot Password?</span>
           </div>
         </div>
 
@@ -116,31 +65,16 @@
         <div id="registrationFormContainer" class="hidden">
           <form id="registerForm">
             <div class="mb-3">
-              <input
-                type="text"
-                class="form-control"
-                id="reg_username"
-                placeholder="Username"
-                required
-              />
+              <input type="text" class="form-control" id="reg_username" placeholder="Username" required />
             </div>
             <div class="mb-3">
-              <input
-                type="password"
-                class="form-control"
-                id="reg_password"
-                placeholder="Password"
-                required
-              />
+              <input type="email" class="form-control" id="reg_email" placeholder="Email" required />
             </div>
             <div class="mb-3">
-              <input
-                type="text"
-                class="form-control"
-                id="reg_pokemon_id"
-                placeholder="Pokémon Pocket ID"
-                required
-              />
+              <input type="password" class="form-control" id="reg_password" placeholder="Password" required />
+            </div>
+            <div class="mb-3">
+              <input type="text" class="form-control" id="reg_pokemon_id" placeholder="Pokémon Pocket ID" required />
             </div>
             <button type="submit" class="btn btn-primary w-100">Register</button>
           </form>
@@ -148,15 +82,27 @@
             <span class="go-back" id="goBackBtn">Go back to Login</span>
           </div>
         </div>
+
+        <!-- Forgot Password Form (added here) -->
+        <div id="forgotPasswordFormContainer" class="hidden">
+          <form id="forgotPasswordForm">
+            <div class="mb-3">
+              <input type="email" class="form-control" id="forgot_email" placeholder="Enter your registered email" required />
+            </div>
+            <button type="submit" class="btn btn-warning w-100">Send Reset Link</button>
+          </form>
+          <div class="text-center mt-3">
+            <span class="go-back" id="goBackToLoginBtn">Back to Login</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
   <!-- Main App Container -->
-<div class="hidden" id="mainAppContainer">
+  <div class="hidden" id="mainAppContainer">
     <nav class="navbar navbar-light bg-light">
       <div class="container d-flex justify-content-center">
-        <!-- Profile button is centered, smaller, using "btn-sm" -->
         <button class="btn btn-outline-primary btn-sm" onclick="showProfile()">Profile</button>
       </div>
     </nav>
@@ -172,109 +118,102 @@
       </div>
       <div id="actionArea" class="mt-4"></div>
     </div>
-  </div>  
+  </div>
 
-  <!-- Profile View Container (full screen) -->
-<div class="hidden" id="profileViewContainer">
+  <!-- Profile View Container -->
+  <div class="hidden" id="profileViewContainer">
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
-      <!-- Use a Bootstrap container with flex utilities to center everything -->
       <div class="container d-flex justify-content-center">
-        <!-- Brand (optional) -->
         <a class="navbar-brand me-3">Pokémon Trade Platform</a>
-  
-        <!-- Back & Logout side by side, in the center -->
         <button class="btn btn-secondary me-2" onclick="navigateToMainApp()">Back</button>
         <button class="btn btn-danger" onclick="logout()">Logout</button>
       </div>
     </nav>
-  
     <div class="container profile-centered-container">
       <h1 class="text-center">Your Profile</h1>
       <form id="updateProfileForm">
         <div class="mb-3">
           <label for="profile_username" class="form-label">Username</label>
-          <input
-            type="text"
-            class="form-control"
-            id="profile_username"
-            required
-          />
+          <input type="text" class="form-control" id="profile_username" required />
         </div>
         <div class="mb-3">
           <label for="profile_pokemon_id" class="form-label">Pokémon Pocket ID</label>
-          <input
-            type="text"
-            class="form-control"
-            id="profile_pokemon_id"
-            required
-          />
+          <input type="text" class="form-control" id="profile_pokemon_id" required />
         </div>
         <div class="mb-3">
           <label for="profile_password" class="form-label">Password</label>
-          <input
-            type="password"
-            class="form-control"
-            id="profile_password"
-            required
-          />
+          <input type="password" class="form-control" id="profile_password" required />
         </div>
-        <button type="submit" class="btn btn-primary w-100">
-          Update Profile
-        </button>
+        <button type="submit" class="btn btn-primary w-100">Update Profile</button>
       </form>
     </div>
   </div>
-  
 
-  <!-- Your JavaScript files -->
+  <!-- JavaScript Files -->
   <script src="/static/js/api.js"></script>
   <script src="/static/js/navigation.js"></script>
   <script src="/static/js/main.js"></script>
-
-  <!-- Inline Script for Basic Setup -->
   <script>
-    // Toggle Registration and Login
     const loginFormContainer = document.getElementById('loginFormContainer');
     const registrationFormContainer = document.getElementById('registrationFormContainer');
+    const forgotPasswordFormContainer = document.getElementById('forgotPasswordFormContainer');
     const showRegisterBtn = document.getElementById('showRegisterBtn');
     const goBackBtn = document.getElementById('goBackBtn');
+
+    const showForgotPasswordBtn = document.getElementById('showForgotPasswordBtn');
+    const goBackToLoginBtn = document.getElementById('goBackToLoginBtn');
 
     showRegisterBtn.addEventListener('click', () => {
       loginFormContainer.classList.add('hidden');
       registrationFormContainer.classList.remove('hidden');
     });
+
     goBackBtn.addEventListener('click', () => {
       registrationFormContainer.classList.add('hidden');
       loginFormContainer.classList.remove('hidden');
     });
 
-    // Handle Forms
+    showForgotPasswordBtn.addEventListener('click', () => {
+      loginFormContainer.classList.add('hidden');
+      forgotPasswordFormContainer.classList.remove('hidden');
+    });
+
+    goBackToLoginBtn.addEventListener('click', () => {
+      forgotPasswordFormContainer.classList.add('hidden');
+      loginFormContainer.classList.remove('hidden');
+    });
+
     document.getElementById('loginForm').addEventListener('submit', handleLogin);
     document.getElementById('registerForm').addEventListener('submit', handleRegistration);
 
-    // Show the full "Profile View" instead of the old small card
-    function showProfile() {
-      // Hide main container
-      document.getElementById('mainAppContainer').classList.add('hidden');
-      // Show profile container
-      document.getElementById('profileViewContainer').classList.remove('hidden');
+    document.getElementById('forgotPasswordForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      const email = document.getElementById('forgot_email').value;
+      axios.post('/forgot-password', { email })
+        .then(() => {
+          alert('Reset email sent! Check your inbox.');
+          forgotPasswordFormContainer.classList.add('hidden');
+          loginFormContainer.classList.remove('hidden');
+        })
+        .catch(err => {
+          alert('Error sending reset email: ' + (err.response?.data?.message || err.message));
+        });
+    });
 
-      // Populate the fields
+    function showProfile() {
+      document.getElementById('mainAppContainer').classList.add('hidden');
+      document.getElementById('profileViewContainer').classList.remove('hidden');
       document.getElementById('profile_username').value = currentUser?.username || '';
       document.getElementById('profile_pokemon_id').value = currentUser?.pokemonId || '';
       document.getElementById('profile_password').value = currentUser?.password || '';
-
-      // Attach submit handler for profile form
       document.getElementById('updateProfileForm').addEventListener('submit', updateProfile);
     }
 
-    // Navigate back to Main App
     function navigateToMainApp() {
       document.getElementById('profileViewContainer').classList.add('hidden');
       document.getElementById('mainAppContainer').classList.remove('hidden');
     }
 
-    // Logout
     function logout() {
       currentUser = null;
       location.reload();

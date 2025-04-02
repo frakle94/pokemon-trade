@@ -3,42 +3,55 @@ let currentUser = null;
 
 // Handles user registration
 function handleRegistration(e) {
-    e.preventDefault();
-    const username = document.getElementById('reg_username').value;
-    const password = document.getElementById('reg_password').value;
-    const pokemonId = document.getElementById('reg_pokemon_id').value;
+  e.preventDefault();
+  const username = document.getElementById('reg_username').value;
+  const email = document.getElementById('reg_email').value;
+  const password = document.getElementById('reg_password').value;
+  const pokemonId = document.getElementById('reg_pokemon_id').value;
 
-    axios.post('/register', { username, password, pokemon_id: pokemonId })
+  axios.post('/register', { username, email, password, pokemon_id: pokemonId })
+      .then(response => {
+          alert(response.data.message);
+          navigateToFeatures(response.data.username, pokemonId, password);
+      })
+      .catch(error => {
+          alert('Error: ' + (error.response?.data?.message || error.message));
+      });
+}
+
+// Handles user login using email
+function handleLogin(e) {
+    e.preventDefault();
+    const email = document.getElementById('login_email').value;
+    const password = document.getElementById('login_password').value;
+
+    axios.post('/login', { email, password })
         .then(response => {
-            alert(response.data.message);
-            navigateToFeatures(response.data.username, pokemonId, password);
+            navigateToFeatures(response.data.username, response.data.pokemon_id, password);
+        })
+        .catch(error => {
+            alert('Invalid email or password. Please try again.');
+        });
+}
+
+// Handles forgot password
+function handleForgotPassword(e) {
+    e.preventDefault();
+    const email = document.getElementById('forgot_email').value;
+
+    axios.post('/forgot-password', { email })
+        .then(response => {
+            alert('Check your email for reset instructions.');
         })
         .catch(error => {
             alert('Error: ' + (error.response?.data?.message || error.message));
         });
 }
 
-// Handles user login
-function handleLogin(e) {
-    e.preventDefault();
-    const username = document.getElementById('login_username').value;
-    const password = document.getElementById('login_password').value;
-
-    axios.post('/login', { username, password })
-        .then(response => {
-            navigateToFeatures(response.data.username, response.data.pokemon_id, password);
-        })
-        .catch(error => {
-            alert('Invalid username or password. Please try again.');
-        });
-}
-
-
 // Navigates to the main application after login/registration
 function navigateToMainApp(username) {
     currentUser = { username };
 
-    // Replace the login/registration content with the main app content
     document.body.innerHTML = `
         <nav class="navbar navbar-expand-lg navbar-light bg-light">
             <div class="container-fluid">
@@ -50,10 +63,7 @@ function navigateToMainApp(username) {
             <h1 class="text-center">Welcome, ${username}!</h1>
             <p class="text-center">Now you can offer and search for Pokémon.</p>
             <div class="text-center mb-4">
-                <!-- Centered Heading -->
                 <h3 id="offerHeading" class="mb-4">Offer a Pokémon</h3>
-
-                <!-- Flexbox Container for Buttons -->
                 <div class="button-container d-flex justify-content-center align-items-center">
                     <button id="offerPokemonBtn" class="btn btn-primary me-1">Offer Pokémon</button>
                     <button id="searchPokemonBtn" class="btn btn-secondary">Search Pokémon</button>
@@ -63,10 +73,8 @@ function navigateToMainApp(username) {
         </div>
     `;
 
-    // Automatically activate Offer Pokémon
     activateOfferPokemon();
 }
-
 
 // Activates the "Offer Pokémon" button and deactivates "Search Pokémon"
 function activateOfferPokemon() {

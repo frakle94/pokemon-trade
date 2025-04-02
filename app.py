@@ -3,6 +3,15 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 import csv
+from dotenv import load_dotenv
+from flask_mail import Mail, Message
+from itsdangerous import URLSafeTimedSerializer
+
+load_dotenv()
+
+
+
+
 
 # Base directory of your project
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -15,10 +24,21 @@ app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
+app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')
+app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', 587))
+app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS', 'True') == 'True'
+app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
+app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER')
+
+mail = Mail(app)
+s = URLSafeTimedSerializer(app.secret_key or "super-secret-key")
+
 # Models
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
     pokemon_id = db.Column(db.String(50), nullable=False)
 
@@ -49,7 +69,7 @@ def index():
 def register():
     data = request.json
     hashed_password = generate_password_hash(data['password'])
-    new_user = User(username=data['username'], password=hashed_password, pokemon_id=data['pokemon_id'])
+    new_user = User(username=data['username'], email=data['email'], password=hashed_password, pokemon_id=data['pokemon_id'])
     db.session.add(new_user)
     db.session.commit()
     return jsonify({
@@ -61,15 +81,62 @@ def register():
 # Login route
 @app.route('/login', methods=['POST'])
 def login():
-    data = request.json
-    user = User.query.filter_by(username=data['username']).first()
-    if user and check_password_hash(user.password, data['password']):
+    data = request.get_json()
+    email = data.get('email')
+    password = data.get('password')
+    if not email or not password:
+        return jsonify({"message": "Email and password required"}), 400
+    user = User.query.filter_by(email=email).first()
+    if user and check_password_hash(user.password, password):
         return jsonify({
             "message": "Login successful!",
             "username": user.username,
             "pokemon_id": user.pokemon_id
         })
-    return jsonify({"message": "Invalid username or password"}), 401
+    return jsonify({"message": "Invalid email or password"}), 401
+
+@app.route('/forgot-password', methods=['POST'])
+def forgot_password():
+    data = request.json
+    email = data.get('email')
+
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({"message": "No user with that email"}), 404
+
+    token = s.dumps(email, salt='password-reset')
+    frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:5000')
+    reset_url = f"{frontend_url}/reset-password/{token}"
+
+
+    msg = Message("Pokémon Trade Password Reset", recipients=[email])
+    msg.body = f"Hi {user.username}, click here to reset your password:\n{reset_url}"
+    mail.send(msg)
+
+    return jsonify({"message": "Password reset email sent!"})
+
+@app.route('/reset-password/<token>', methods=['GET'])
+def reset_password_form(token):
+    return render_template('reset_password.html', token=token)
+
+@app.route('/reset-password/<token>', methods=['POST'])
+def reset_password(token):
+    try:
+        email = s.loads(token, salt='password-reset', max_age=3600)
+    except Exception:
+        return jsonify({"message": "Invalid or expired token"}), 400
+
+    data = request.get_json()
+    new_password = data.get('password')
+
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+
+    user.password = generate_password_hash(new_password)
+    db.session.commit()
+
+    return jsonify({"message": "Password reset successful!"})
 
 # Updates user credentials
 @app.route('/user/update', methods=['PUT'])
@@ -274,5 +341,5 @@ def get_pokemon_names():
 
 if __name__ == '__main__':
     with app.app_context():
-        db.create_all()  # Create tables in the database if they don't exist
+        db.create_all()
     app.run(debug=True)
