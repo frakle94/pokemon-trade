@@ -4,8 +4,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import os
 import csv
 from dotenv import load_dotenv
-from flask_mail import Mail, Message
 from itsdangerous import URLSafeTimedSerializer
+import requests
 
 load_dotenv()
 
@@ -24,15 +24,8 @@ app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')
-app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', 587))
-app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS', 'True') == 'True'
-app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
-app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
-app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER')
-
-mail = Mail(app)
-s = URLSafeTimedSerializer(app.secret_key or "super-secret-key")
+app.secret_key = "super-secret-key"
+s = URLSafeTimedSerializer(app.secret_key)
 
 # Models
 class User(db.Model):
@@ -95,25 +88,65 @@ def login():
         })
     return jsonify({"message": "Invalid email or password"}), 401
 
+def send_mail_with_mailjet(to_email, subject, text_body):
+    """
+    Sends an email using the Mailjet REST API.
+    """
+    # Load credentials from environment variables
+    api_key = os.getenv('MAILJET_API_KEY')
+    api_secret = os.getenv('MAILJET_API_SECRET')
+    if not api_key or not api_secret:
+        raise ValueError("Missing Mailjet credentials (MAILJET_API_KEY or MAILJET_API_SECRET).")
+
+    url = "https://api.mailjet.com/v3.1/send"
+    # The payload structure follows Mailjet's "Send API v3.1" spec
+    data = {
+        "Messages": [
+            {
+                "From": {
+                    # The "Email" must be a verified sender in your Mailjet account
+                    "Email": str(os.getenv('MAILJET_SENDER')),
+                    "Name": "MyPokemonApp"
+                },
+                "To": [
+                    {
+                        "Email": to_email
+                    }
+                ],
+                "Subject": subject,
+                "TextPart": text_body
+            }
+        ]
+    }
+    # Make the request with basic auth
+    response = requests.post(url, auth=(api_key, api_secret), json=data)
+    response.raise_for_status()  # raise an error if the request failed
+    return response
+
 @app.route('/forgot-password', methods=['POST'])
 def forgot_password():
     data = request.json
     email = data.get('email')
 
+    # Find user
     user = User.query.filter_by(email=email).first()
     if not user:
         return jsonify({"message": "No user with that email"}), 404
 
+    # Generate a token
     token = s.dumps(email, salt='password-reset')
     frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:5000')
     reset_url = f"{frontend_url}/reset-password/{token}"
 
+    subject = "Pokémon Trade Password Reset"
+    body = f"Hi {user.username}, click here to reset your password:\n{reset_url}"
 
-    msg = Message("Pokémon Trade Password Reset", recipients=[email])
-    msg.body = f"Hi {user.username}, click here to reset your password:\n{reset_url}"
-    mail.send(msg)
-
-    return jsonify({"message": "Password reset email sent!"})
+    # Send via Mailjet
+    try:
+        send_mail_with_mailjet(email, subject, body)
+        return jsonify({"message": "Password reset email sent!"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/reset-password/<token>', methods=['GET'])
 def reset_password_form(token):
@@ -126,7 +159,7 @@ def reset_password(token):
     except Exception:
         return jsonify({"message": "Invalid or expired token"}), 400
 
-    data = request.get_json()
+    data = request.json
     new_password = data.get('password')
 
     user = User.query.filter_by(email=email).first()
