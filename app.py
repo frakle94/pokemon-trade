@@ -35,20 +35,19 @@ class Offer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     pokemon = db.Column(db.String(80), nullable=False)
+    expansion = db.Column(db.String(80), nullable=True)
 
-# You can keep or remove this if you still need a "wanted" feature
 class Want(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     pokemon = db.Column(db.String(80), nullable=False)
 
-# New model for "searched" Pokémon
 class Search(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     pokemon = db.Column(db.String(80), nullable=False)
+    expansion = db.Column(db.String(80), nullable=True)  # Nuovo campo
 
-# Frontend route
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -58,7 +57,10 @@ def index():
 def register():
     data = request.json
     hashed_password = generate_password_hash(data['password'])
-    new_user = User(username=data['username'], email=data['email'], password=hashed_password, pokemon_id=data['pokemon_id'])
+    new_user = User(username=data['username'], 
+                    email=data['email'], 
+                    password=hashed_password, 
+                    pokemon_id=data['pokemon_id'])
     db.session.add(new_user)
     db.session.commit()
     return jsonify({
@@ -90,19 +92,16 @@ def send_mail_with_mailjet(to_email, subject, text_body):
     """
     Sends an email using the Mailjet REST API.
     """
-    # Load credentials from environment variables
     api_key = os.getenv('MAILJET_API_KEY')
     api_secret = os.getenv('MAILJET_API_SECRET')
     if not api_key or not api_secret:
         raise ValueError("Missing Mailjet credentials (MAILJET_API_KEY or MAILJET_API_SECRET).")
 
     url = "https://api.mailjet.com/v3.1/send"
-    # The payload structure follows Mailjet's "Send API v3.1" spec
     data = {
         "Messages": [
             {
                 "From": {
-                    # The "Email" must be a verified sender in your Mailjet account
                     "Email": str(os.getenv('MAILJET_SENDER')),
                     "Name": "MyPokemonApp"
                 },
@@ -116,9 +115,8 @@ def send_mail_with_mailjet(to_email, subject, text_body):
             }
         ]
     }
-    # Make the request with basic auth
     response = requests.post(url, auth=(api_key, api_secret), json=data)
-    response.raise_for_status()  # raise an error if the request failed
+    response.raise_for_status()
     return response
 
 @app.route('/forgot-password', methods=['POST'])
@@ -126,12 +124,10 @@ def forgot_password():
     data = request.json
     email = data.get('email')
 
-    # Find user
     user = User.query.filter_by(email=email).first()
     if not user:
         return jsonify({"message": "No user with that email"}), 404
 
-    # Generate a token
     token = s.dumps(email, salt='password-reset')
     frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:5000')
     reset_url = f"{frontend_url}/reset-password/{token}"
@@ -139,7 +135,6 @@ def forgot_password():
     subject = "Pokémon Trade Password Reset"
     body = f"Hi {user.username}, click here to reset your password:\n{reset_url}"
 
-    # Send via Mailjet
     try:
         send_mail_with_mailjet(email, subject, body)
         return jsonify({"message": "Password reset email sent!"}), 200
@@ -183,7 +178,6 @@ def update_user():
     if not user:
         return jsonify({"message": "User not found!"}), 404
 
-    # Update fields
     user.username = new_username
     user.pokemon_id = new_pokemon_id
     user.email = new_email
@@ -201,10 +195,15 @@ def add_offer():
     if not user:
         return jsonify({"message": "User not found!"}), 404
 
-    offer = Offer(user_id=user.id, pokemon=data['pokemon'])
+    expansion = data.get('expansion', '')
+    offer = Offer(
+        user_id=user.id,
+        pokemon=data['pokemon'],
+        expansion=expansion
+    )
     db.session.add(offer)
     db.session.commit()
-    return jsonify({"message": f"Offered Pokémon {data['pokemon']} added successfully!"})
+    return jsonify({"message": f"Offered Pokémon {data['pokemon']} (expansion={expansion}) added successfully!"})
 
 # Get offered Pokémon
 @app.route('/pokemon/offered', methods=['GET'])
@@ -215,7 +214,14 @@ def get_offered_pokemon():
         return jsonify({"message": "User not found!"}), 404
 
     offers = Offer.query.filter_by(user_id=user.id).all()
-    return jsonify([{"id": offer.id, "pokemon": offer.pokemon} for offer in offers])
+    return jsonify([
+        {
+            "id": offer.id,
+            "pokemon": offer.pokemon,
+            "expansion": offer.expansion
+        }
+        for offer in offers
+    ])
 
 # Delete Pokémon offer
 @app.route('/pokemon/offer/delete', methods=['DELETE'])
@@ -246,7 +252,7 @@ def add_wanted():
 # New Routes for "searchPokemon" logic (behaving like offerPokemon):
 ###############################################################################
 
-# 1. Add (create) a "searched" Pokémon record
+# 1. Add (create) a "searched" Pokémon record (with expansion)
 @app.route('/pokemon/search', methods=['POST'])
 def add_search():
     data = request.json
@@ -254,12 +260,17 @@ def add_search():
     if not user:
         return jsonify({"message": "User not found!"}), 404
 
-    searched = Search(user_id=user.id, pokemon=data['pokemon'])
+    expansion = data.get('expansion', '')
+    searched = Search(
+        user_id=user.id,
+        pokemon=data['pokemon'],
+        expansion=expansion
+    )
     db.session.add(searched)
     db.session.commit()
-    return jsonify({"message": f"Searched Pokémon {data['pokemon']} added successfully!"})
+    return jsonify({"message": f"Searched Pokémon {data['pokemon']} (expansion={expansion}) added successfully!"})
 
-# 2. Get all "searched" Pokémon for the current user
+# 2. Get all "searched" Pokémon for the current user (include expansion)
 @app.route('/pokemon/searched', methods=['GET'])
 def get_searched_pokemon():
     username = request.args.get('username')
@@ -268,7 +279,14 @@ def get_searched_pokemon():
         return jsonify({"message": "User not found!"}), 404
 
     searches = Search.query.filter_by(user_id=user.id).all()
-    return jsonify([{"id": s.id, "pokemon": s.pokemon} for s in searches])
+    return jsonify([
+        {
+            "id": s.id,
+            "pokemon": s.pokemon,
+            "expansion": s.expansion
+        }
+        for s in searches
+    ])
 
 # 3. Delete a "searched" Pokémon entry
 @app.route('/pokemon/search/delete', methods=['DELETE'])
@@ -283,71 +301,44 @@ def delete_search():
 
     return jsonify({"message": "Searched Pokémon entry not found!"}), 404
 
-
 ###############################################################################
 
 @app.route('/pokemon/magical_match', methods=['GET'])
 def magical_match():
-    """
-    Finds TWO-SIDED matches for the given user.
-    A two-sided match means:
-      - The user has at least one search that matches the other user's offer.
-      - The other user has at least one search that matches the user's offer.
-
-    Query param: ?username=<the_user_who_wants_matches>
-
-    Returns a JSON list; each item looks like:
-    {
-      "other_user": "User2",
-      "other_user_pokemon_id": "XYZ123",
-      "mySearch_TheirOffer": ["E"],        # what I want from them
-      "theirSearch_MyOffer": ["A", "B"]    # what they want from me
-    }
-    """
-    # 1. Get the username from query params
     username = request.args.get('username')
     if not username:
         return jsonify({"message": "Please specify ?username=<value>"}), 400
 
-    # 2. Find the user
     user = User.query.filter_by(username=username).first()
     if not user:
         return jsonify({"message": f"User '{username}' not found"}), 404
 
-    # 3. Gather this user's offers and searches
-    user_offers = Offer.query.filter_by(user_id=user.id).all()   # e.g. A, B, C
-    user_searches = Search.query.filter_by(user_id=user.id).all() # e.g. D, E, F
+    user_offers = Offer.query.filter_by(user_id=user.id).all() 
+    user_searches = Search.query.filter_by(user_id=user.id).all()
 
-    # Convert to sets of strings
     user_offers_set = {o.pokemon for o in user_offers}
     user_searches_set = {s.pokemon for s in user_searches}
 
-    # 4. Check every other user for two-sided matches
     all_users = User.query.all()
     matches = []
 
     for other_user in all_users:
         if other_user.id == user.id:
-            continue  # skip myself
+            continue
 
-        # Gather other user's offers and searches
-        other_offers = Offer.query.filter_by(user_id=other_user.id).all()   # e.g. E, G, H
-        other_searches = Search.query.filter_by(user_id=other_user.id).all() # e.g. A, E, F
+        other_offers = Offer.query.filter_by(user_id=other_user.id).all()
+        other_searches = Search.query.filter_by(user_id=other_user.id).all()
 
         other_offers_set = {o.pokemon for o in other_offers}
         other_searches_set = {s.pokemon for s in other_searches}
 
-        # 5. Two-sided intersection
-        # What do *I* want from them? Intersection of my searches & their offers
         mySearch_TheirOffer = user_searches_set.intersection(other_offers_set)
-        # What do *they* want from me? Intersection of their searches & my offers
         theirSearch_MyOffer = other_searches_set.intersection(user_offers_set)
 
         if mySearch_TheirOffer and theirSearch_MyOffer:
-            # We have a two-sided match
             matches.append({
                 "other_user": other_user.username,
-                "other_user_pokemon_id": other_user.pokemon_id,  # included as requested
+                "other_user_pokemon_id": other_user.pokemon_id,
                 "mySearch_TheirOffer": list(mySearch_TheirOffer),
                 "theirSearch_MyOffer": list(theirSearch_MyOffer)
             })
@@ -356,21 +347,58 @@ def magical_match():
 
 @app.route('/get_pokemon_names', methods=['GET'])
 def get_pokemon_names():
+    """
+    1) Se query param ?list_expansions=true, restituisce la lista di espansioni distinte.
+    2) Altrimenti, se c'è ?expansion=..., filtra i Pokémon solo per quell'espansione.
+       Se non c'è expansion, restituisce TUTTI i Pokémon.
+
+    Struttura CSV:
+    row[0] = Espansione (minuscolo)
+    row[1] = Nome Pokémon
+    """
     csv_path = os.path.join(app.root_path, 'static/files/Anagrafica_Pokemon.csv')
-    nomi_pokemon = []
+
+    list_expansions_flag = request.args.get('list_expansions', '').lower() == 'true'
+    expansion_param = request.args.get('expansion', '').strip().lower()
+
+    expansions_set = set()
+    pokemon_list = []
 
     try:
         with open(csv_path, 'r') as file:
             csv_reader = csv.reader(file, delimiter=';')
-            next(csv_reader)  # Skip the header row if there is one
+            next(csv_reader)  # Salta header se presente
+
             for row in csv_reader:
-                nomi_pokemon.append(row[1])
+                # row[0] = Espansione, row[1] = NomePokémon
+                if len(row) < 2:
+                    continue
+
+                espansione = row[0].strip().lower()
+                nome_pokemon = row[1].strip()
+
+                # Aggiungo l'espansione al set
+                if espansione:
+                    expansions_set.add(espansione)
+
+                # Se NON stiamo listando expansions, calcoliamo la logica di filtraggio
+                if not list_expansions_flag:
+                    # Se expansion_param è vuoto => prendi tutti
+                    if (not expansion_param) or (espansione == expansion_param):
+                        pokemon_list.append(nome_pokemon)
+
     except FileNotFoundError:
         return jsonify({"error": "File not found"}), 404
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-    return jsonify(nomi_pokemon)
+    if list_expansions_flag:
+        # Ritorno solo la lista expansions
+        expansions_sorted = sorted([exp.capitalize() for exp in expansions_set])
+        return jsonify(expansions_sorted)
+
+    # Altrimenti ritorno i Pokémon (filtrati o tutti)
+    return jsonify(pokemon_list)
 
 if __name__ == '__main__':
     with app.app_context():

@@ -10,431 +10,525 @@ function handleRegistration(e) {
   const pokemonId = document.getElementById('reg_pokemon_id').value;
 
   axios.post('/register', { username, email, password, pokemon_id: pokemonId })
-      .then(response => {
-          alert(response.data.message);
-          navigateToFeatures(response.data.username, email, pokemonId, password);
-      })
-      .catch(error => {
-          alert('Error: ' + (error.response?.data?.message || error.message));
-      });
+    .then(response => {
+      alert(response.data.message);
+      navigateToFeatures(response.data.username, email, pokemonId, password);
+    })
+    .catch(error => {
+      alert('Error: ' + (error.response?.data?.message || error.message));
+    });
 }
 
 // Handles user login using email
 function handleLogin(e) {
-    e.preventDefault();
-    const email = document.getElementById('login_email').value;
-    const password = document.getElementById('login_password').value;
+  e.preventDefault();
+  const email = document.getElementById('login_email').value;
+  const password = document.getElementById('login_password').value;
 
-    axios.post('/login', { email, password })
-        .then(response => {
-            navigateToFeatures(response.data.username, response.data.email, response.data.pokemon_id, password);
-        })
-        .catch(error => {
-            alert('Invalid email or password. Please try again.');
-        });
+  axios.post('/login', { email, password })
+    .then(response => {
+      navigateToFeatures(response.data.username, response.data.email, response.data.pokemon_id, password);
+    })
+    .catch(error => {
+      alert('Invalid email or password. Please try again.');
+    });
 }
 
 // Handles forgot password
 function handleForgotPassword(e) {
-    e.preventDefault();
-    const email = document.getElementById('forgot_email').value;
+  e.preventDefault();
+  const email = document.getElementById('forgot_email').value;
 
-    axios.post('/forgot-password', { email })
-        .then(response => {
-            alert('Check your email for reset instructions.');
-        })
-        .catch(error => {
-            alert('Error: ' + (error.response?.data?.message || error.message));
-        });
+  axios.post('/forgot-password', { email })
+    .then(() => {
+      alert('Check your email for reset instructions.');
+    })
+    .catch(error => {
+      alert('Error: ' + (error.response?.data?.message || error.message));
+    });
 }
 
-// Navigates to the main application after login/registration
+/**
+ * Salva i dati utente in currentUser e chiama navigateToMainApp()
+ */
+function navigateToFeatures(username, email, pokemonId, password) {
+  currentUser = { username, email, pokemonId, password };
+  navigateToMainApp(username);
+}
+
+/**
+ * Ricostruisce il body con i pulsanti Offer/Search,
+ * e di default mostra "Offer Pokémon"
+ */
 function navigateToMainApp(username) {
-    currentUser = { username };
+  // Aggiorniamo se necessario
+  currentUser = { ...currentUser, username };
 
-    document.body.innerHTML = `
-        <nav class="navbar navbar-expand-lg navbar-light bg-light">
-            <div class="container-fluid">
-                <a class="navbar-brand">Pokémon Trade Platform</a>
-                <button class="btn btn-outline-primary ms-auto" onclick="showProfile()">Profile</button>
-            </div>
-        </nav>
-        <div class="container mt-5">
-            <h1 class="text-center">Welcome, ${username}!</h1>
-            <p class="text-center">Now you can offer and search for Pokémon.</p>
-            <div class="text-center mb-4">
-                <h3 id="offerHeading" class="mb-4">Offer a Pokémon</h3>
-                <div class="button-container d-flex justify-content-center align-items-center">
-                    <button id="offerPokemonBtn" class="btn btn-primary me-1">Offer Pokémon</button>
-                    <button id="searchPokemonBtn" class="btn btn-secondary">Search Pokémon</button>
-                </div>
-            </div>
-            <div id="actionArea" class="mt-4"></div>
+  document.body.innerHTML = `
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <div class="container-fluid">
+        <a class="navbar-brand">Pokémon Trade Platform</a>
+        <button class="btn btn-outline-primary ms-auto" onclick="showProfile()">Profile</button>
+      </div>
+    </nav>
+    <div class="container mt-5">
+      <h1 class="text-center">Welcome, ${username}!</h1>
+      <p class="text-center">Now you can offer and search for Pokémon.</p>
+      <div class="text-center mb-4">
+        <h3 id="offerHeading" class="mb-4">Offer a Pokémon</h3>
+        <div class="button-container d-flex justify-content-center align-items-center">
+          <button id="offerPokemonBtn" class="btn btn-primary me-1">Offer Pokémon</button>
+          <button id="searchPokemonBtn" class="btn btn-secondary">Search Pokémon</button>
         </div>
-    `;
+      </div>
+      <div id="actionArea" class="mt-4"></div>
+    </div>
+  `;
 
-    activateOfferPokemon();
+  // Bind pulsanti
+  document.getElementById('offerPokemonBtn').addEventListener('click', activateOfferPokemon);
+  document.getElementById('searchPokemonBtn').addEventListener('click', activateSearchPokemon);
+
+  // Mostriamo la sezione "Offer Pokémon" di default
+  activateOfferPokemon();
 }
 
-// Activates the "Offer Pokémon" button and deactivates "Search Pokémon"
+// Attiva Offer Pokémon
 function activateOfferPokemon() {
-    const offerButton = document.getElementById('offerPokemonBtn');
-    const searchButton = document.getElementById('searchPokemonBtn');
+  const offerButton = document.getElementById('offerPokemonBtn');
+  const searchButton = document.getElementById('searchPokemonBtn');
 
-    offerButton.classList.remove('btn-secondary');
-    offerButton.classList.add('btn-primary');
+  offerButton.classList.remove('btn-secondary');
+  offerButton.classList.add('btn-primary');
 
-    searchButton.classList.remove('btn-primary');
-    searchButton.classList.add('btn-secondary');
+  searchButton.classList.remove('btn-primary');
+  searchButton.classList.add('btn-secondary');
 
-    // Load Offer Pokémon functionality
-    offerPokemon();
+  offerPokemon();
 }
 
-// Activates the "Search Pokémon" button and deactivates "Offer Pokémon"
+// Attiva Search Pokémon
 function activateSearchPokemon() {
-    const offerButton = document.getElementById('offerPokemonBtn');
-    const searchButton = document.getElementById('searchPokemonBtn');
+  const offerButton = document.getElementById('offerPokemonBtn');
+  const searchButton = document.getElementById('searchPokemonBtn');
 
-    searchButton.classList.remove('btn-secondary');
-    searchButton.classList.add('btn-primary');
+  searchButton.classList.remove('btn-secondary');
+  searchButton.classList.add('btn-primary');
 
-    offerButton.classList.remove('btn-primary');
-    offerButton.classList.add('btn-secondary');
+  offerButton.classList.remove('btn-primary');
+  offerButton.classList.add('btn-secondary');
 
-    // Load Search Pokémon functionality
-    searchPokemon();
+  searchPokemon();
 }
 
-// Offers a Pokémon
+/**
+ * loadExpansions(selectId)
+ * -> /get_pokemon_names?list_expansions=true
+ *    per popolare <select id="selectId">
+ */
+function loadExpansions(selectId) {
+  axios.get('/get_pokemon_names?list_expansions=true')
+    .then(response => {
+      const expansions = response.data; // es: ["Base set","Fossil","Jungle"...]
+      const selectEl = document.getElementById(selectId);
+      if (!selectEl) return;
+
+      // Pulisco e aggiungo un placeholder
+      selectEl.innerHTML = '';
+      const placeholder = document.createElement('option');
+      placeholder.disabled = true;
+      placeholder.selected = true;
+      placeholder.hidden = true;
+      placeholder.textContent = 'Select expansion';
+      selectEl.appendChild(placeholder);
+
+      // Opzione "All expansions"
+      const allOpt = document.createElement('option');
+      allOpt.value = '';
+      allOpt.textContent = '— ALL —';
+      selectEl.appendChild(allOpt);
+
+      expansions.forEach(exp => {
+        const opt = document.createElement('option');
+        opt.value = exp;  // manteniamo la capitalizzazione
+        opt.textContent = exp;
+        selectEl.appendChild(opt);
+      });
+    })
+    .catch(err => {
+      console.error("Errore expansions:", err);
+    });
+}
+
+/**
+ * loadPokemonNamesDatalist(selectId, dataListId)
+ * -> se selectId ha un expansionValue, filtra i Pokémon
+ * -> altrimenti mostra tutti
+ * -> riempie <datalist id="dataListId">
+ */
+function loadPokemonNamesDatalist(selectId, dataListId) {
+  const selectEl = document.getElementById(selectId);
+  if (!selectEl) return;
+
+  const expansionValue = selectEl.value || '';
+  let url = '/get_pokemon_names';
+  if (expansionValue) {
+    url += `?expansion=${encodeURIComponent(expansionValue)}`;
+  }
+
+  axios.get(url)
+    .then(response => {
+      const dataList = document.getElementById(dataListId);
+      if (!dataList) return;
+      dataList.innerHTML = '';
+
+      response.data.forEach(nome => {
+        const opt = document.createElement('option');
+        opt.value = nome;
+        dataList.appendChild(opt);
+      });
+    })
+    .catch(error => {
+      console.error("Errore caricamento nomi Pokémon:", error);
+    });
+}
+
+/**
+ * offerPokemon() -> disegna <select id="offerExpansionSelect"> e <input list="offerPokemonList">
+ */
 function offerPokemon() {
-    const actionArea = document.getElementById('actionArea');
-    actionArea.innerHTML = `
-      <div class="centered-content">
-        <h3 class="mb-4">Offer a Pokémon</h3>
-        <form id="offerPokemonForm" class="mx-auto" autocomplete="off">
-          <div class="mb-3">
-            <input 
-              type="text" 
-              class="form-control"
-              id="offerPokemonName" 
-              list="pokemonList"
-              placeholder="Enter Pokémon name"
-              required
-              autocomplete="off"
-            >
-            <datalist id="pokemonList"></datalist>
-          </div>
-          <button type="submit" class="btn btn-primary">Submit Offer</button>
-        </form>
-        <h4 class="mt-4">Your Offered Pokémon</h4>
-        <ul id="offeredPokemonList" class="list-group"></ul>
-      </div>
-    `;
-  
-    loadPokemonNamesDatalist();
-    fetchOfferedPokemon();
-  
-    document.getElementById('offerPokemonForm').addEventListener('submit', function (e) {
-      e.preventDefault();
-      const pokemonName = document.getElementById('offerPokemonName').value;
-  
-      const allOptions = [...document.querySelectorAll('#pokemonList option')].map(opt => opt.value);
-      if (!allOptions.includes(pokemonName)) {
-        alert("Nome Pokémon non valido! Seleziona un nome presente nell'elenco.");
-        return;
-      }
-  
-      axios.post('/pokemon/offer', { username: currentUser.username, pokemon: pokemonName })
-        .then(() => {
-          fetchOfferedPokemon();
-          document.getElementById('offerPokemonName').value = '';
-        })
-        .catch(error => {
-          alert('Error: ' + (error.response?.data?.message || error.message));
-        });
-    });
-  }
-  
-  function loadPokemonNamesDatalist() {
-    axios.get('/get_pokemon_names')
-      .then(response => {
-        const validNames = response.data;
-        const dataList = document.getElementById('pokemonList');
-        dataList.innerHTML = '';
-  
-        validNames.forEach(nome => {
-          const opt = document.createElement('option');
-          opt.value = nome;
-          dataList.appendChild(opt);
-        });
-      })
-      .catch(error => {
-        console.error("Errore caricamento nomi Pokémon:", error);
-      });
-  }
-  
-  
+  const actionArea = document.getElementById('actionArea');
+  actionArea.innerHTML = `
+    <div class="centered-content">
+      <h3 class="mb-4">Offer a Pokémon</h3>
 
-// Fetches the list of offered Pokémon
+      <div class="mb-3">
+        <select
+          id="offerExpansionSelect"
+          class="form-control"
+          style="background-color: #000; color: #fff;"
+        ></select>
+      </div>
+
+      <form id="offerPokemonForm" class="mx-auto" autocomplete="off">
+        <div class="mb-3">
+          <input
+            type="text"
+            class="form-control"
+            id="offerPokemonName"
+            list="offerPokemonList"
+            placeholder="Enter Pokémon name"
+            required
+          >
+          <datalist id="offerPokemonList"></datalist>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit Offer</button>
+      </form>
+
+      <h4 class="mt-4">Your Offered Pokémon</h4>
+      <ul id="offeredPokemonList" class="list-group"></ul>
+    </div>
+  `;
+
+  // Carico expansions in #offerExpansionSelect
+  loadExpansions("offerExpansionSelect");
+
+  // Carico i Pokémon filtrati
+  loadPokemonNamesDatalist("offerExpansionSelect", "offerPokemonList");
+
+  // Mostro la lista di Pokémon offerti
+  fetchOfferedPokemon();
+
+  // Se cambia expansions, ricarico i Pokémon
+  const selectEl = document.getElementById('offerExpansionSelect');
+  selectEl.addEventListener('change', () => {
+    loadPokemonNamesDatalist("offerExpansionSelect", "offerPokemonList");
+  });
+
+  // Form submission
+  document.getElementById('offerPokemonForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    const expansionChosen = selectEl.value;
+    const pokemonName = document.getElementById('offerPokemonName').value.trim();
+
+    // Validazione Pokémon
+    const allOptions = [...document.querySelectorAll('#offerPokemonList option')].map(o => o.value);
+    if (!allOptions.includes(pokemonName)) {
+      alert("Invalid Pokémon name! Please select from the list.");
+      return;
+    }
+
+    // POST /pokemon/offer
+    axios.post('/pokemon/offer', {
+      username: currentUser.username,
+      pokemon: pokemonName,
+      expansion: expansionChosen
+    })
+    .then(() => {
+      fetchOfferedPokemon();
+      document.getElementById('offerPokemonName').value = '';
+    })
+    .catch(error => {
+      alert('Error: ' + (error.response?.data?.message || error.message));
+    });
+  });
+}
+
+// GET /pokemon/offered
 function fetchOfferedPokemon() {
-    axios.get(`/pokemon/offered?username=${currentUser.username}`)
-        .then(response => {
-            const offeredList = document.getElementById('offeredPokemonList');
-            offeredList.innerHTML = ''; // Clear previous list
-            response.data.forEach(offer => {
-                const listItem = document.createElement('li');
-                listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
-                listItem.innerHTML = `
-                    ${offer.pokemon}
-                    <button class="btn btn-danger tiny-btn" onclick="deleteOffer(${offer.id})">Delete</button>
-                `;
-                offeredList.appendChild(listItem);
-            });
-        })
-        .catch(error => {
-            alert('Error fetching offered Pokémon: ' + (error.response?.data?.message || error.message));
-        });
-}
+  axios.get(`/pokemon/offered?username=${currentUser.username}`)
+    .then(response => {
+      const offeredList = document.getElementById('offeredPokemonList');
+      if (!offeredList) return;
+      offeredList.innerHTML = '';
 
-// Deletes an offered Pokémon
-function deleteOffer(offerId) {
-    axios.delete('/pokemon/offer/delete', { data: { offer_id: offerId } })
-        .then(() => {
-            fetchOfferedPokemon(); // Refresh the list after deletion
-        })
-        .catch(error => {
-            alert('Error deleting offer: ' + (error.response?.data?.message || error.message));
-        });
-}
+      response.data.forEach(offer => {
+        const listItem = document.createElement('li');
+        listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
 
-// Searches for Pokémon (behaves like offerPokemon)
-function searchPokemon() {
-    const actionArea = document.getElementById('actionArea');
-    actionArea.innerHTML = `
-      <div class="centered-content">
-        <h3 class="mb-4">Search for a Pokémon</h3>
-        <!-- Disable browser autocomplete to avoid old inputs -->
-        <form id="searchPokemonForm" class="mx-auto" autocomplete="off">
-          <div class="mb-3">
-            <!-- Use list for the datalist -->
-            <input 
-              type="text" 
-              class="form-control" 
-              id="searchPokemonName" 
-              list="pokemonListSearch"
-              placeholder="Enter Pokémon name" 
-              required 
-              autocomplete="off"
-            >
-            <!-- Datalist for valid Pokémon names -->
-            <datalist id="pokemonListSearch"></datalist>
-          </div>
-          <button type="submit" class="btn btn-primary">Submit Search</button>
-        </form>
-        <h4 class="mt-4">Your Searched Pokémon</h4>
-        <ul id="searchedPokemonList" class="list-group"></ul>
-      </div>
-    `;
-  
-    // 1) Load valid Pokémon names for the datalist
-    loadPokemonNamesDatalistSearch();
-  
-    // 2) Fetch the user's previously searched Pokémon
-    fetchSearchedPokemon();
-  
-    // 3) Handle the form submission
-    document.getElementById('searchPokemonForm').addEventListener('submit', function (e) {
-      e.preventDefault();
-      const pokemonName = document.getElementById('searchPokemonName').value;
-  
-      // Collect all valid <option> values
-      const allOptions = [...document.querySelectorAll('#pokemonListSearch option')]
-        .map(opt => opt.value);
-  
-      // Block if it's not in the valid list
-      if (!allOptions.includes(pokemonName)) {
-        alert("Invalid Pokémon name! Please select a name from the list.");
-        return;
-      }
-  
-      // If valid, proceed with adding the new 'searched' Pokémon
-      axios.post('/pokemon/search', {
-        username: currentUser.username,
-        pokemon: pokemonName
-      })
-      .then(() => {
-        fetchSearchedPokemon();
-        document.getElementById('searchPokemonName').value = '';
-      })
-      .catch(error => {
-        alert('Error: ' + (error.response?.data?.message || error.message));
+        // Nome - Espansione (se expansion)
+        const displayName = offer.expansion 
+          ? `${offer.expansion} - ${offer.pokemon}`
+          : offer.pokemon;
+
+        listItem.innerHTML = `
+          ${displayName}
+          <button class="btn btn-danger tiny-btn" onclick="deleteOffer(${offer.id})">Delete</button>
+        `;
+        offeredList.appendChild(listItem);
       });
+    })
+    .catch(error => {
+      alert('Error fetching offered Pokémon: ' + (error.response?.data?.message || error.message));
     });
-  }
-  
-  // Loads valid Pokémon names into the <datalist> for searching
-  function loadPokemonNamesDatalistSearch() {
-    // Change '/pokemon/get_pokemon_names' to your actual endpoint if needed
-    axios.get('/get_pokemon_names') 
-      .then(response => {
-        const validNames = response.data; // e.g. ["Bulbasaur", "Charmander", ...]
-        const dataList = document.getElementById('pokemonListSearch');
-        dataList.innerHTML = '';
-  
-        validNames.forEach(nome => {
-          const opt = document.createElement('option');
-          opt.value = nome;
-          dataList.appendChild(opt);
-        });
-      })
-      .catch(error => {
-        console.error("Error loading Pokémon names:", error);
-      });
-  }
+}
 
-// Fetches the list of searched Pokémon
+// DELETE /pokemon/offer/delete
+function deleteOffer(offerId) {
+  axios.delete('/pokemon/offer/delete', { data: { offer_id: offerId } })
+    .then(() => {
+      fetchOfferedPokemon();
+    })
+    .catch(error => {
+      alert('Error deleting offer: ' + (error.response?.data?.message || error.message));
+    });
+}
+
+/**
+ * searchPokemon() -> stesse expansions e filtraggio
+ * + salvataggio expansion in /pokemon/search
+ */
+function searchPokemon() {
+  const actionArea = document.getElementById('actionArea');
+  actionArea.innerHTML = `
+    <div class="centered-content">
+      <h3 class="mb-4">Search for a Pokémon</h3>
+
+      <div class="mb-3">
+        <select
+          id="searchExpansionSelect"
+          class="form-control"
+          style="background-color: #000; color: #fff;"
+        ></select>
+      </div>
+
+      <form id="searchPokemonForm" class="mx-auto" autocomplete="off">
+        <div class="mb-3">
+          <input 
+            type="text"
+            class="form-control"
+            id="searchPokemonName"
+            list="searchPokemonList"
+            placeholder="Enter Pokémon name"
+            required
+          >
+          <datalist id="searchPokemonList"></datalist>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit Search</button>
+      </form>
+
+      <h4 class="mt-4">Your Searched Pokémon</h4>
+      <ul id="searchedPokemonList" class="list-group"></ul>
+    </div>
+  `;
+
+  // 1) Carichiamo expansions in #searchExpansionSelect
+  loadExpansions("searchExpansionSelect");
+
+  // 2) Carichiamo i Pokémon (filtrati) => (selectId="searchExpansionSelect", dataListId="searchPokemonList")
+  loadPokemonNamesDatalist("searchExpansionSelect", "searchPokemonList");
+
+  // 3) Carichiamo la lista "searched"
+  fetchSearchedPokemon();
+
+  // Cambi di expansions => ricarico i Pokémon
+  const selectEl = document.getElementById('searchExpansionSelect');
+  selectEl.addEventListener('change', () => {
+    loadPokemonNamesDatalist("searchExpansionSelect", "searchPokemonList");
+  });
+
+  // Gestione form
+  document.getElementById('searchPokemonForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    const expansionChosen = selectEl.value;
+    const pokemonName = document.getElementById('searchPokemonName').value.trim();
+
+    // Validazione Pokémon
+    const allOptions = [...document.querySelectorAll('#searchPokemonList option')].map(o => o.value);
+    if (!allOptions.includes(pokemonName)) {
+      alert("Invalid Pokémon name! Please select from the list.");
+      return;
+    }
+
+    // POST /pokemon/search => passiamo expansion
+    axios.post('/pokemon/search', {
+      username: currentUser.username,
+      pokemon: pokemonName,
+      expansion: expansionChosen
+    })
+    .then(() => {
+      fetchSearchedPokemon();
+      document.getElementById('searchPokemonName').value = '';
+    })
+    .catch(error => {
+      alert('Error: ' + (error.response?.data?.message || error.message));
+    });
+  });
+}
+
+/** GET /pokemon/searched?username=... */
 function fetchSearchedPokemon() {
-    axios.get(`/pokemon/searched?username=${currentUser.username}`)
-        .then(response => {
-            const searchedList = document.getElementById('searchedPokemonList');
-            searchedList.innerHTML = ''; // Clear previous list
-            response.data.forEach(search => {
-                const listItem = document.createElement('li');
-                listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
-                listItem.innerHTML = `
-                    ${search.pokemon}
-                    <button class="btn btn-danger tiny-btn" onclick="deleteSearch(${search.id})">Delete</button>
-                `;
-                searchedList.appendChild(listItem);
-            });
-        })
-        .catch(error => {
-            alert('Error fetching searched Pokémon: ' + (error.response?.data?.message || error.message));
-        });
+  axios.get(`/pokemon/searched?username=${currentUser.username}`)
+    .then(response => {
+      const searchedList = document.getElementById('searchedPokemonList');
+      if (!searchedList) return;
+      searchedList.innerHTML = '';
+
+      response.data.forEach(search => {
+        const listItem = document.createElement('li');
+        listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+
+        // Nome - Espansione se c'è
+        const displayName = search.expansion
+          ? `${search.expansion} - ${search.pokemon}`
+          : search.pokemon;
+
+        listItem.innerHTML = `
+          ${displayName}
+          <button class="btn btn-danger tiny-btn" onclick="deleteSearch(${search.id})">Delete</button>
+        `;
+        searchedList.appendChild(listItem);
+      });
+    })
+    .catch(error => {
+      alert('Error fetching searched Pokémon: ' + (error.response?.data?.message || error.message));
+    });
 }
 
-// Deletes a searched Pokémon entry
+/** DELETE /pokemon/search/delete */
 function deleteSearch(searchId) {
-    axios.delete('/pokemon/search/delete', { data: { search_id: searchId } })
-        .then(() => {
-            fetchSearchedPokemon(); // Refresh the list after deletion
-        })
-        .catch(error => {
-            alert('Error deleting search: ' + (error.response?.data?.message || error.message));
-        });
+  axios.delete('/pokemon/search/delete', { data: { search_id: searchId } })
+    .then(() => {
+      fetchSearchedPokemon();
+    })
+    .catch(error => {
+      alert('Error deleting search: ' + (error.response?.data?.message || error.message));
+    });
 }
 
+/** activateMagicalMatch() -> pulsanti e poi magicalMatch() */
 function activateMagicalMatch() {
-    const offerButton = document.getElementById('offerPokemonBtn');
-    const searchButton = document.getElementById('searchPokemonBtn');
-    const matchButton = document.getElementById('magicalMatchBtn');
+  const offerButton = document.getElementById('offerPokemonBtn');
+  const searchButton = document.getElementById('searchPokemonBtn');
+  const matchButton = document.getElementById('magicalMatchBtn');
 
-    // Make Magical Match button primary
-    matchButton.classList.remove('btn-secondary');
-    matchButton.classList.add('btn-primary');
+  matchButton.classList.remove('btn-secondary');
+  matchButton.classList.add('btn-primary');
 
-    // Make Offer and Search buttons secondary
-    offerButton.classList.remove('btn-primary');
-    offerButton.classList.add('btn-secondary');
-    searchButton.classList.remove('btn-primary');
-    searchButton.classList.add('btn-secondary');
+  offerButton.classList.remove('btn-primary');
+  offerButton.classList.add('btn-secondary');
+  searchButton.classList.remove('btn-primary');
+  searchButton.classList.add('btn-secondary');
 
-    // Load Magical Match functionality
-    magicalMatch();
+  magicalMatch();
 }
 
 function magicalMatch() {
-    // 1. Grab the container from your HTML
-    const someContainer = document.getElementById('actionArea');
-  
-    // 2. Optionally clear it and add a heading
-    someContainer.innerHTML = '<h3>Two-Sided Magical Match Results</h3>';
-  
-    // 3. Make the request to your Flask route
-    axios.get(`/pokemon/magical_match?username=${currentUser.username}`)
-      .then(response => {
-        const data = response.data; // an array of match objects
-        if (!data || data.length === 0) {
-          someContainer.innerHTML += '<p>No two-sided matches found.</p>';
-          return;
-        }
-  
-        let html = '';
-        data.forEach(item => {
-          // item might look like:
-          // {
-          //   "other_user": "User_2",
-          //   "other_user_pokemon_id": "XYZ123",
-          //   "mySearch_TheirOffer": ["E"],
-          //   "theirSearch_MyOffer": ["A"]
-          // }
-          html += `
-            <div class="card my-3">
-              <div class="card-body">
-                <h5 class="card-title">Match with ${item.other_user}</h5>
-                <p>Other User's Pokémon ID: ${item.other_user_pokemon_id}</p>
-                <p>You want from them: ${item.mySearch_TheirOffer.join(', ')}</p>
-                <p>They want from you: ${item.theirSearch_MyOffer.join(', ')}</p>
-              </div>
+  const someContainer = document.getElementById('actionArea');
+  someContainer.innerHTML = '<h3>Two-Sided Magical Match Results</h3>';
+
+  axios.get(`/pokemon/magical_match?username=${currentUser.username}`)
+    .then(response => {
+      const data = response.data;
+      if (!data || data.length === 0) {
+        someContainer.innerHTML += '<p>No two-sided matches found.</p>';
+        return;
+      }
+
+      let html = '';
+      data.forEach(item => {
+        html += `
+          <div class="card my-3">
+            <div class="card-body">
+              <h5 class="card-title">Match with ${item.other_user}</h5>
+              <p>Other User's Pokémon ID: ${item.other_user_pokemon_id}</p>
+              <p>You want from them: ${item.mySearch_TheirOffer.join(', ')}</p>
+              <p>They want from you: ${item.theirSearch_MyOffer.join(', ')}</p>
             </div>
-          `;
-        });
-  
-        // 4. Add all match cards to the container
-        someContainer.innerHTML += html;
-      })
-      .catch(error => {
-        alert('Error fetching two-sided match: ' + (error.response?.data?.message || error.message));
+          </div>
+        `;
       });
-  }
+      someContainer.innerHTML += html;
+    })
+    .catch(error => {
+      alert('Error fetching two-sided match: ' + (error.response?.data?.message || error.message));
+    });
+}
 
+/** showProfile(), updateProfile(), closeProfileCard() -> invariati se li usi */
 function showProfile() {
-    const profileCard = document.getElementById('profileCard');
-    const username = currentUser.username || 'Unknown User';
-    const email = currentUser.email || 'N/A';
-    const pokemonId = currentUser.pokemon_id || 'N/A';
+  const profileCard = document.getElementById('profileCard');
+  const username = currentUser.username || 'Unknown User';
+  const email = currentUser.email || 'N/A';
+  const pokemonId = currentUser.pokemon_id || 'N/A';
 
-    document.getElementById('profileUsername').textContent = username;
-    document.getElementById('profileEmail').textContent = email;
-    document.getElementById('profilePokemonId').textContent = pokemonId;
+  document.getElementById('profileUsername').textContent = username;
+  document.getElementById('profileEmail').textContent = email;
+  document.getElementById('profilePokemonId').textContent = pokemonId;
 
-    profileCard.classList.remove('hidden'); // Show the profile card
+  profileCard.classList.remove('hidden');
 }
 
 function updateProfile(event) {
-    event.preventDefault();
-  
-    const newUsername = document.getElementById('profile_username').value;
-    const newEmail = document.getElementById('profile_email').value;
-    const newPokemonId = document.getElementById('profile_pokemon_id').value;
-    const newPassword = document.getElementById('profile_password').value;
-  
-    axios.put('/user/update', {
-      old_username: currentUser.username,
-      username: newUsername,
-      email: newEmail,
-      pokemon_id: newPokemonId,
-      password: newPassword
-    })
-    .then(response => {
-      alert(response.data.message || 'Profile updated successfully!');
-  
-      // Update currentUser in the client
-      currentUser.username = newUsername;
-      currentUser.email = newEmail;
-      currentUser.pokemonId = newPokemonId;
-      currentUser.password = newPassword;
-  
-      navigateToMainApp();
-    })
-    .catch(error => {
-      alert('Error updating profile: ' + (error.response?.data?.message || error.message));
-    });
-  }  
+  event.preventDefault();
+  const newUsername = document.getElementById('profile_username').value;
+  const newEmail = document.getElementById('profile_email').value;
+  const newPokemonId = document.getElementById('profile_pokemon_id').value;
+  const newPassword = document.getElementById('profile_password').value;
 
+  axios.put('/user/update', {
+    old_username: currentUser.username,
+    username: newUsername,
+    email: newEmail,
+    pokemon_id: newPokemonId,
+    password: newPassword
+  })
+  .then(response => {
+    alert(response.data.message || 'Profile updated successfully!');
+    currentUser.username = newUsername;
+    currentUser.email = newEmail;
+    currentUser.pokemonId = newPokemonId;
+    currentUser.password = newPassword;
+    navigateToMainApp(newUsername);
+  })
+  .catch(error => {
+    alert('Error updating profile: ' + (error.response?.data?.message || error.message));
+  });
+}
 
 function closeProfileCard() {
-    const profileCard = document.getElementById('profileCard');
-    profileCard.classList.add('hidden'); // Hide the profile card
+  const profileCard = document.getElementById('profileCard');
+  profileCard.classList.add('hidden');
 }
