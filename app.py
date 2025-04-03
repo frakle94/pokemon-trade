@@ -38,11 +38,6 @@ class Offer(db.Model):
     expansion = db.Column(db.String(80), nullable=True)
     rarity = db.Column(db.String(80), nullable=True)
 
-# class Want(db.Model):
-#     id = db.Column(db.Integer, primary_key=True)
-#     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-#     pokemon = db.Column(db.String(80), nullable=False)
-
 class Search(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -59,10 +54,12 @@ def index():
 def register():
     data = request.json
     hashed_password = generate_password_hash(data['password'])
-    new_user = User(username=data['username'], 
-                    email=data['email'], 
-                    password=hashed_password, 
-                    pokemon_id=data['pokemon_id'])
+    new_user = User(
+        username=data['username'],
+        email=data['email'],
+        password=hashed_password,
+        pokemon_id=data['pokemon_id']
+    )
     db.session.add(new_user)
     db.session.commit()
     return jsonify({
@@ -156,14 +153,12 @@ def reset_password(token):
 
     data = request.json
     new_password = data.get('password')
-
     user = User.query.filter_by(email=email).first()
     if not user:
         return jsonify({"message": "User not found"}), 404
 
     user.password = generate_password_hash(new_password)
     db.session.commit()
-
     return jsonify({"message": "Password reset successful!"})
 
 # Updates user credentials
@@ -188,7 +183,9 @@ def update_user():
 
     return jsonify({"message": "Profile updated successfully!"})
 
-# Add a Pokémon offer
+###############################################################################
+# OFFER POKEMON
+###############################################################################
 @app.route('/pokemon/offer', methods=['POST'])
 def add_offer():
     data = request.json
@@ -229,7 +226,6 @@ def add_offer():
         "image_url": full_image_url
     })
 
-# Get offered Pokémon
 @app.route('/pokemon/offered', methods=['GET'])
 def get_offered_pokemon():
     username = request.args.get('username')
@@ -247,7 +243,6 @@ def get_offered_pokemon():
             rarity_name=offer.rarity
         )
         full_image_url = f"{BASE_URL}/{partial_image}" if partial_image else ""
-
         results.append({
             "id": offer.id,
             "pokemon": offer.pokemon,
@@ -258,7 +253,6 @@ def get_offered_pokemon():
 
     return jsonify(results)
 
-# Delete Pokémon offer
 @app.route('/pokemon/offer/delete', methods=['DELETE'])
 def delete_offer():
     offer_id = request.json.get('offer_id')
@@ -267,29 +261,11 @@ def delete_offer():
         db.session.delete(offer)
         db.session.commit()
         return jsonify({"message": "Offer deleted successfully!"})
-
     return jsonify({"message": "Offer not found!"}), 404
 
-# # (Optional) Add wanted Pokémon
-# @app.route('/pokemon/wanted', methods=['POST'])
-# def add_wanted():
-#     data = request.json
-#     user = User.query.filter_by(username=data['username']).first()
-#     if not user:
-#         return jsonify({"message": "User not found!"}), 404
-
-#     want = Want(user_id=user.id, pokemon=data['pokemon'])
-#     db.session.add(want)
-#     db.session.commit()
-#     return jsonify({"message": f"Desired Pokémon {data['pokemon']} added successfully!"})
-
 ###############################################################################
-# New Routes for "searchPokemon" logic (behaving like offerPokemon):
+# SEARCH POKEMON
 ###############################################################################
-
-# 1. Add (create) a "searched" Pokémon record (with expansion)
-# Esempio in /pokemon/search (stessa logica in /pokemon/offer)
-
 @app.route('/pokemon/search', methods=['POST'])
 def add_search():
     data = request.json
@@ -305,6 +281,7 @@ def add_search():
     if not expansion or expansion.lower() == 'select expansion':
         expansion = get_expansion_for_pokemon(pokemon_name)
 
+    # Salva in DB
     searched = Search(
         user_id=user.id,
         pokemon=pokemon_name,
@@ -313,11 +290,19 @@ def add_search():
     )
     db.session.add(searched)
     db.session.commit()
+
+    # Ricaviamo l'immagine corrispondente
+    partial_image = get_image_for_pokemon(pokemon_name, expansion, rarity)
+    full_image_url = f"{BASE_URL}/{partial_image}" if partial_image else ""
+
     return jsonify({
-        "message": f"Searched Pokémon {pokemon_name} (expansion={expansion}, rarity={rarity}) added!"
+        "message": f"Searched Pokémon {pokemon_name} (expansion={expansion}, rarity={rarity}) added!",
+        "pokemon": pokemon_name,
+        "expansion": expansion,
+        "rarity": rarity,
+        "image_url": full_image_url
     })
 
-# 2. Get all "searched" Pokémon for the current user (include expansion)
 @app.route('/pokemon/searched', methods=['GET'])
 def get_searched_pokemon():
     username = request.args.get('username')
@@ -326,17 +311,25 @@ def get_searched_pokemon():
         return jsonify({"message": "User not found!"}), 404
 
     searches = Search.query.filter_by(user_id=user.id).all()
-    return jsonify([
-        {
+
+    results = []
+    for s in searches:
+        partial_image = get_image_for_pokemon(
+            pokemon_name=s.pokemon,
+            expansion_name=s.expansion,
+            rarity_name=s.rarity
+        )
+        full_image_url = f"{BASE_URL}/{partial_image}" if partial_image else ""
+
+        results.append({
             "id": s.id,
             "pokemon": s.pokemon,
             "expansion": s.expansion,
-            "rarity": s.rarity
-        }
-        for s in searches
-    ])
+            "rarity": s.rarity,
+            "image_url": full_image_url
+        })
+    return jsonify(results)
 
-# 3. Delete a "searched" Pokémon entry
 @app.route('/pokemon/search/delete', methods=['DELETE'])
 def delete_search():
     search_id = request.json.get('search_id')
@@ -350,64 +343,8 @@ def delete_search():
     return jsonify({"message": "Searched Pokémon entry not found!"}), 404
 
 ###############################################################################
-
-def get_rarity_for_pokemon(pokemon_name):
-    """
-    Apre il CSV e cerca la rarità corrispondente a `pokemon_name`.
-    Assumiamo che il CSV abbia:
-      row[0] = espansione
-      row[1] = nome
-      row[2] = rarità
-    """
-    csv_path = os.path.join(app.root_path, 'static/files/Anagrafica_Pokemon.csv')
-    # Normalizziamo il nome in minuscolo se nel CSV i nomi sono salvati minuscoli
-    name_lower = pokemon_name.strip().lower()
-    try:
-        with open(csv_path, 'r') as file:
-            csv_reader = csv.reader(file, delimiter=';')
-            header = next(csv_reader, None)  # salta l'header
-            for row in csv_reader:
-                if len(row) < 3:
-                    continue
-                # row[1] = nome del Pokémon, row[2] = rarità
-                csv_name = row[1].strip().lower()
-                csv_rarity = row[2].strip()
-                if csv_name == name_lower:
-                    return csv_rarity
-    except FileNotFoundError:
-        print("CSV non trovato.")
-    except Exception as e:
-        print("Errore in get_rarity_for_pokemon:", e)
-    return ""  # se non troviamo nulla
-
-def get_expansion_for_pokemon(pokemon_name):
-    """
-    Legge il CSV e restituisce l'espansione associata a 'pokemon_name'.
-    Se non trova nulla, restituisce stringa vuota.
-    Assumiamo colonna 0 = espansione, colonna 1 = nome.
-    """
-    csv_path = os.path.join(app.root_path, 'static/files/Anagrafica_Pokemon.csv')
-    name_lower = pokemon_name.strip().lower()
-
-    try:
-        with open(csv_path, 'r') as file:
-            csv_reader = csv.reader(file, delimiter=';')
-            next(csv_reader, None)  # salta l'header se presente
-
-            for row in csv_reader:
-                if len(row) < 2:
-                    continue
-                csv_expansion = row[0].strip()
-                csv_name = row[1].strip().lower()
-
-                if csv_name == name_lower:
-                    return csv_expansion
-    except FileNotFoundError:
-        print("File not found for expansions.")
-    except Exception as e:
-        print("Errore get_expansion_for_pokemon:", e)
-    return ""
-
+# MAGIC MATCH
+###############################################################################
 @app.route('/pokemon/magical_match', methods=['GET'])
 def magical_match():
     username = request.args.get('username')
@@ -468,6 +405,9 @@ def magical_match():
 
     return jsonify(matches)
 
+###############################################################################
+# GET POKEMON NAMES
+###############################################################################
 @app.route('/get_pokemon_names', methods=['GET'])
 def get_pokemon_names():
     """
@@ -523,6 +463,9 @@ def get_pokemon_names():
     # Altrimenti ritorno i Pokémon (filtrati o tutti)
     return jsonify(pokemon_list)
 
+###############################################################################
+# HELPER FUNCTIONS
+###############################################################################
 BASE_URL = "https://assets.pokemon-zone.com/game-assets/CardPreviews"
 
 def get_image_for_pokemon(pokemon_name, expansion_name, rarity_name):
@@ -563,6 +506,63 @@ def get_image_for_pokemon(pokemon_name, expansion_name, rarity_name):
 
     return ""
 
+def get_rarity_for_pokemon(pokemon_name):
+    """
+    Apre il CSV e cerca la rarità corrispondente a `pokemon_name`.
+    Assumiamo che il CSV abbia:
+      row[0] = espansione
+      row[1] = nome
+      row[2] = rarità
+    """
+    csv_path = os.path.join(app.root_path, 'static/files/Anagrafica_Pokemon.csv')
+    name_lower = pokemon_name.strip().lower()
+    try:
+        with open(csv_path, 'r') as file:
+            csv_reader = csv.reader(file, delimiter=';')
+            header = next(csv_reader, None)  # salta l'header
+            for row in csv_reader:
+                if len(row) < 3:
+                    continue
+                csv_name = row[1].strip().lower()
+                csv_rarity = row[2].strip()
+                if csv_name == name_lower:
+                    return csv_rarity
+    except FileNotFoundError:
+        print("CSV non trovato.")
+    except Exception as e:
+        print("Errore in get_rarity_for_pokemon:", e)
+    return ""  # se non troviamo nulla
+
+def get_expansion_for_pokemon(pokemon_name):
+    """
+    Legge il CSV e restituisce l'espansione associata a 'pokemon_name'.
+    Se non trova nulla, restituisce stringa vuota.
+    Assumiamo colonna 0 = espansione, colonna 1 = nome.
+    """
+    csv_path = os.path.join(app.root_path, 'static/files/Anagrafica_Pokemon.csv')
+    name_lower = pokemon_name.strip().lower()
+
+    try:
+        with open(csv_path, 'r') as file:
+            csv_reader = csv.reader(file, delimiter=';')
+            next(csv_reader, None)  # salta l'header se presente
+
+            for row in csv_reader:
+                if len(row) < 2:
+                    continue
+                csv_expansion = row[0].strip()
+                csv_name = row[1].strip().lower()
+                if csv_name == name_lower:
+                    return csv_expansion
+    except FileNotFoundError:
+        print("File not found for expansions.")
+    except Exception as e:
+        print("Errore get_expansion_for_pokemon:", e)
+    return ""
+
+###############################################################################
+# MAIN
+###############################################################################
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()

@@ -436,18 +436,47 @@ function fetchSearchedPokemon() {
       searchedList.innerHTML = '';
 
       response.data.forEach(search => {
+        // Each search object might have: { id, pokemon, expansion, rarity, image_url }
+
         const listItem = document.createElement('li');
-        listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+        listItem.className = 'list-group-item';
 
-        // Nome - Espansione se c'è
-        const displayName = search.expansion
-          ? `${search.expansion} - ${search.pokemon}`
-          : search.pokemon;
-
-        listItem.innerHTML = `
-          ${displayName}
-          <button class="btn btn-danger tiny-btn" onclick="deleteSearch(${search.id})">Delete</button>
+        // Build HTML with name, expansion, rarity, and image if present
+        let displayHTML = `
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <strong>Pokémon:</strong> ${search.pokemon}<br/>
+              <strong>Expansion:</strong> ${search.expansion || 'N/A'}<br/>
+              <strong>Rarity:</strong> ${search.rarity || 'N/A'}
+            </div>
+            <div class="d-flex align-items-center">
         `;
+
+        if (search.image_url) {
+          displayHTML += `
+            <img
+              src="${search.image_url}"
+              alt="Pokémon Image"
+              style="max-width: 80px; height: auto; margin-right: 12px;"
+            />
+          `;
+        } else {
+          displayHTML += `
+            <span style="margin-right: 12px;">No image</span>
+          `;
+        }
+
+        displayHTML += `
+            <button
+              class="btn btn-danger btn-sm"
+              onclick="deleteSearch(${search.id})">
+              Delete
+            </button>
+          </div>
+        </div>
+        `;
+
+        listItem.innerHTML = displayHTML;
         searchedList.appendChild(listItem);
       });
     })
