@@ -393,72 +393,56 @@ def magical_match():
     if not username:
         return jsonify({"message": "Please specify ?username=<value>"}), 400
 
-    # 1) Troviamo l'utente "principale"
     user = User.query.filter_by(username=username).first()
     if not user:
         return jsonify({"message": f"User '{username}' not found"}), 404
 
-    # 2) Raccolgo "offers" e "searches" di questo utente,
-    #    costruendo set di (pokemon, rarita)
+    # 1) Offerte e ricerche di chi ha richiesto il match (creiamo set di triple)
     user_offers = Offer.query.filter_by(user_id=user.id).all()
     user_searches = Search.query.filter_by(user_id=user.id).all()
-    user_offers_set   = {(o.pokemon, o.rarity) for o in user_offers}
-    user_searches_set = {(s.pokemon, s.rarity) for s in user_searches}
+
+    user_offers_set = {
+        (o.pokemon, o.rarity, o.expansion)
+        for o in user_offers
+    }
+    user_searches_set = {
+        (s.pokemon, s.rarity, s.expansion)
+        for s in user_searches
+    }
 
     matches = []
     all_users = User.query.all()
 
     for other_user in all_users:
         if other_user.id == user.id:
-            continue
+            continue  # Saltiamo noi stessi
 
-        # 3) Offerte e ricerche dell'altro utente
+        # 2) Offerte e ricerche dell’altro utente (anche qui triple)
         other_offers = Offer.query.filter_by(user_id=other_user.id).all()
         other_searches = Search.query.filter_by(user_id=other_user.id).all()
-        other_offers_set   = {(o.pokemon, o.rarity) for o in other_offers}
-        other_searches_set = {(s.pokemon, s.rarity) for s in other_searches}
 
-        # 4) Calcolo l’intersezione base
-        #    - mySearch_TheirOffer:  Pokémon/rarità che IO cerco e LUI offre
-        #    - theirSearch_MyOffer:  Pokémon/rarità che LUI cerca e IO offro
+        other_offers_set = {
+            (o.pokemon, o.rarity, o.expansion)
+            for o in other_offers
+        }
+        other_searches_set = {
+            (s.pokemon, s.rarity, s.expansion)
+            for s in other_searches
+        }
+
+        # 3) Cosa io cerco e l’altro offre
         mySearch_TheirOffer = user_searches_set.intersection(other_offers_set)
+        # 4) Cosa l’altro cerca e io offro
         theirSearch_MyOffer = other_searches_set.intersection(user_offers_set)
 
-        # 5) Se entrambe le intersection NON sono vuote, 
-        #    vuol dire che c'è almeno un incrocio di scambi
-        if not mySearch_TheirOffer or not theirSearch_MyOffer:
-            continue
-
-        # 6) Ma dobbiamo garantire che esista almeno UNA rarità "r"
-        #    comune tra i due set. Non basta scambiare "pippo(1) vs pluto(2)" 
-        #    se la rarità differisce. Cerchiamo le rarità presenti in entrambi.
-        mySearchRarities  = {r for (_, r) in mySearch_TheirOffer}
-        theirSearchRarities = {r for (_, r) in theirSearch_MyOffer}
-        common_rarities = mySearchRarities.intersection(theirSearchRarities)
-
-        # Se non c'è almeno una rarità in comune, 
-        # non soddisfiamo il requisito "stessa rarità su entrambe le direzioni".
-        if not common_rarities:
-            continue
-
-        # 7) Filtriamo “mySearch_TheirOffer” e “theirSearch_MyOffer” 
-        #    per tenere SOLO gli item che appartengono a una rarità comune
-        final_mySearch_TheirOffer = {
-            (p, r) for (p, r) in mySearch_TheirOffer
-            if r in common_rarities
-        }
-        final_theirSearch_MyOffer = {
-            (p, r) for (p, r) in theirSearch_MyOffer
-            if r in common_rarities
-        }
-
-        # Se dopo il filtraggio rimane qualcosa, abbiamo un match
-        if final_mySearch_TheirOffer and final_theirSearch_MyOffer:
+        # 5) Se entrambi non vuoti => match reciproco su nome, rarità e espansione
+        if mySearch_TheirOffer and theirSearch_MyOffer:
             matches.append({
                 "other_user": other_user.username,
                 "other_user_pokemon_id": other_user.pokemon_id,
-                "mySearch_TheirOffer": list(final_mySearch_TheirOffer),
-                "theirSearch_MyOffer": list(final_theirSearch_MyOffer)
+                # Convertiamo le triple in liste così il JSON è serializzabile
+                "mySearch_TheirOffer": list(mySearch_TheirOffer),
+                "theirSearch_MyOffer": list(theirSearch_MyOffer)
             })
 
     return jsonify(matches)
