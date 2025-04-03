@@ -284,18 +284,47 @@ function fetchOfferedPokemon() {
       offeredList.innerHTML = '';
 
       response.data.forEach(offer => {
+        // Each offer object has: { id, pokemon, expansion, rarity, image_url }
+
         const listItem = document.createElement('li');
-        listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+        listItem.className = 'list-group-item';
 
-        // Nome - Espansione (se expansion)
-        const displayName = offer.expansion 
-          ? `${offer.expansion} - ${offer.pokemon}`
-          : offer.pokemon;
-
-        listItem.innerHTML = `
-          ${displayName}
-          <button class="btn btn-danger tiny-btn" onclick="deleteOffer(${offer.id})">Delete</button>
+        // Build HTML showing name, expansion, rarity, and image if present
+        let displayHTML = `
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <strong>Pokémon:</strong> ${offer.pokemon}<br/>
+              <strong>Expansion:</strong> ${offer.expansion || 'N/A'}<br/>
+              <strong>Rarity:</strong> ${offer.rarity || 'N/A'}
+            </div>
+            <div class="d-flex align-items-center">
         `;
+
+        if (offer.image_url) {
+          displayHTML += `
+              <img 
+                src="${offer.image_url}" 
+                alt="Pokémon Image"
+                style="max-width: 80px; height: auto; margin-right: 12px;"
+              />
+          `;
+        } else {
+          displayHTML += `
+              <span style="margin-right: 12px;">No image</span>
+          `;
+        }
+
+        displayHTML += `
+              <button 
+                class="btn btn-danger btn-sm" 
+                onclick="deleteOffer(${offer.id})">
+                Delete
+              </button>
+            </div>
+          </div>
+        `;
+
+        listItem.innerHTML = displayHTML;
         offeredList.appendChild(listItem);
       });
     })

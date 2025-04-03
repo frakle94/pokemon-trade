@@ -188,7 +188,6 @@ def update_user():
 
     return jsonify({"message": "Profile updated successfully!"})
 
-
 # Add a Pokémon offer
 @app.route('/pokemon/offer', methods=['POST'])
 def add_offer():
@@ -208,15 +207,27 @@ def add_offer():
     if not expansion or expansion.lower() == 'select expansion':
         expansion = get_expansion_for_pokemon(pokemon_name)
 
+    # Crea la nuova offerta
     offer = Offer(
         user_id=user.id,
         pokemon=pokemon_name,
-        expansion=expansion,  # Ora con eventuale fallback dal CSV
+        expansion=expansion,
         rarity=rarity
     )
     db.session.add(offer)
     db.session.commit()
-    return jsonify({"message": f"Offered Pokémon {pokemon_name} (expansion={expansion}, rarity={rarity}) added!"})
+
+    # Ora recupera l'immagine corrispondente a (nome, espansione, rarità)
+    partial_image = get_image_for_pokemon(pokemon_name, expansion, rarity)
+    full_image_url = f"{BASE_URL}/{partial_image}" if partial_image else ""
+
+    return jsonify({
+        "message": f"Offered Pokémon {pokemon_name} (expansion={expansion}, rarity={rarity}) added!",
+        "pokemon": pokemon_name,
+        "expansion": expansion,
+        "rarity": rarity,
+        "image_url": full_image_url
+    })
 
 # Get offered Pokémon
 @app.route('/pokemon/offered', methods=['GET'])
@@ -227,15 +238,25 @@ def get_offered_pokemon():
         return jsonify({"message": "User not found!"}), 404
 
     offers = Offer.query.filter_by(user_id=user.id).all()
-    return jsonify([
-        {
+    
+    results = []
+    for offer in offers:
+        partial_image = get_image_for_pokemon(
+            pokemon_name=offer.pokemon,
+            expansion_name=offer.expansion,
+            rarity_name=offer.rarity
+        )
+        full_image_url = f"{BASE_URL}/{partial_image}" if partial_image else ""
+
+        results.append({
             "id": offer.id,
             "pokemon": offer.pokemon,
             "expansion": offer.expansion,
-            "rarity": offer.rarity
-        }
-        for offer in offers
-    ])
+            "rarity": offer.rarity,
+            "image_url": full_image_url
+        })
+
+    return jsonify(results)
 
 # Delete Pokémon offer
 @app.route('/pokemon/offer/delete', methods=['DELETE'])
@@ -501,6 +522,46 @@ def get_pokemon_names():
 
     # Altrimenti ritorno i Pokémon (filtrati o tutti)
     return jsonify(pokemon_list)
+
+BASE_URL = "https://assets.pokemon-zone.com/game-assets/CardPreviews"
+
+def get_image_for_pokemon(pokemon_name, expansion_name, rarity_name):
+    """
+    Reads the CSV and returns the 'Immagine' partial path (column 3)
+    for the specified Pokemon (matching expansion, name, and rarity).
+    Returns "" if not found.
+    """
+    csv_path = os.path.join(app.root_path, 'static/files/Anagrafica_Pokemon.csv')
+    
+    name_lower = pokemon_name.strip().lower()
+    expansion_lower = expansion_name.strip().lower()
+    rarity_lower = rarity_name.strip().lower()
+
+    try:
+        with open(csv_path, 'r', encoding='utf-8') as file:
+            csv_reader = csv.reader(file, delimiter=';')
+            header = next(csv_reader, None)  # skip header if present
+
+            for row in csv_reader:
+                if len(row) < 4:
+                    continue
+                csv_expansion = row[0].strip().lower()
+                csv_name = row[1].strip().lower()
+                csv_rarity = row[2].strip().lower()
+                csv_image = row[3].strip()
+
+                if (
+                    csv_expansion == expansion_lower and
+                    csv_name == name_lower and
+                    csv_rarity == rarity_lower
+                ):
+                    return csv_image
+    except FileNotFoundError:
+        print("CSV file not found in get_image_for_pokemon.")
+    except Exception as e:
+        print("Error in get_image_for_pokemon:", e)
+
+    return ""
 
 if __name__ == '__main__':
     with app.app_context():
