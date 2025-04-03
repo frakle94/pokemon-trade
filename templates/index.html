@@ -56,9 +56,9 @@
           <div class="text-center mt-3">
             <span class="btn btn-link" id="showRegisterBtn">Click here to register</span>
           </div>
-          <div class="text-center">
+          <!-- <div class="text-center">
             <span class="btn btn-link text-danger" id="showForgotPasswordBtn">Forgot Password?</span>
-          </div>
+          </div> -->
         </div>
 
         <!-- Registration Form -->
@@ -103,7 +103,7 @@
   <div class="hidden" id="mainAppContainer">
     <nav class="navbar navbar-light bg-light">
       <div class="container d-flex justify-content-center">
-        <button class="btn btn-outline-primary btn-sm" onclick="showProfile()">Profile</button>
+        <button class="btn btn-outline-primary" onclick="showProfile()">Profile</button>
       </div>
     </nav>
     <div class="container mt-5">
@@ -123,12 +123,15 @@
   <!-- Profile View Container -->
   <div class="hidden" id="profileViewContainer">
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
-      <div class="container d-flex justify-content-center">
-        <a class="navbar-brand me-3">Pokémon Trade Platform</a>
-        <button class="btn btn-secondary me-2" onclick="navigateToMainApp()">Back</button>
-        <button class="btn btn-danger" onclick="logout()">Logout</button>
+      <div class="container">
+        <a class="navbar-brand">Pokémon Trade Platform</a>
+        <!-- A div that pushes content to the right and adds spacing -->
+        <div class="ms-auto">
+          <button class="btn btn-secondary btn-sm me-2" onclick="navigateToMainApp()">Back</button>
+          <button class="btn btn-danger btn-sm" onclick="logout()">Logout</button>
+        </div>
       </div>
-    </nav>
+    </nav>    
     <div class="container profile-centered-container">
       <h1 class="text-center">Your Profile</h1>
       <form id="updateProfileForm">
@@ -137,12 +140,16 @@
           <input type="text" class="form-control" id="profile_username" required />
         </div>
         <div class="mb-3">
-          <label for="profile_pokemon_id" class="form-label">Pokémon Pocket ID</label>
-          <input type="text" class="form-control" id="profile_pokemon_id" required />
+          <label for="profile_email" class="form-label">Email</label>
+          <input type="text" class="form-control" id="profile_email" required />
         </div>
         <div class="mb-3">
           <label for="profile_password" class="form-label">Password</label>
           <input type="password" class="form-control" id="profile_password" required />
+        </div>
+        <div class="mb-3">
+          <label for="profile_pokemon_id" class="form-label">Pokémon Pocket ID</label>
+          <input type="text" class="form-control" id="profile_pokemon_id" required />
         </div>
         <button type="submit" class="btn btn-primary w-100">Update Profile</button>
       </form>
@@ -204,6 +211,7 @@
       document.getElementById('mainAppContainer').classList.add('hidden');
       document.getElementById('profileViewContainer').classList.remove('hidden');
       document.getElementById('profile_username').value = currentUser?.username || '';
+      document.getElementById('profile_email').value = currentUser?.email || '';
       document.getElementById('profile_pokemon_id').value = currentUser?.pokemonId || '';
       document.getElementById('profile_password').value = currentUser?.password || '';
       document.getElementById('updateProfileForm').addEventListener('submit', updateProfile);

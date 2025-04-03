@@ -209,4 +209,13 @@ form {
     min-height: 80vh; 
     margin-top: 1rem; /* Add some spacing below the navbar if you like */
   }
-  
+  /* Override for Bootstrap's .btn-sm so it's not forced to 100% wide */
+.btn-sm {
+    width: auto !important;      /* override width: 100% */
+    max-width: none !important;  /* override max-width: 300px */
+    display: inline-block !important; /* remove display:block */
+    margin: 0 !important;        /* remove the forced margin auto */
+    padding: 0.25rem 0.5rem !important; /* typical .btn-sm dimensions */
+    font-size: 0.875rem !important; /* typical .btn-sm font size, or smaller if you want */
+}
+

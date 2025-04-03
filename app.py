@@ -9,10 +9,6 @@ import requests
 
 load_dotenv()
 
-
-
-
-
 # Base directory of your project
 basedir = os.path.abspath(os.path.dirname(__file__))
 # Absolute path to the database file
@@ -68,6 +64,7 @@ def register():
     return jsonify({
         "message": "User registered successfully!",
         "username": new_user.username,
+        "email": new_user.email,
         "pokemon_id": new_user.pokemon_id
     })
 
@@ -84,6 +81,7 @@ def login():
         return jsonify({
             "message": "Login successful!",
             "username": user.username,
+            "email": user.email,
             "pokemon_id": user.pokemon_id
         })
     return jsonify({"message": "Invalid email or password"}), 401
@@ -177,6 +175,7 @@ def update_user():
     data = request.json
     old_username = data.get('old_username')
     new_username = data.get('username')
+    new_email = data.get('email')
     new_pokemon_id = data.get('pokemon_id')
     new_password = data.get('password')
 
@@ -187,6 +186,7 @@ def update_user():
     # Update fields
     user.username = new_username
     user.pokemon_id = new_pokemon_id
+    user.email = new_email
     user.password = generate_password_hash(new_password)
     db.session.commit()
 

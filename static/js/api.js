@@ -12,7 +12,7 @@ function handleRegistration(e) {
   axios.post('/register', { username, email, password, pokemon_id: pokemonId })
       .then(response => {
           alert(response.data.message);
-          navigateToFeatures(response.data.username, pokemonId, password);
+          navigateToFeatures(response.data.username, email, pokemonId, password);
       })
       .catch(error => {
           alert('Error: ' + (error.response?.data?.message || error.message));
@@ -27,7 +27,7 @@ function handleLogin(e) {
 
     axios.post('/login', { email, password })
         .then(response => {
-            navigateToFeatures(response.data.username, response.data.pokemon_id, password);
+            navigateToFeatures(response.data.username, response.data.email, response.data.pokemon_id, password);
         })
         .catch(error => {
             alert('Invalid email or password. Please try again.');
@@ -392,9 +392,11 @@ function magicalMatch() {
 function showProfile() {
     const profileCard = document.getElementById('profileCard');
     const username = currentUser.username || 'Unknown User';
+    const email = currentUser.email || 'N/A';
     const pokemonId = currentUser.pokemon_id || 'N/A';
 
     document.getElementById('profileUsername').textContent = username;
+    document.getElementById('profileEmail').textContent = email;
     document.getElementById('profilePokemonId').textContent = pokemonId;
 
     profileCard.classList.remove('hidden'); // Show the profile card
@@ -404,12 +406,14 @@ function updateProfile(event) {
     event.preventDefault();
   
     const newUsername = document.getElementById('profile_username').value;
+    const newEmail = document.getElementById('profile_email').value;
     const newPokemonId = document.getElementById('profile_pokemon_id').value;
     const newPassword = document.getElementById('profile_password').value;
   
     axios.put('/user/update', {
       old_username: currentUser.username,
       username: newUsername,
+      email: newEmail,
       pokemon_id: newPokemonId,
       password: newPassword
     })
@@ -418,6 +422,7 @@ function updateProfile(event) {
   
       // Update currentUser in the client
       currentUser.username = newUsername;
+      currentUser.email = newEmail;
       currentUser.pokemonId = newPokemonId;
       currentUser.password = newPassword;
   

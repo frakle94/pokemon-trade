@@ -1,6 +1,6 @@
-function navigateToFeatures(username, pokemonId, password) {
+function navigateToFeatures(username, email, pokemonId, password) {
     // Store the current user
-    currentUser = { username, pokemonId, password };
+    currentUser = { username, email, pokemonId, password };
 
     // Hide login/registration and show the main app container
     document.getElementById('authContainer').classList.add('hidden');

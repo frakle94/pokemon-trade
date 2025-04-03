@@ -27,12 +27,16 @@ function showProfile() {
                     <input type="text" class="form-control" id="profile_username" value="${currentUser.username}" required>
                 </div>
                 <div class="mb-3">
-                    <label for="profile_pokemon_id" class="form-label">Pokémon Pocket ID</label>
-                    <input type="text" class="form-control" id="profile_pokemon_id" value="${currentUser.pokemonId}" required>
+                    <label for="profile_email" class="form-label">Email</label>
+                    <input type="text" class="form-control" id="profile_email" value="${currentUser.email}" required>
                 </div>
                 <div class="mb-3">
                     <label for="profile_password" class="form-label">Password</label>
                     <input type="password" class="form-control" id="profile_password" value="${currentUser.password}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="profile_pokemon_id" class="form-label">Pokémon Pocket ID</label>
+                    <input type="text" class="form-control" id="profile_pokemon_id" value="${currentUser.pokemonId}" required>
                 </div>
                 <button type="submit" class="btn btn-primary w-100">Update Profile</button>
             </form>
