@@ -29,11 +29,21 @@
     .go-back { color: #007bff; cursor: pointer; text-decoration: underline; }
     .go-back:hover { text-decoration: none; }
     @keyframes rainbow {
-      0% { background-color: red; } 14% { background-color: orange; } 28% { background-color: yellow; }
-      42% { background-color: green; } 56% { background-color: blue; } 70% { background-color: indigo; }
-      84% { background-color: violet; } 100% { background-color: red; }
+      0% { background-color: red; } 
+      14% { background-color: orange; } 
+      28% { background-color: yellow; }
+      42% { background-color: green; } 
+      56% { background-color: blue; } 
+      70% { background-color: indigo; }
+      84% { background-color: violet; } 
+      100% { background-color: red; }
     }
     .btn-rainbow { animation: rainbow 3s linear infinite; color: #fff; border: none; }
+
+    /* ADDED THIS TO CREATE EXTRA SPACE AT BOTTOM OF MAIN APP: */
+    #mainAppContainer {
+      padding-bottom: 3rem;
+    }
   </style>
 </head>
 <body class="bg-light">
