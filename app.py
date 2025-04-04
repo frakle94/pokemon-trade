@@ -193,36 +193,35 @@ def add_offer():
     if not user:
         return jsonify({"message": "User not found!"}), 404
 
-    # Prendi expansion inviato dal client, altrimenti stringa vuota
-    expansion = data.get('expansion', '')
-    pokemon_name = data['pokemon']
-    
-    # Ottieni la rarità dal CSV (resta invariato)
-    rarity = get_rarity_for_pokemon(pokemon_name)
-    
-    # Se l'utente NON ha scelto nulla o ha "Select expansion" => leggi dal CSV
-    if not expansion or expansion.lower() == 'select expansion':
-        expansion = get_expansion_for_pokemon(pokemon_name)
+    pokemon_name = data.get('pokemon', '').strip()
+    user_expansion = data.get('expansion', '').strip()
+    user_rarity = data.get('rarity', '').strip()
 
-    # Crea la nuova offerta
+    # ONLY fallback if user_expansion is truly empty
+    if not user_expansion:
+        user_expansion = get_expansion_for_pokemon(pokemon_name)
+
+    # ONLY fallback if user_rarity is truly empty
+    if not user_rarity:
+        user_rarity = get_rarity_for_pokemon(pokemon_name)
+
     offer = Offer(
         user_id=user.id,
         pokemon=pokemon_name,
-        expansion=expansion,
-        rarity=rarity
+        expansion=user_expansion,
+        rarity=user_rarity
     )
     db.session.add(offer)
     db.session.commit()
 
-    # Ora recupera l'immagine corrispondente a (nome, espansione, rarità)
-    partial_image = get_image_for_pokemon(pokemon_name, expansion, rarity)
+    partial_image = get_image_for_pokemon(pokemon_name, user_expansion, user_rarity)
     full_image_url = f"{BASE_URL}/{partial_image}" if partial_image else ""
 
     return jsonify({
-        "message": f"Offered Pokémon {pokemon_name} (expansion={expansion}, rarity={rarity}) added!",
+        "message": f"Offered Pokémon {pokemon_name} (expansion={user_expansion}, rarity={user_rarity}) added!",
         "pokemon": pokemon_name,
-        "expansion": expansion,
-        "rarity": rarity,
+        "expansion": user_expansion,
+        "rarity": user_rarity,
         "image_url": full_image_url
     })
 
@@ -273,33 +272,35 @@ def add_search():
     if not user:
         return jsonify({"message": "User not found!"}), 404
 
-    expansion = data.get('expansion', '').strip()
-    pokemon_name = data['pokemon']
-    rarity = get_rarity_for_pokemon(pokemon_name)
+    pokemon_name = data.get('pokemon', '').strip()
+    user_expansion = data.get('expansion', '').strip()
+    user_rarity = data.get('rarity', '').strip()
 
-    # Se l'utente NON ha scelto nulla o ha "Select expansion" => leggi dal CSV
-    if not expansion or expansion.lower() == 'select expansion':
-        expansion = get_expansion_for_pokemon(pokemon_name)
+    # ONLY fallback if user_expansion is truly empty
+    if not user_expansion:
+        user_expansion = get_expansion_for_pokemon(pokemon_name)
 
-    # Salva in DB
+    # ONLY fallback if user_rarity is truly empty
+    if not user_rarity:
+        user_rarity = get_rarity_for_pokemon(pokemon_name)
+
     searched = Search(
         user_id=user.id,
         pokemon=pokemon_name,
-        expansion=expansion,
-        rarity=rarity
+        expansion=user_expansion,
+        rarity=user_rarity
     )
     db.session.add(searched)
     db.session.commit()
 
-    # Ricaviamo l'immagine corrispondente
-    partial_image = get_image_for_pokemon(pokemon_name, expansion, rarity)
+    partial_image = get_image_for_pokemon(pokemon_name, user_expansion, user_rarity)
     full_image_url = f"{BASE_URL}/{partial_image}" if partial_image else ""
 
     return jsonify({
-        "message": f"Searched Pokémon {pokemon_name} (expansion={expansion}, rarity={rarity}) added!",
+        "message": f"Searched Pokémon {pokemon_name} (expansion={user_expansion}, rarity={user_rarity}) added!",
         "pokemon": pokemon_name,
-        "expansion": expansion,
-        "rarity": rarity,
+        "expansion": user_expansion,
+        "rarity": user_rarity,
         "image_url": full_image_url
     })
 
@@ -355,55 +356,74 @@ def magical_match():
     if not user:
         return jsonify({"message": f"User '{username}' not found"}), 404
 
-    # 1) Offerte e ricerche di chi ha richiesto il match (creiamo set di triple)
-    user_offers = Offer.query.filter_by(user_id=user.id).all()
-    user_searches = Search.query.filter_by(user_id=user.id).all()
-
-    user_offers_set = {
-        (o.pokemon, o.rarity, o.expansion)
-        for o in user_offers
-    }
-    user_searches_set = {
-        (s.pokemon, s.rarity, s.expansion)
-        for s in user_searches
-    }
+    # The main user’s offers and wants
+    user_offers = Offer.query.filter_by(user_id=user.id).all()  # List of Offer objects
+    user_wants  = Search.query.filter_by(user_id=user.id).all() # List of Search objects
 
     matches = []
     all_users = User.query.all()
 
     for other_user in all_users:
         if other_user.id == user.id:
-            continue  # Saltiamo noi stessi
+            continue  # Skip ourselves
 
-        # 2) Offerte e ricerche dell’altro utente (anche qui triple)
         other_offers = Offer.query.filter_by(user_id=other_user.id).all()
-        other_searches = Search.query.filter_by(user_id=other_user.id).all()
+        other_wants  = Search.query.filter_by(user_id=other_user.id).all()
 
-        other_offers_set = {
-            (o.pokemon, o.rarity, o.expansion)
-            for o in other_offers
-        }
-        other_searches_set = {
-            (s.pokemon, s.rarity, s.expansion)
-            for s in other_searches
-        }
+        # We'll collect pairs (cardA, cardB) meaning:
+        # - cardA from user A's offers that user B wants
+        # - cardB from user B's offers that user A wants
+        # - same rarity => valid trade
+        trade_pairs = []
 
-        # 3) Cosa io cerco e l’altro offre
-        mySearch_TheirOffer = user_searches_set.intersection(other_offers_set)
-        # 4) Cosa l’altro cerca e io offro
-        theirSearch_MyOffer = other_searches_set.intersection(user_offers_set)
+        # For each card A offers, check if B wants it
+        for cardA in user_offers:
+            if any(is_same_card(cardA, w) for w in other_wants):
+                # Then for each card B offers, see if A wants it
+                for cardB in other_offers:
+                    if any(is_same_card(cardB, w) for w in user_wants):
+                        # Now check if the two cards share the same rarity
+                        if cardA.rarity == cardB.rarity:
+                            trade_pairs.append((cardA, cardB))
 
-        # 5) Se entrambi non vuoti => match reciproco su nome, rarità e espansione
-        if mySearch_TheirOffer and theirSearch_MyOffer:
-            matches.append({
+        if trade_pairs:
+            # We'll build two arrays of strings so that the front-end can do
+            #   mySearch_TheirOffer.join(', ')  and  theirSearch_MyOffer.join(', ')
+            # for the "You want from them" / "They want from you" lines
+
+            # "mySearch_TheirOffer" = the set of cards B offers that A wants
+            # => from each (cardA, cardB) pair,  cardB is the one A wants
+            mySearch_TheirOffer_set = {
+                f"{b.pokemon} ({b.expansion}, {b.rarity})"
+                for (a, b) in trade_pairs
+            }
+
+            # "theirSearch_MyOffer" = the set of cards A offers that B wants
+            # => from each (cardA, cardB) pair,  cardA is the one B wants
+            theirSearch_MyOffer_set = {
+                f"{a.pokemon} ({a.expansion}, {a.rarity})"
+                for (a, b) in trade_pairs
+            }
+
+            match_info = {
                 "other_user": other_user.username,
                 "other_user_pokemon_id": other_user.pokemon_id,
-                # Convertiamo le triple in liste così il JSON è serializzabile
-                "mySearch_TheirOffer": list(mySearch_TheirOffer),
-                "theirSearch_MyOffer": list(theirSearch_MyOffer)
-            })
+                "mySearch_TheirOffer": sorted(mySearch_TheirOffer_set),
+                "theirSearch_MyOffer": sorted(theirSearch_MyOffer_set)
+            }
+
+            matches.append(match_info)
 
     return jsonify(matches)
+
+def is_same_card(offer_or_search_obj, want_obj):
+    """
+    Checks if two objects describe the 'same card' by name + expansion + rarity.
+    Adjust if you want partial matching (e.g. ignoring expansion).
+    """
+    return (offer_or_search_obj.pokemon == want_obj.pokemon
+            and offer_or_search_obj.expansion == want_obj.expansion
+            and offer_or_search_obj.rarity == want_obj.rarity)
 
 ###############################################################################
 # GET POKEMON NAMES
@@ -411,44 +431,60 @@ def magical_match():
 @app.route('/get_pokemon_names', methods=['GET'])
 def get_pokemon_names():
     """
-    1) Se query param ?list_expansions=true, restituisce la lista di espansioni distinte.
-    2) Altrimenti, se c'è ?expansion=..., filtra i Pokémon solo per quell'espansione.
-       Se non c'è expansion, restituisce TUTTI i Pokémon.
+    Usage:
+      1) ?list_expansions=true => returns a list of expansions only
+      2) ?with_rarity=true     => returns combined strings "Name (Expansion, Rarity)"
+         filtered by expansion if ?expansion=<value> is also given
+      3) Else, if neither of the above, returns just the Pokémon names (the old logic).
 
-    Struttura CSV:
-    row[0] = Espansione (minuscolo)
-    row[1] = Nome Pokémon
+    CSV structure:
+      row[0] = Espansione
+      row[1] = Nome
+      row[2] = Rarità
+      (optionally row[3] = Immagine, but unused here)
     """
     csv_path = os.path.join(app.root_path, 'static/files/Anagrafica_Pokemon.csv')
 
     list_expansions_flag = request.args.get('list_expansions', '').lower() == 'true'
+    with_rarity_flag = request.args.get('with_rarity', '').lower() == 'true'
     expansion_param = request.args.get('expansion', '').strip().lower()
 
     expansions_set = set()
-    pokemon_list = []
+    results_list = []
 
     try:
         with open(csv_path, 'r') as file:
             csv_reader = csv.reader(file, delimiter=';')
-            next(csv_reader)  # Salta header se presente
+            next(csv_reader, None)  # Skip header if present
 
             for row in csv_reader:
-                # row[0] = Espansione, row[1] = NomePokémon
                 if len(row) < 2:
+                    continue  # We need at least [0]=Expansion, [1]=Name
+
+                csv_expansion = row[0].strip()
+                csv_expansion_lower = csv_expansion.lower()
+
+                nome_pokemon = row[1].strip()
+                # If available, get rarity
+                csv_rarity = row[2].strip() if len(row) >= 3 else ""
+
+                # Track expansions for the expansions-only list
+                if csv_expansion_lower:
+                    expansions_set.add(csv_expansion_lower)
+
+                # If we're listing expansions => skip the rest of logic
+                if list_expansions_flag:
                     continue
 
-                espansione = row[0].strip().lower()
-                nome_pokemon = row[1].strip()
+                # Check expansion filter
+                if expansion_param and csv_expansion_lower != expansion_param:
+                    continue
 
-                # Aggiungo l'espansione al set
-                if espansione:
-                    expansions_set.add(espansione)
-
-                # Se NON stiamo listando expansions, calcoliamo la logica di filtraggio
-                if not list_expansions_flag:
-                    # Se expansion_param è vuoto => prendi tutti
-                    if (not expansion_param) or (espansione == expansion_param):
-                        pokemon_list.append(nome_pokemon)
+                if with_rarity_flag:
+                    combo_str = f"{nome_pokemon} ({csv_expansion}, {csv_rarity})"
+                    results_list.append(combo_str)
+                else:
+                    results_list.append(nome_pokemon)
 
     except FileNotFoundError:
         return jsonify({"error": "File not found"}), 404
@@ -456,12 +492,11 @@ def get_pokemon_names():
         return jsonify({"error": str(e)}), 500
 
     if list_expansions_flag:
-        # Ritorno solo la lista expansions
         expansions_sorted = sorted([exp.capitalize() for exp in expansions_set])
         return jsonify(expansions_sorted)
 
-    # Altrimenti ritorno i Pokémon (filtrati o tutti)
-    return jsonify(pokemon_list)
+    unique_sorted = sorted(set(results_list))
+    return jsonify(unique_sorted)
 
 ###############################################################################
 # HELPER FUNCTIONS
@@ -469,11 +504,6 @@ def get_pokemon_names():
 BASE_URL = "https://assets.pokemon-zone.com/game-assets/CardPreviews"
 
 def get_image_for_pokemon(pokemon_name, expansion_name, rarity_name):
-    """
-    Reads the CSV and returns the 'Immagine' partial path (column 3)
-    for the specified Pokemon (matching expansion, name, and rarity).
-    Returns "" if not found.
-    """
     csv_path = os.path.join(app.root_path, 'static/files/Anagrafica_Pokemon.csv')
     
     name_lower = pokemon_name.strip().lower()
@@ -507,19 +537,12 @@ def get_image_for_pokemon(pokemon_name, expansion_name, rarity_name):
     return ""
 
 def get_rarity_for_pokemon(pokemon_name):
-    """
-    Apre il CSV e cerca la rarità corrispondente a `pokemon_name`.
-    Assumiamo che il CSV abbia:
-      row[0] = espansione
-      row[1] = nome
-      row[2] = rarità
-    """
     csv_path = os.path.join(app.root_path, 'static/files/Anagrafica_Pokemon.csv')
     name_lower = pokemon_name.strip().lower()
     try:
         with open(csv_path, 'r') as file:
             csv_reader = csv.reader(file, delimiter=';')
-            header = next(csv_reader, None)  # salta l'header
+            header = next(csv_reader, None)
             for row in csv_reader:
                 if len(row) < 3:
                     continue
@@ -531,22 +554,16 @@ def get_rarity_for_pokemon(pokemon_name):
         print("CSV non trovato.")
     except Exception as e:
         print("Errore in get_rarity_for_pokemon:", e)
-    return ""  # se non troviamo nulla
+    return ""
 
 def get_expansion_for_pokemon(pokemon_name):
-    """
-    Legge il CSV e restituisce l'espansione associata a 'pokemon_name'.
-    Se non trova nulla, restituisce stringa vuota.
-    Assumiamo colonna 0 = espansione, colonna 1 = nome.
-    """
     csv_path = os.path.join(app.root_path, 'static/files/Anagrafica_Pokemon.csv')
     name_lower = pokemon_name.strip().lower()
 
     try:
         with open(csv_path, 'r') as file:
             csv_reader = csv.reader(file, delimiter=';')
-            next(csv_reader, None)  # salta l'header se presente
-
+            next(csv_reader, None)
             for row in csv_reader:
                 if len(row) < 2:
                     continue

@@ -122,6 +122,27 @@ function activateSearchPokemon() {
 }
 
 /**
+ * parseComboString(comboStr):
+ * Given a string like "Bulbasaur (Geni Supremi, 1 R)",
+ * returns an object { name, expansion, rarity } or null if invalid format.
+ */
+function parseComboString(comboStr) {
+  // Example input: "Bulbasaur (Geni Supremi, 1 R)"
+  const pattern = /^(.*?)\s*\((.*?),\s*(.*?)\)$/;
+  const match = comboStr.match(pattern);
+  if (!match) return null;
+
+  // match[1] => "Bulbasaur"
+  // match[2] => "Geni Supremi"
+  // match[3] => "1 R"
+  return {
+    name: match[1].trim(),
+    expansion: match[2].trim(),
+    rarity: match[3].trim()
+  };
+}
+
+/**
  * loadExpansions(selectId)
  * -> /get_pokemon_names?list_expansions=true
  *    per popolare <select id="selectId">
@@ -165,15 +186,20 @@ function loadExpansions(selectId) {
  * -> se selectId ha un expansionValue, filtra i Pokémon
  * -> altrimenti mostra tutti
  * -> riempie <datalist id="dataListId">
+ *   con stringhe "Nome (Espansione, Rarità)" grazie a ?with_rarity=true
  */
 function loadPokemonNamesDatalist(selectId, dataListId) {
   const selectEl = document.getElementById(selectId);
   if (!selectEl) return;
 
   const expansionValue = selectEl.value || '';
-  let url = '/get_pokemon_names';
+  // Always request combos: "Name (Expansion, Rarity)"
+  let url = '/get_pokemon_names?with_rarity=true';
+
+  // If the user picked an expansion, append it
   if (expansionValue) {
-    url += `?expansion=${encodeURIComponent(expansionValue)}`;
+    // e.g. &expansion=geni supremi
+    url += `&expansion=${encodeURIComponent(expansionValue.toLowerCase())}`;
   }
 
   axios.get(url)
@@ -182,14 +208,15 @@ function loadPokemonNamesDatalist(selectId, dataListId) {
       if (!dataList) return;
       dataList.innerHTML = '';
 
-      response.data.forEach(nome => {
+      response.data.forEach(combo => {
+        // combo might be: "Bulbasaur (Geni Supremi, 1 R)"
         const opt = document.createElement('option');
-        opt.value = nome;
+        opt.value = combo;
         dataList.appendChild(opt);
       });
     })
     .catch(error => {
-      console.error("Errore caricamento nomi Pokémon:", error);
+      console.error("Errore caricamento nomi Pokémon (with combos):", error);
     });
 }
 
@@ -233,13 +260,13 @@ function offerPokemon() {
   // Carico expansions in #offerExpansionSelect
   loadExpansions("offerExpansionSelect");
 
-  // Carico i Pokémon filtrati
+  // Carico i Pokémon (combo) in the datalist
   loadPokemonNamesDatalist("offerExpansionSelect", "offerPokemonList");
 
   // Mostro la lista di Pokémon offerti
   fetchOfferedPokemon();
 
-  // Se cambia expansions, ricarico i Pokémon
+  // Se cambia expansions, ricarico i Pokémon combo
   const selectEl = document.getElementById('offerExpansionSelect');
   selectEl.addEventListener('change', () => {
     loadPokemonNamesDatalist("offerExpansionSelect", "offerPokemonList");
@@ -249,21 +276,28 @@ function offerPokemon() {
   document.getElementById('offerPokemonForm').addEventListener('submit', function (e) {
     e.preventDefault();
 
-    const expansionChosen = selectEl.value;
-    const pokemonName = document.getElementById('offerPokemonName').value.trim();
+    const typedValue = document.getElementById('offerPokemonName').value.trim();
 
-    // Validazione Pokémon
+    // Check if user typed a valid combo from the datalist
     const allOptions = [...document.querySelectorAll('#offerPokemonList option')].map(o => o.value);
-    if (!allOptions.includes(pokemonName)) {
-      alert("Invalid Pokémon name! Please select from the list.");
+    if (!allOptions.includes(typedValue)) {
+      alert("Invalid Pokémon combo! Please select from the list.");
       return;
     }
 
-    // POST /pokemon/offer
+    // Parse "Name (Expansion, Rarity)"
+    const parsed = parseComboString(typedValue);
+    if (!parsed) {
+      alert("Invalid combo format! Use: Name (Expansion, Rarity)");
+      return;
+    }
+
+    // Now post all three fields
     axios.post('/pokemon/offer', {
       username: currentUser.username,
-      pokemon: pokemonName,
-      expansion: expansionChosen
+      pokemon: parsed.name,
+      expansion: parsed.expansion,
+      rarity: parsed.rarity
     })
     .then(() => {
       fetchOfferedPokemon();
@@ -385,13 +419,13 @@ function searchPokemon() {
   // 1) Carichiamo expansions in #searchExpansionSelect
   loadExpansions("searchExpansionSelect");
 
-  // 2) Carichiamo i Pokémon (filtrati) => (selectId="searchExpansionSelect", dataListId="searchPokemonList")
+  // 2) Carichiamo i Pokémon combos => (selectId="searchExpansionSelect", dataListId="searchPokemonList")
   loadPokemonNamesDatalist("searchExpansionSelect", "searchPokemonList");
 
   // 3) Carichiamo la lista "searched"
   fetchSearchedPokemon();
 
-  // Cambi di expansions => ricarico i Pokémon
+  // Cambi di expansions => ricarico i Pokémon combo
   const selectEl = document.getElementById('searchExpansionSelect');
   selectEl.addEventListener('change', () => {
     loadPokemonNamesDatalist("searchExpansionSelect", "searchPokemonList");
@@ -401,21 +435,27 @@ function searchPokemon() {
   document.getElementById('searchPokemonForm').addEventListener('submit', function (e) {
     e.preventDefault();
 
-    const expansionChosen = selectEl.value;
-    const pokemonName = document.getElementById('searchPokemonName').value.trim();
+    const typedValue = document.getElementById('searchPokemonName').value.trim();
 
-    // Validazione Pokémon
     const allOptions = [...document.querySelectorAll('#searchPokemonList option')].map(o => o.value);
-    if (!allOptions.includes(pokemonName)) {
-      alert("Invalid Pokémon name! Please select from the list.");
+    if (!allOptions.includes(typedValue)) {
+      alert("Invalid Pokémon combo! Please select from the list.");
       return;
     }
 
-    // POST /pokemon/search => passiamo expansion
+    // Parse "Name (Expansion, Rarity)"
+    const parsed = parseComboString(typedValue);
+    if (!parsed) {
+      alert("Invalid format! Use 'Name (Expansion, Rarity)'");
+      return;
+    }
+
+    // POST /pokemon/search => pass all three
     axios.post('/pokemon/search', {
       username: currentUser.username,
-      pokemon: pokemonName,
-      expansion: expansionChosen
+      pokemon: parsed.name,
+      expansion: parsed.expansion,
+      rarity: parsed.rarity
     })
     .then(() => {
       fetchSearchedPokemon();
@@ -527,6 +567,10 @@ function magicalMatch() {
 
       let html = '';
       data.forEach(item => {
+        // Safely fallback to empty arrays so we can do join without errors
+        const mySTO = item.mySearch_TheirOffer || [];
+        const theirSMO = item.theirSearch_MyOffer || [];
+
         html += `
           <div class="card my-3">
             <div class="card-body">
