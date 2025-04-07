@@ -148,15 +148,8 @@ function loadExpansions(selectId) {
       const selectEl = document.getElementById(selectId);
       if (!selectEl) return;
 
-      selectEl.innerHTML = '';
-      const placeholder = document.createElement('option');
-      placeholder.disabled = true;
-      placeholder.selected = true;
-      placeholder.hidden = true;
-      placeholder.textContent = 'Select expansion';
-      selectEl.appendChild(placeholder);
-
-      // "All expansions" option
+      // The <select> already has <option value="">Select expansion</option>
+      // We'll just append the "ALL expansions" option plus real expansions.
       const allOpt = document.createElement('option');
       allOpt.value = '';
       allOpt.textContent = '— ALL —';
@@ -208,6 +201,8 @@ function loadPokemonNamesDatalist(selectId, dataListId) {
 
 /**
  * offerPokemon() -> draws expansions + input + list
+ * Notice: <option value="">Select expansion</option> is NOT disabled,
+ * so the user can leave it blank, type Pokémon name, and see all results if they want.
  */
 function offerPokemon() {
   const actionArea = document.getElementById('actionArea');
@@ -219,8 +214,12 @@ function offerPokemon() {
           id="offerExpansionSelect"
           class="form-control"
           style="background-color: #000; color: #fff;"
-        ></select>
+        >
+          <!-- The user sees this placeholder immediately; they can pick "All expansions" or any real expansion -->
+          <option value="" selected>Select expansion</option>
+        </select>
       </div>
+
       <form id="offerPokemonForm" class="mx-auto" autocomplete="off">
         <div class="mb-3">
           <input
@@ -235,6 +234,7 @@ function offerPokemon() {
         </div>
         <button type="submit" class="btn btn-primary">Submit Offer</button>
       </form>
+
       <h4 class="mt-4">Your Offered Pokémon</h4>
       <ul id="offeredPokemonList" class="list-group"></ul>
     </div>
@@ -358,8 +358,12 @@ function searchPokemon() {
           id="searchExpansionSelect"
           class="form-control"
           style="background-color: #000; color: #fff;"
-        ></select>
+        >
+          <!-- If the user never picks an expansion, it's empty string => fetch all combos -->
+          <option value="" selected>Select expansion</option>
+        </select>
       </div>
+
       <form id="searchPokemonForm" class="mx-auto" autocomplete="off">
         <div class="mb-3">
           <input
@@ -374,6 +378,7 @@ function searchPokemon() {
         </div>
         <button type="submit" class="btn btn-primary">Submit Search</button>
       </form>
+
       <h4 class="mt-4">Your Searched Pokémon</h4>
       <ul id="searchedPokemonList" class="list-group"></ul>
     </div>

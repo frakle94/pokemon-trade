@@ -186,9 +186,9 @@ form {
     margin-top: 1rem;
 }
 
-/* === STATIC RAINBOW BORDER (No animation) === */
+/* Magical Match always has a static rainbow border (example: 4px thick) */
 .btn-rainbow {
-    border: 3px solid transparent; /* Required for border-image to show */
+    border: 3px solid transparent;
     border-image-slice: 1;
     border-image-source: linear-gradient(
       to right,
