@@ -227,7 +227,8 @@ function offerPokemon() {
   const actionArea = document.getElementById('actionArea');
   actionArea.innerHTML = `
     <div class="centered-content">
-      <h3 class="mb-4">Offer a Pokémon</h3>
+      <!-- Replaced the heading with a small spacing -->
+      <div class="mb-2"></div>
 
       <div class="mb-3">
         <select
@@ -257,42 +258,38 @@ function offerPokemon() {
     </div>
   `;
 
-  // Carico expansions in #offerExpansionSelect
+  // Load expansions in #offerExpansionSelect
   loadExpansions("offerExpansionSelect");
 
-  // Carico i Pokémon (combo) in the datalist
+  // Populate the datalist with Pokémon combos
   loadPokemonNamesDatalist("offerExpansionSelect", "offerPokemonList");
 
-  // Mostro la lista di Pokémon offerti
+  // Fetch and display offered Pokémon
   fetchOfferedPokemon();
 
-  // Se cambia expansions, ricarico i Pokémon combo
+  // When expansion changes, reload the Pokémon combos
   const selectEl = document.getElementById('offerExpansionSelect');
   selectEl.addEventListener('change', () => {
     loadPokemonNamesDatalist("offerExpansionSelect", "offerPokemonList");
   });
 
-  // Form submission
+  // Handle form submission
   document.getElementById('offerPokemonForm').addEventListener('submit', function (e) {
     e.preventDefault();
 
     const typedValue = document.getElementById('offerPokemonName').value.trim();
-
-    // Check if user typed a valid combo from the datalist
     const allOptions = [...document.querySelectorAll('#offerPokemonList option')].map(o => o.value);
     if (!allOptions.includes(typedValue)) {
       alert("Invalid Pokémon combo! Please select from the list.");
       return;
     }
 
-    // Parse "Name (Expansion, Rarity)"
     const parsed = parseComboString(typedValue);
     if (!parsed) {
       alert("Invalid combo format! Use: Name (Expansion, Rarity)");
       return;
     }
 
-    // Now post all three fields
     axios.post('/pokemon/offer', {
       username: currentUser.username,
       pokemon: parsed.name,
@@ -386,7 +383,8 @@ function searchPokemon() {
   const actionArea = document.getElementById('actionArea');
   actionArea.innerHTML = `
     <div class="centered-content">
-      <h3 class="mb-4">Search for a Pokémon</h3>
+      <!-- Replaced the heading with a small spacing -->
+      <div class="mb-2"></div>
 
       <div class="mb-3">
         <select
