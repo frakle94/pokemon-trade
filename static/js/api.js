@@ -559,7 +559,7 @@ function magicalMatch() {
     .then(response => {
       const data = response.data;
       if (!data || data.length === 0) {
-        someContainer.innerHTML += '<p>No two-sided matches found.</p>';
+        someContainer.innerHTML += '<p>No users up for a trade at the moment.<br>Try adding ALL Pokémons you can offer and ALL Pokémons you search.<br>Try later on the Magical Match!</p>';
         return;
       }
 
