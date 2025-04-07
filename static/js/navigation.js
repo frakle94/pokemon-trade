@@ -9,7 +9,7 @@ function navigateToFeatures(username, email, pokemonId, password) {
     // Update the username display
     document.getElementById('username').textContent = username;
 
-    // Attach event listeners to the existing HTML buttons
+    // Attach event listeners
     document.getElementById('offerPokemonBtn')
         .addEventListener('click', () => setActiveButton('offer'));
 
@@ -23,58 +23,39 @@ function navigateToFeatures(username, email, pokemonId, password) {
     setActiveButton('offer');
 }
 
-
-
 function setActiveButton(activeButton) {
     const offerButton = document.getElementById('offerPokemonBtn');
     const searchButton = document.getElementById('searchPokemonBtn');
     const matchButton = document.getElementById('magicalMatchBtn');
 
     if (activeButton === 'offer') {
-        // Offer active
         offerButton.classList.remove('btn-secondary');
         offerButton.classList.add('btn-primary');
-
-        // Search inactive
         searchButton.classList.remove('btn-primary');
         searchButton.classList.add('btn-secondary');
-
-        // Match inactive
         matchButton.classList.remove('btn-primary');
         matchButton.classList.add('btn-secondary');
 
         offerPokemon();
 
     } else if (activeButton === 'search') {
-        // Search active
         searchButton.classList.remove('btn-secondary');
         searchButton.classList.add('btn-primary');
-
-        // Offer inactive
         offerButton.classList.remove('btn-primary');
         offerButton.classList.add('btn-secondary');
-
-        // Match inactive
         matchButton.classList.remove('btn-primary');
         matchButton.classList.add('btn-secondary');
 
         searchPokemon();
 
     } else if (activeButton === 'match') {
-        // Match active
         matchButton.classList.remove('btn-secondary');
         matchButton.classList.add('btn-primary');
-
-        // Offer inactive
         offerButton.classList.remove('btn-primary');
         offerButton.classList.add('btn-secondary');
-
-        // Search inactive
         searchButton.classList.remove('btn-primary');
         searchButton.classList.add('btn-secondary');
 
         magicalMatch();
     }
 }
-
-

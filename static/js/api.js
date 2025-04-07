@@ -123,18 +123,13 @@ function activateSearchPokemon() {
 
 /**
  * parseComboString(comboStr):
- * Given a string like "Bulbasaur (Geni Supremi, 1 R)",
- * returns an object { name, expansion, rarity } or null if invalid format.
+ * returns { name, expansion, rarity } or null if invalid format.
  */
 function parseComboString(comboStr) {
-  // Example input: "Bulbasaur (Geni Supremi, 1 R)"
   const pattern = /^(.*?)\s*\((.*?),\s*(.*?)\)$/;
   const match = comboStr.match(pattern);
   if (!match) return null;
 
-  // match[1] => "Bulbasaur"
-  // match[2] => "Geni Supremi"
-  // match[3] => "1 R"
   return {
     name: match[1].trim(),
     expansion: match[2].trim(),
@@ -145,16 +140,14 @@ function parseComboString(comboStr) {
 /**
  * loadExpansions(selectId)
  * -> /get_pokemon_names?list_expansions=true
- *    per popolare <select id="selectId">
  */
 function loadExpansions(selectId) {
   axios.get('/get_pokemon_names?list_expansions=true')
     .then(response => {
-      const expansions = response.data; // es: ["Base set","Fossil","Jungle"...]
+      const expansions = response.data;
       const selectEl = document.getElementById(selectId);
       if (!selectEl) return;
 
-      // Pulisco e aggiungo un placeholder
       selectEl.innerHTML = '';
       const placeholder = document.createElement('option');
       placeholder.disabled = true;
@@ -163,7 +156,7 @@ function loadExpansions(selectId) {
       placeholder.textContent = 'Select expansion';
       selectEl.appendChild(placeholder);
 
-      // Opzione "All expansions"
+      // "All expansions" option
       const allOpt = document.createElement('option');
       allOpt.value = '';
       allOpt.textContent = '— ALL —';
@@ -171,7 +164,7 @@ function loadExpansions(selectId) {
 
       expansions.forEach(exp => {
         const opt = document.createElement('option');
-        opt.value = exp;  // manteniamo la capitalizzazione
+        opt.value = exp;
         opt.textContent = exp;
         selectEl.appendChild(opt);
       });
@@ -183,22 +176,16 @@ function loadExpansions(selectId) {
 
 /**
  * loadPokemonNamesDatalist(selectId, dataListId)
- * -> se selectId ha un expansionValue, filtra i Pokémon
- * -> altrimenti mostra tutti
- * -> riempie <datalist id="dataListId">
- *   con stringhe "Nome (Espansione, Rarità)" grazie a ?with_rarity=true
+ * -> if selectId has expansion, filter; else show all
  */
 function loadPokemonNamesDatalist(selectId, dataListId) {
   const selectEl = document.getElementById(selectId);
   if (!selectEl) return;
 
   const expansionValue = selectEl.value || '';
-  // Always request combos: "Name (Expansion, Rarity)"
   let url = '/get_pokemon_names?with_rarity=true';
 
-  // If the user picked an expansion, append it
   if (expansionValue) {
-    // e.g. &expansion=geni supremi
     url += `&expansion=${encodeURIComponent(expansionValue.toLowerCase())}`;
   }
 
@@ -209,7 +196,6 @@ function loadPokemonNamesDatalist(selectId, dataListId) {
       dataList.innerHTML = '';
 
       response.data.forEach(combo => {
-        // combo might be: "Bulbasaur (Geni Supremi, 1 R)"
         const opt = document.createElement('option');
         opt.value = combo;
         dataList.appendChild(opt);
@@ -221,15 +207,13 @@ function loadPokemonNamesDatalist(selectId, dataListId) {
 }
 
 /**
- * offerPokemon() -> disegna <select id="offerExpansionSelect"> e <input list="offerPokemonList">
+ * offerPokemon() -> draws expansions + input + list
  */
 function offerPokemon() {
   const actionArea = document.getElementById('actionArea');
   actionArea.innerHTML = `
     <div class="centered-content">
-      <!-- Replaced the heading with a small spacing -->
       <div class="mb-2"></div>
-
       <div class="mb-3">
         <select
           id="offerExpansionSelect"
@@ -237,7 +221,6 @@ function offerPokemon() {
           style="background-color: #000; color: #fff;"
         ></select>
       </div>
-
       <form id="offerPokemonForm" class="mx-auto" autocomplete="off">
         <div class="mb-3">
           <input
@@ -252,28 +235,20 @@ function offerPokemon() {
         </div>
         <button type="submit" class="btn btn-primary">Submit Offer</button>
       </form>
-
       <h4 class="mt-4">Your Offered Pokémon</h4>
       <ul id="offeredPokemonList" class="list-group"></ul>
     </div>
   `;
 
-  // Load expansions in #offerExpansionSelect
   loadExpansions("offerExpansionSelect");
-
-  // Populate the datalist with Pokémon combos
   loadPokemonNamesDatalist("offerExpansionSelect", "offerPokemonList");
-
-  // Fetch and display offered Pokémon
   fetchOfferedPokemon();
 
-  // When expansion changes, reload the Pokémon combos
-  const selectEl = document.getElementById('offerExpansionSelect');
-  selectEl.addEventListener('change', () => {
-    loadPokemonNamesDatalist("offerExpansionSelect", "offerPokemonList");
-  });
+  document.getElementById('offerExpansionSelect')
+    .addEventListener('change', () => {
+      loadPokemonNamesDatalist("offerExpansionSelect", "offerPokemonList");
+    });
 
-  // Handle form submission
   document.getElementById('offerPokemonForm').addEventListener('submit', function (e) {
     e.preventDefault();
 
@@ -315,12 +290,9 @@ function fetchOfferedPokemon() {
       offeredList.innerHTML = '';
 
       response.data.forEach(offer => {
-        // Each offer object has: { id, pokemon, expansion, rarity, image_url }
-
         const listItem = document.createElement('li');
         listItem.className = 'list-group-item';
 
-        // Build HTML showing name, expansion, rarity, and image if present
         let displayHTML = `
           <div class="d-flex align-items-center justify-content-between">
             <div>
@@ -333,21 +305,19 @@ function fetchOfferedPokemon() {
 
         if (offer.image_url) {
           displayHTML += `
-              <img 
-                src="${offer.image_url}" 
+              <img
+                src="${offer.image_url}"
                 alt="Pokémon Image"
                 style="max-width: 80px; height: auto; margin-right: 12px;"
               />
           `;
         } else {
-          displayHTML += `
-              <span style="margin-right: 12px;">No image</span>
-          `;
+          displayHTML += `<span style="margin-right: 12px;">No image</span>`;
         }
 
         displayHTML += `
-              <button 
-                class="btn btn-danger btn-sm" 
+              <button
+                class="btn btn-danger btn-sm"
                 onclick="deleteOffer(${offer.id})">
                 Delete
               </button>
@@ -376,16 +346,13 @@ function deleteOffer(offerId) {
 }
 
 /**
- * searchPokemon() -> stesse expansions e filtraggio
- * + salvataggio expansion in /pokemon/search
+ * searchPokemon() -> expansions + input + list
  */
 function searchPokemon() {
   const actionArea = document.getElementById('actionArea');
   actionArea.innerHTML = `
     <div class="centered-content">
-      <!-- Replaced the heading with a small spacing -->
       <div class="mb-2"></div>
-
       <div class="mb-3">
         <select
           id="searchExpansionSelect"
@@ -393,10 +360,9 @@ function searchPokemon() {
           style="background-color: #000; color: #fff;"
         ></select>
       </div>
-
       <form id="searchPokemonForm" class="mx-auto" autocomplete="off">
         <div class="mb-3">
-          <input 
+          <input
             type="text"
             class="form-control"
             id="searchPokemonName"
@@ -408,47 +374,36 @@ function searchPokemon() {
         </div>
         <button type="submit" class="btn btn-primary">Submit Search</button>
       </form>
-
       <h4 class="mt-4">Your Searched Pokémon</h4>
       <ul id="searchedPokemonList" class="list-group"></ul>
     </div>
   `;
 
-  // 1) Carichiamo expansions in #searchExpansionSelect
   loadExpansions("searchExpansionSelect");
-
-  // 2) Carichiamo i Pokémon combos => (selectId="searchExpansionSelect", dataListId="searchPokemonList")
   loadPokemonNamesDatalist("searchExpansionSelect", "searchPokemonList");
-
-  // 3) Carichiamo la lista "searched"
   fetchSearchedPokemon();
 
-  // Cambi di expansions => ricarico i Pokémon combo
-  const selectEl = document.getElementById('searchExpansionSelect');
-  selectEl.addEventListener('change', () => {
-    loadPokemonNamesDatalist("searchExpansionSelect", "searchPokemonList");
-  });
+  document.getElementById('searchExpansionSelect')
+    .addEventListener('change', () => {
+      loadPokemonNamesDatalist("searchExpansionSelect", "searchPokemonList");
+    });
 
-  // Gestione form
   document.getElementById('searchPokemonForm').addEventListener('submit', function (e) {
     e.preventDefault();
 
     const typedValue = document.getElementById('searchPokemonName').value.trim();
-
     const allOptions = [...document.querySelectorAll('#searchPokemonList option')].map(o => o.value);
     if (!allOptions.includes(typedValue)) {
       alert("Invalid Pokémon combo! Please select from the list.");
       return;
     }
 
-    // Parse "Name (Expansion, Rarity)"
     const parsed = parseComboString(typedValue);
     if (!parsed) {
       alert("Invalid format! Use 'Name (Expansion, Rarity)'");
       return;
     }
 
-    // POST /pokemon/search => pass all three
     axios.post('/pokemon/search', {
       username: currentUser.username,
       pokemon: parsed.name,
@@ -465,7 +420,7 @@ function searchPokemon() {
   });
 }
 
-/** GET /pokemon/searched?username=... */
+// GET /pokemon/searched
 function fetchSearchedPokemon() {
   axios.get(`/pokemon/searched?username=${currentUser.username}`)
     .then(response => {
@@ -474,12 +429,9 @@ function fetchSearchedPokemon() {
       searchedList.innerHTML = '';
 
       response.data.forEach(search => {
-        // Each search object might have: { id, pokemon, expansion, rarity, image_url }
-
         const listItem = document.createElement('li');
         listItem.className = 'list-group-item';
 
-        // Build HTML with name, expansion, rarity, and image if present
         let displayHTML = `
           <div class="d-flex align-items-center justify-content-between">
             <div>
@@ -499,9 +451,7 @@ function fetchSearchedPokemon() {
             />
           `;
         } else {
-          displayHTML += `
-            <span style="margin-right: 12px;">No image</span>
-          `;
+          displayHTML += `<span style="margin-right: 12px;">No image</span>`;
         }
 
         displayHTML += `
@@ -534,23 +484,6 @@ function deleteSearch(searchId) {
     });
 }
 
-/** activateMagicalMatch() -> pulsanti e poi magicalMatch() */
-function activateMagicalMatch() {
-  const offerButton = document.getElementById('offerPokemonBtn');
-  const searchButton = document.getElementById('searchPokemonBtn');
-  const matchButton = document.getElementById('magicalMatchBtn');
-
-  matchButton.classList.remove('btn-secondary');
-  matchButton.classList.add('btn-primary');
-
-  offerButton.classList.remove('btn-primary');
-  offerButton.classList.add('btn-secondary');
-  searchButton.classList.remove('btn-primary');
-  searchButton.classList.add('btn-secondary');
-
-  magicalMatch();
-}
-
 function magicalMatch() {
   const someContainer = document.getElementById('actionArea');
   someContainer.innerHTML = '<h3>Two-Sided Magical Match Results</h3>';
@@ -565,7 +498,6 @@ function magicalMatch() {
 
       let html = '';
       data.forEach(item => {
-        // Safely fallback to empty arrays so we can do join without errors
         const mySTO = item.mySearch_TheirOffer || [];
         const theirSMO = item.theirSearch_MyOffer || [];
 
@@ -574,8 +506,8 @@ function magicalMatch() {
             <div class="card-body">
               <h5 class="card-title">Match with ${item.other_user}</h5>
               <p>Other User's Pokémon Pocket ID: ${item.other_user_pokemon_id}</p>
-              <p>You want from them: ${item.mySearch_TheirOffer.join(', ')}</p>
-              <p>They want from you: ${item.theirSearch_MyOffer.join(', ')}</p>
+              <p>You want from them: ${mySTO.join(', ')}</p>
+              <p>They want from you: ${theirSMO.join(', ')}</p>
             </div>
           </div>
         `;
@@ -587,7 +519,7 @@ function magicalMatch() {
     });
 }
 
-/** showProfile(), updateProfile(), closeProfileCard() -> invariati se li usi */
+/** showProfile(), updateProfile(), closeProfileCard() -> same usage as before */
 function showProfile() {
   const profileCard = document.getElementById('profileCard');
   const username = currentUser.username || 'Unknown User';

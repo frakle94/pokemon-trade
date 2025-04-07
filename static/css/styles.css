@@ -1,110 +1,101 @@
 /* Stile uniforme per i campi input e pulsanti */
 .form-control,
 .btn {
-    width: 100%; /* Stessa larghezza per box e pulsanti */
-    max-width: 300px; /* Limita la larghezza massima */
-    margin: 0 auto 1rem; /* Centra e aggiunge margine inferiore */
-    padding: 0.5rem; /* Spazio interno */
-    border-radius: 0.25rem; /* Angoli arrotondati */
-    display: block; /* Assicura che siano elementi di blocco */
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto 1rem;
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    display: block;
 }
 
 /* Campi input con sfondo nero e testo bianco */
 .form-control {
-    background-color: #000; /* Sfondo nero */
-    color: #fff; /* Testo bianco */
-    border: 1px solid #ced4da; /* Bordo */
+    background-color: #000;
+    color: #fff;
+    border: 1px solid #ced4da;
 }
 
 /* Placeholder bianco con trasparenza */
 .form-control::placeholder {
-    color: rgba(255, 255, 255, 0.7); /* Placeholder bianco */
+    color: rgba(255, 255, 255, 0.7);
 }
 
 /* Stato Focus per input */
 .form-control:focus {
-    background-color: #000; /* Mantiene sfondo nero */
-    color: #fff; /* Testo bianco */
-    border-color: #80bdff; /* Bordo blu in focus */
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25); /* Effetto focus */
-    outline: none; /* Rimuove il bordo predefinito */
+    background-color: #000;
+    color: #fff;
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    outline: none;
 }
 
-/* Gestione auto-compilazione da Google Chrome */
+/* Gestione auto-compilazione da Chrome/others */
 .form-control:-webkit-autofill {
-    background-color: #000 !important; /* Sfondo nero */
-    color: #fff !important; /* Testo bianco */
-    -webkit-box-shadow: 0 0 0px 1000px #000 inset !important; /* Rimuove il colore predefinito di Google */
-    box-shadow: 0 0 0px 1000px #000 inset !important; /* Rimuove il colore predefinito di Google */
+    background-color: #000 !important;
+    color: #fff !important;
+    -webkit-box-shadow: 0 0 0px 1000px #000 inset !important;
+    box-shadow: 0 0 0px 1000px #000 inset !important;
 }
-
-/* Gestione auto-compilazione per altri browser */
 .form-control:-webkit-autofill::first-line {
-    color: #fff !important; /* Testo bianco anche nella prima riga */
+    color: #fff !important;
 }
-
-/* Disabilita l'animazione di riempimento automatico */
 input:-webkit-autofill {
-    -webkit-text-fill-color: #fff !important; /* Testo bianco */
-    transition: background-color 5000s ease-in-out 0s !important; /* Mantiene il nero */
+    -webkit-text-fill-color: #fff !important;
+    transition: background-color 5000s ease-in-out 0s !important;
 }
 
 /* Stile per i pulsanti */
 .btn {
-    font-weight: bold; /* Testo in grassetto */
+    font-weight: bold;
 }
 
 /* Pulsante Login (verde) */
 .btn-success {
-    background-color: #28a745; /* Verde */
-    border-color: #28a745; /* Bordo verde */
-    color: white; /* Testo bianco */
+    background-color: #28a745;
+    border-color: #28a745;
+    color: white;
 }
-
-/* Hover per pulsante Login */
 .btn-success:hover {
-    background-color: #218838; /* Verde più scuro */
+    background-color: #218838;
     border-color: #1e7e34;
 }
 
 /* Pulsante Register (blu) */
 .btn-primary {
-    background-color: #007bff; /* Blu */
+    background-color: #007bff;
     border-color: #007bff;
-    color: white; /* Testo bianco */
+    color: white;
 }
-
-/* Hover per pulsante Register */
 .btn-primary:hover {
-    background-color: #0056b3; /* Blu più scuro */
+    background-color: #0056b3;
     border-color: #004085;
 }
 
 /* Center align the heading */
 .text-center h3 {
-    text-align: center; /* Ensures the heading is centered */
-    margin-bottom: 1rem; /* Adds spacing below the heading */
+    text-align: center;
+    margin-bottom: 1rem;
 }
 
 /* Flexbox container for buttons */
 .d-flex {
     display: flex;
-    align-items: center; /* Centers buttons vertically */
-    justify-content: center; /* Centers buttons horizontally */
+    align-items: center;
+    justify-content: center;
 }
 
 .d-flex .btn {
-    margin: 0; /* Removes default margins */
-    margin-right: 5px; /* Adds minimal spacing between buttons */
+    margin: 0;
+    margin-right: 5px;
 }
 
 .d-flex .btn:last-child {
-    margin-right: 0; /* Ensures no margin on the last button */
+    margin-right: 0;
 }
 
-
 html, body {
-    height: 100%; /* Ensure full-height layout */
+    height: 100%;
     margin: 0;
     padding: 0;
 }
@@ -119,8 +110,6 @@ html, body {
     text-align: center;
 }
 
-
-
 /* Form styling */
 form {
     max-width: 400px;
@@ -128,31 +117,30 @@ form {
 }
 
 /* Tiny button styling */
-/* Custom styles for a smaller button */
 .tiny-btn {
-    width: 50px !important;/* Explicitly set the button width */
-    height: 30px !important;/* Explicitly set the button height */
-    font-size: 0.6rem; /* Smaller text size */
-    padding: 0; /* Remove extra padding */
-    display: inline-flex; /* Ensures content is properly aligned */
-    justify-content: center; /* Centers the text horizontally */
-    align-items: center; /* Centers the text vertically */
-    line-height: 1; /* Ensures compact height for the text */
-    border-radius: 0.2rem; /* Optional: Adjust border radius for a sharper look */
+    width: 50px !important;
+    height: 30px !important;
+    font-size: 0.6rem;
+    padding: 0;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    line-height: 1;
+    border-radius: 0.2rem;
 }
 
 /* Profile Card Styling */
 .profile-card {
-    position: fixed; /* Ensures the card stays fixed on the screen */
-    top: 1rem; /* Distance from the top */
-    right: 1rem; /* Distance from the right */
-    z-index: 1050; /* Keeps it above other elements */
-    background-color: white; /* Background color */
-    border: 1px solid #dee2e6; /* Light border */
-    border-radius: 0.25rem; /* Rounded corners */
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow */
-    width: 300px; /* Fixed width */
-    padding: 1rem; /* Inner spacing */
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1050;
+    background-color: white;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    width: 300px;
+    padding: 1rem;
 }
 
 .hidden {
@@ -161,61 +149,49 @@ form {
 
 /* Centered Heading */
 #offerHeading {
-    text-align: center; /* Ensures the heading is centered */
-    margin-bottom: 1rem; /* Adds spacing below the heading */
+    text-align: center;
+    margin-bottom: 1rem;
 }
 
 /* Flexbox Container for Buttons */
 .button-container {
     display: flex;
-    justify-content: center; /* Centers buttons horizontally */
-    align-items: center; /* Aligns buttons vertically */
-    gap: 5px; /* Minimal space between buttons */
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
 }
 
-/* Button Styling for Consistency */
 .button-container .btn {
-    min-width: 150px; /* Ensures consistent button width */
-    padding: 0.5rem 1rem; /* Adds spacing inside buttons */
-    text-align: center; /* Ensures text inside buttons is centered */
+    min-width: 150px;
+    padding: 0.5rem 1rem;
+    text-align: center;
 }
 
-@keyframes rainbow {
-    0%   { background-color: red;    }
-    14%  { background-color: orange; }
-    28%  { background-color: yellow; }
-    42%  { background-color: green;  }
-    56%  { background-color: blue;   }
-    70%  { background-color: indigo; }
-    84%  { background-color: violet; }
-    100% { background-color: red;    }
-  }
-  
-  /* The "crazy" rainbow button */
-  .btn-rainbow {
-    animation: rainbow 3s linear infinite !important; /* Speed is 3s, loops forever */
-    color: #fff !important; /* Ensure text is visible */
-    border: none !important; /* Remove borders if desired */
-  }
-  
-  .profile-centered-container {
-    /* Use Flexbox to center horizontally & vertically */
+/* Overriding Bootstrap's .btn-sm so it's not forced to 100% wide */
+.btn-sm {
+    width: auto !important;
+    max-width: none !important;
+    display: inline-block !important;
+    margin: 0 !important;
+    padding: 0.25rem 0.5rem !important;
+    font-size: 0.875rem !important;
+}
+
+.profile-centered-container {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-  
-    /* Ensure there's enough vertical space to center */
-    min-height: 80vh; 
-    margin-top: 1rem; /* Add some spacing below the navbar if you like */
-  }
-  /* Override for Bootstrap's .btn-sm so it's not forced to 100% wide */
-.btn-sm {
-    width: auto !important;      /* override width: 100% */
-    max-width: none !important;  /* override max-width: 300px */
-    display: inline-block !important; /* remove display:block */
-    margin: 0 !important;        /* remove the forced margin auto */
-    padding: 0.25rem 0.5rem !important; /* typical .btn-sm dimensions */
-    font-size: 0.875rem !important; /* typical .btn-sm font size, or smaller if you want */
+    min-height: 80vh;
+    margin-top: 1rem;
 }
 
+/* === STATIC RAINBOW BORDER (No animation) === */
+.btn-rainbow {
+    border: 3px solid transparent; /* Required for border-image to show */
+    border-image-slice: 1;
+    border-image-source: linear-gradient(
+      to right,
+      red, orange, yellow, green, blue, indigo, violet
+    );
+}

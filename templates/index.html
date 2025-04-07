@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
   <link rel="stylesheet" href="/static/css/styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
   <style>
     .centered-container {
       display: flex;
@@ -28,19 +29,8 @@
     .hidden { display: none; }
     .go-back { color: #007bff; cursor: pointer; text-decoration: underline; }
     .go-back:hover { text-decoration: none; }
-    @keyframes rainbow {
-      0% { background-color: red; } 
-      14% { background-color: orange; } 
-      28% { background-color: yellow; }
-      42% { background-color: green; } 
-      56% { background-color: blue; } 
-      70% { background-color: indigo; }
-      84% { background-color: violet; } 
-      100% { background-color: red; }
-    }
-    .btn-rainbow { animation: rainbow 3s linear infinite; color: #fff; border: none; }
 
-    /* ADDED THIS TO CREATE EXTRA SPACE AT BOTTOM OF MAIN APP: */
+    /* Extra space at bottom of main app */
     #mainAppContainer {
       padding-bottom: 3rem;
     }
@@ -52,7 +42,7 @@
       <div class="card-body">
         <h1 class="text-center mb-4"><strong>Pokémon Trade Platform</strong></h1>
 
-        <!-- Login Form (now uses email) -->
+        <!-- Login Form -->
         <div id="loginFormContainer">
           <form id="loginForm">
             <div class="mb-3">
@@ -93,7 +83,7 @@
           </div>
         </div>
 
-        <!-- Forgot Password Form (added here) -->
+        <!-- Forgot Password Form -->
         <div id="forgotPasswordFormContainer" class="hidden">
           <form id="forgotPasswordForm">
             <div class="mb-3">
@@ -120,15 +110,15 @@
       <h1 class="text-center">
         Welcome, <span id="username"></span>!
       </h1>
-      <!-- The lines with a red border and rounded corners -->
-    <p class="text-center" style="border: 2px solid red; padding: 0.5rem; border-radius: 0.5rem;">
-      <strong>Offer</strong> your spare Pokémons,<br>
-      <strong>Search</strong> the Pokémons you need,<br>
-      <strong>Magical Match</strong> to find users up for a trade.
-    </p>     
+      <p class="text-center" style="border: 2px solid red; padding: 0.5rem; border-radius: 0.5rem;">
+        <strong>Offer</strong> your spare Pokémons,<br>
+        <strong>Search</strong> the Pokémons you need,<br>
+        <strong>Magical Match</strong> to find users up for a trade.
+      </p>
       <div class="d-flex justify-content-center mb-4 align-items-center">
         <button id="offerPokemonBtn" class="btn btn-primary me-1">Offer Pokémon</button>
         <button id="searchPokemonBtn" class="btn btn-secondary">Search Pokémon</button>
+        <!-- Magical Match: toggles .btn-secondary / .btn-primary, plus .btn-rainbow for border -->
         <button id="magicalMatchBtn" class="btn btn-secondary btn-rainbow">Magical Match</button>
       </div>
       <div id="actionArea" class="mt-4"></div>
@@ -140,13 +130,12 @@
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
       <div class="container">
         <a class="navbar-brand">Pokémon Trade Platform</a>
-        <!-- A div that pushes content to the right and adds spacing -->
         <div class="ms-auto">
           <button class="btn btn-secondary btn-sm me-2" onclick="navigateToMainApp()">Back</button>
           <button class="btn btn-danger btn-sm" onclick="logout()">Logout</button>
         </div>
       </div>
-    </nav>    
+    </nav>
     <div class="container profile-centered-container">
       <h1 class="text-center">Your Profile</h1>
       <form id="updateProfileForm">
@@ -195,15 +184,15 @@
       loginFormContainer.classList.remove('hidden');
     });
 
-    showForgotPasswordBtn.addEventListener('click', () => {
-      loginFormContainer.classList.add('hidden');
-      forgotPasswordFormContainer.classList.remove('hidden');
-    });
-
-    goBackToLoginBtn.addEventListener('click', () => {
-      forgotPasswordFormContainer.classList.add('hidden');
-      loginFormContainer.classList.remove('hidden');
-    });
+    // If we re-enable the "Forgot Password?" link, these listeners show/hide the form:
+    // showForgotPasswordBtn.addEventListener('click', () => {
+    //   loginFormContainer.classList.add('hidden');
+    //   forgotPasswordFormContainer.classList.remove('hidden');
+    // });
+    // goBackToLoginBtn.addEventListener('click', () => {
+    //   forgotPasswordFormContainer.classList.add('hidden');
+    //   loginFormContainer.classList.remove('hidden');
+    // });
 
     document.getElementById('loginForm').addEventListener('submit', handleLogin);
     document.getElementById('registerForm').addEventListener('submit', handleRegistration);
