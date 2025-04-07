@@ -573,7 +573,7 @@ function magicalMatch() {
           <div class="card my-3">
             <div class="card-body">
               <h5 class="card-title">Match with ${item.other_user}</h5>
-              <p>Other User's Pokémon ID: ${item.other_user_pokemon_id}</p>
+              <p>Other User's Pokémon Pocket ID: ${item.other_user_pokemon_id}</p>
               <p>You want from them: ${item.mySearch_TheirOffer.join(', ')}</p>
               <p>They want from you: ${item.theirSearch_MyOffer.join(', ')}</p>
             </div>
