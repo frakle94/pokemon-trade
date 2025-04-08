@@ -1,8 +1,6 @@
-<!-- Updated HTML for Pokémon Trade Platform -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Favicons and Metadata -->
   <link rel="apple-touch-icon" sizes="180x180" href="static/files/redketchup/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="static/files/redketchup/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="static/files/redketchup/favicon-16x16.png">
@@ -29,11 +27,7 @@
     .hidden { display: none; }
     .go-back { color: #007bff; cursor: pointer; text-decoration: underline; }
     .go-back:hover { text-decoration: none; }
-
-    /* Extra space at bottom of main app */
-    #mainAppContainer {
-      padding-bottom: 3rem;
-    }
+    #mainAppContainer { padding-bottom: 3rem; }
   </style>
 </head>
 <body class="bg-light">
@@ -113,12 +107,13 @@
       <p class="text-center" style="border: 2px solid black; padding: 0.5rem; border-radius: 0.5rem;">
         <strong>Offer</strong> your spare Pokémons,<br>
         <strong>Search</strong> the Pokémons you need,<br>
-        <strong>Magical Match</strong> to find users up for a trade.
+        <strong>Magical Match</strong> to find users up for a trade.<br>
+        <br>
+        Update your Profile <strong>Trade Status</strong> when you are low on points.<br>
       </p>
       <div class="d-flex justify-content-center mb-4 align-items-center">
         <button id="offerPokemonBtn" class="btn btn-primary me-1">Offer Pokémon</button>
         <button id="searchPokemonBtn" class="btn btn-secondary">Search Pokémon</button>
-        <!-- Magical Match: toggles .btn-secondary / .btn-primary, plus .btn-rainbow for border -->
         <button id="magicalMatchBtn" class="btn btn-secondary btn-rainbow">Magical Match</button>
       </div>
       <div id="actionArea" class="mt-4"></div>
@@ -155,6 +150,17 @@
           <label for="profile_pokemon_id" class="form-label">Pokémon Pocket ID</label>
           <input type="text" class="form-control" id="profile_pokemon_id" required />
         </div>
+
+        <!-- Nuovo campo per la condizione di scambio -->
+        <div class="mb-3">
+          <label for="profile_trade_condition" class="form-label" style="color: blue;">Trade Status</label>
+          <select class="form-control" id="profile_trade_condition" required>
+            <option value="NONE">Cannot trade</option>
+            <option value="COMMON">Common cards only</option>
+            <option value="ALL">All cards!</option>
+          </select>
+        </div>
+
         <button type="submit" class="btn btn-primary w-100">Update Profile</button>
       </form>
     </div>
@@ -171,8 +177,8 @@
     const showRegisterBtn = document.getElementById('showRegisterBtn');
     const goBackBtn = document.getElementById('goBackBtn');
 
-    const showForgotPasswordBtn = document.getElementById('showForgotPasswordBtn');
-    const goBackToLoginBtn = document.getElementById('goBackToLoginBtn');
+    // const showForgotPasswordBtn = document.getElementById('showForgotPasswordBtn');
+    // const goBackToLoginBtn = document.getElementById('goBackToLoginBtn');
 
     showRegisterBtn.addEventListener('click', () => {
       loginFormContainer.classList.add('hidden');
@@ -184,7 +190,7 @@
       loginFormContainer.classList.remove('hidden');
     });
 
-    // If we re-enable the "Forgot Password?" link, these listeners show/hide the form:
+    // Se in futuro riattivi forgot password:
     // showForgotPasswordBtn.addEventListener('click', () => {
     //   loginFormContainer.classList.add('hidden');
     //   forgotPasswordFormContainer.classList.remove('hidden');
@@ -218,6 +224,7 @@
       document.getElementById('profile_email').value = currentUser?.email || '';
       document.getElementById('profile_pokemon_id').value = currentUser?.pokemonId || '';
       document.getElementById('profile_password').value = currentUser?.password || '';
+      document.getElementById('profile_trade_condition').value = currentUser?.trade_condition || 'ALL';
       document.getElementById('updateProfileForm').addEventListener('submit', updateProfile);
     }
 

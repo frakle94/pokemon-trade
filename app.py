@@ -30,6 +30,8 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
     pokemon_id = db.Column(db.String(50), nullable=False)
+    # Ora di default "ALL" invece che "NONE"
+    trade_condition = db.Column(db.String(20), nullable=False, default="ALL")
 
 class Offer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -58,7 +60,8 @@ def register():
         username=data['username'],
         email=data['email'],
         password=hashed_password,
-        pokemon_id=data['pokemon_id']
+        pokemon_id=data['pokemon_id'],
+        trade_condition="ALL"  # Impostato di default alla creazione
     )
     db.session.add(new_user)
     db.session.commit()
@@ -66,7 +69,8 @@ def register():
         "message": "User registered successfully!",
         "username": new_user.username,
         "email": new_user.email,
-        "pokemon_id": new_user.pokemon_id
+        "pokemon_id": new_user.pokemon_id,
+        "trade_condition": new_user.trade_condition
     })
 
 # Login route
@@ -77,13 +81,15 @@ def login():
     password = data.get('password')
     if not email or not password:
         return jsonify({"message": "Email and password required"}), 400
+
     user = User.query.filter_by(email=email).first()
     if user and check_password_hash(user.password, password):
         return jsonify({
             "message": "Login successful!",
             "username": user.username,
             "email": user.email,
-            "pokemon_id": user.pokemon_id
+            "pokemon_id": user.pokemon_id,
+            "trade_condition": user.trade_condition  # <--- Key line
         })
     return jsonify({"message": "Invalid email or password"}), 401
 
@@ -176,11 +182,16 @@ def update_user():
         return jsonify({"message": "User not found!"}), 404
 
     user.username = new_username
-    user.pokemon_id = new_pokemon_id
     user.email = new_email
+    user.pokemon_id = new_pokemon_id
     user.password = generate_password_hash(new_password)
-    db.session.commit()
 
+    # Make sure the request’s JSON includes 'trade_condition' if you want to allow changes
+    new_trade_condition = data.get('trade_condition')
+    if new_trade_condition in ["ALL", "COMMON", "NONE"]:
+        user.trade_condition = new_trade_condition
+
+    db.session.commit()
     return jsonify({"message": "Profile updated successfully!"})
 
 ###############################################################################
@@ -351,69 +362,43 @@ def magical_match():
     username = request.args.get('username')
     if not username:
         return jsonify({"message": "Please specify ?username=<value>"}), 400
-
     user = User.query.filter_by(username=username).first()
     if not user:
         return jsonify({"message": f"User '{username}' not found"}), 404
-
-    # The main user’s offers and wants
-    user_offers = Offer.query.filter_by(user_id=user.id).all()  # List of Offer objects
-    user_wants  = Search.query.filter_by(user_id=user.id).all() # List of Search objects
-
+    if user.trade_condition == "NONE":
+        return jsonify({"message": "Your Trade Status is set on 'Cannot trade', update your Profile settings if you have enough points for trading!"}), 403
+    user_offers = Offer.query.filter_by(user_id=user.id).all()
+    user_wants = Search.query.filter_by(user_id=user.id).all()
+    if user.trade_condition == "COMMON":
+        user_offers = [o for o in user_offers if o.rarity in ["C", "U", "R"]]
     matches = []
     all_users = User.query.all()
-
     for other_user in all_users:
         if other_user.id == user.id:
-            continue  # Skip ourselves
-
+            continue
+        if other_user.trade_condition == "NONE":
+            continue
         other_offers = Offer.query.filter_by(user_id=other_user.id).all()
-        other_wants  = Search.query.filter_by(user_id=other_user.id).all()
-
-        # We'll collect pairs (cardA, cardB) meaning:
-        # - cardA from user A's offers that user B wants
-        # - cardB from user B's offers that user A wants
-        # - same rarity => valid trade
+        other_wants = Search.query.filter_by(user_id=other_user.id).all()
+        if other_user.trade_condition == "COMMON":
+            other_offers = [o for o in other_offers if o.rarity in ["C", "U", "R"]]
         trade_pairs = []
-
-        # For each card A offers, check if B wants it
         for cardA in user_offers:
             if any(is_same_card(cardA, w) for w in other_wants):
-                # Then for each card B offers, see if A wants it
                 for cardB in other_offers:
                     if any(is_same_card(cardB, w) for w in user_wants):
-                        # Now check if the two cards share the same rarity
                         if cardA.rarity == cardB.rarity:
                             trade_pairs.append((cardA, cardB))
-
         if trade_pairs:
-            # We'll build two arrays of strings so that the front-end can do
-            #   mySearch_TheirOffer.join(', ')  and  theirSearch_MyOffer.join(', ')
-            # for the "You want from them" / "They want from you" lines
-
-            # "mySearch_TheirOffer" = the set of cards B offers that A wants
-            # => from each (cardA, cardB) pair,  cardB is the one A wants
-            mySearch_TheirOffer_set = {
-                f"{b.pokemon} ({b.expansion}, {b.rarity})"
-                for (a, b) in trade_pairs
-            }
-
-            # "theirSearch_MyOffer" = the set of cards A offers that B wants
-            # => from each (cardA, cardB) pair,  cardA is the one B wants
-            theirSearch_MyOffer_set = {
-                f"{a.pokemon} ({a.expansion}, {a.rarity})"
-                for (a, b) in trade_pairs
-            }
-
+            mySearch_TheirOffer_set = {f"{b.pokemon} ({b.expansion}, {b.rarity})" for (a, b) in trade_pairs}
+            theirSearch_MyOffer_set = {f"{a.pokemon} ({a.expansion}, {a.rarity})" for (a, b) in trade_pairs}
             match_info = {
                 "other_user": other_user.username,
                 "other_user_pokemon_id": other_user.pokemon_id,
                 "mySearch_TheirOffer": sorted(mySearch_TheirOffer_set),
                 "theirSearch_MyOffer": sorted(theirSearch_MyOffer_set)
             }
-
             matches.append(match_info)
-
     return jsonify(matches)
 
 def is_same_card(offer_or_search_obj, want_obj):
@@ -576,6 +561,30 @@ def get_expansion_for_pokemon(pokemon_name):
     except Exception as e:
         print("Errore get_expansion_for_pokemon:", e)
     return ""
+
+@app.route('/user/trade_condition', methods=['PUT'])
+def update_trade_condition():
+    """
+    Aggiorna la condizione di scambio dell'utente (ALL, COMMON, NONE)
+    """
+    data = request.json
+    username = data.get('username')
+    new_condition = data.get('trade_condition')
+
+    if not username or not new_condition:
+        return jsonify({"message": "username and trade_condition are required"}), 400
+
+    if new_condition not in ["ALL", "COMMON", "NONE"]:
+        return jsonify({"message": "Invalid trade_condition. Must be ALL, COMMON, or NONE."}), 400
+
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+
+    user.trade_condition = new_condition
+    db.session.commit()
+
+    return jsonify({"message": f"Trade status updated to {new_condition} for user {username}."})
 
 ###############################################################################
 # MAIN
