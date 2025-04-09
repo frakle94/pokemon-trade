@@ -1,3 +1,4 @@
 database.db
-database_old.db
 .env
+backup_with_new_column.py
+create_db.ipynb
