@@ -50,9 +50,6 @@
           <div class="text-center mt-3">
             <span class="btn btn-link" id="showRegisterBtn">Click here to register</span>
           </div>
-          <!-- <div class="text-center">
-            <span class="btn btn-link text-danger" id="showForgotPasswordBtn">Forgot Password?</span>
-          </div> -->
         </div>
 
         <!-- Registration Form -->
@@ -150,8 +147,6 @@
           <label for="profile_pokemon_id" class="form-label">Pokémon Pocket ID</label>
           <input type="text" class="form-control" id="profile_pokemon_id" required />
         </div>
-
-        <!-- Nuovo campo per la condizione di scambio -->
         <div class="mb-3">
           <label for="profile_trade_condition" class="form-label" style="color: blue;">Trade Status</label>
           <select class="form-control" id="profile_trade_condition" required>
@@ -160,16 +155,16 @@
             <option value="ALL">All cards!</option>
           </select>
         </div>
-
         <button type="submit" class="btn btn-primary w-100">Update Profile</button>
       </form>
     </div>
   </div>
 
-  <!-- JavaScript Files -->
+  <!-- Scripts -->
   <script src="/static/js/api.js"></script>
   <script src="/static/js/navigation.js"></script>
   <script src="/static/js/main.js"></script>
+
   <script>
     const loginFormContainer = document.getElementById('loginFormContainer');
     const registrationFormContainer = document.getElementById('registrationFormContainer');
@@ -177,32 +172,23 @@
     const showRegisterBtn = document.getElementById('showRegisterBtn');
     const goBackBtn = document.getElementById('goBackBtn');
 
-    // const showForgotPasswordBtn = document.getElementById('showForgotPasswordBtn');
-    // const goBackToLoginBtn = document.getElementById('goBackToLoginBtn');
-
+    // Show Register
     showRegisterBtn.addEventListener('click', () => {
       loginFormContainer.classList.add('hidden');
       registrationFormContainer.classList.remove('hidden');
     });
 
+    // Go Back to Login
     goBackBtn.addEventListener('click', () => {
       registrationFormContainer.classList.add('hidden');
       loginFormContainer.classList.remove('hidden');
     });
 
-    // Se in futuro riattivi forgot password:
-    // showForgotPasswordBtn.addEventListener('click', () => {
-    //   loginFormContainer.classList.add('hidden');
-    //   forgotPasswordFormContainer.classList.remove('hidden');
-    // });
-    // goBackToLoginBtn.addEventListener('click', () => {
-    //   forgotPasswordFormContainer.classList.add('hidden');
-    //   loginFormContainer.classList.remove('hidden');
-    // });
-
+    // Login & Registration
     document.getElementById('loginForm').addEventListener('submit', handleLogin);
     document.getElementById('registerForm').addEventListener('submit', handleRegistration);
 
+    // Forgot Password
     document.getElementById('forgotPasswordForm').addEventListener('submit', function (e) {
       e.preventDefault();
       const email = document.getElementById('forgot_email').value;
@@ -216,27 +202,6 @@
           alert('Error sending reset email: ' + (err.response?.data?.message || err.message));
         });
     });
-
-    function showProfile() {
-      document.getElementById('mainAppContainer').classList.add('hidden');
-      document.getElementById('profileViewContainer').classList.remove('hidden');
-      document.getElementById('profile_username').value = currentUser?.username || '';
-      document.getElementById('profile_email').value = currentUser?.email || '';
-      document.getElementById('profile_pokemon_id').value = currentUser?.pokemonId || '';
-      document.getElementById('profile_password').value = currentUser?.password || '';
-      document.getElementById('profile_trade_condition').value = currentUser?.trade_condition || 'ALL';
-      document.getElementById('updateProfileForm').addEventListener('submit', updateProfile);
-    }
-
-    function navigateToMainApp() {
-      document.getElementById('profileViewContainer').classList.add('hidden');
-      document.getElementById('mainAppContainer').classList.remove('hidden');
-    }
-
-    function logout() {
-      currentUser = null;
-      location.reload();
-    }
   </script>
 </body>
 </html>

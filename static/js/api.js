@@ -1,9 +1,16 @@
 // api.js
 
-// Shared global variable for user session
 let currentUser = null;
+let allCards = [];
+let selectedCards = [];
 
-// Handles user registration
+// We'll store references so we can remove them when switching pages
+let handleOfferOutsideClick = null;
+let handleSearchOutsideClick = null;
+
+/**
+ * Handles registration flow
+ */
 function handleRegistration(e) {
   e.preventDefault();
   const username = document.getElementById('reg_username').value;
@@ -22,7 +29,9 @@ function handleRegistration(e) {
     });
 }
 
-// Handles user login using email
+/**
+ * Handles login flow
+ */
 function handleLogin(e) {
   e.preventDefault();
   const email = document.getElementById('login_email').value;
@@ -39,16 +48,17 @@ function handleLogin(e) {
         tc
       );
     })
-    .catch(error => {
+    .catch(() => {
       alert('Invalid email or password. Please try again.');
     });
 }
 
-// Handles forgot password
+/**
+ * Handles forgot password
+ */
 function handleForgotPassword(e) {
   e.preventDefault();
   const email = document.getElementById('forgot_email').value;
-
   axios.post('/forgot-password', { email })
     .then(() => {
       alert('Check your email for reset instructions.');
@@ -59,8 +69,7 @@ function handleForgotPassword(e) {
 }
 
 /**
- * Salva i dati utente in currentUser e chiama navigateToMainApp()
- * Abbiamo aggiunto un quinto parametro tradeCondition.
+ * Navigation to main features
  */
 function navigateToFeatures(username, email, pokemonId, password, tradeCondition = 'ALL') {
   currentUser = { username, email, pokemonId, password, trade_condition: tradeCondition };
@@ -68,129 +77,100 @@ function navigateToFeatures(username, email, pokemonId, password, tradeCondition
 }
 
 /**
- * Ricostruisce il body con i pulsanti Offer/Search,
- * e di default mostra "Offer Pokémon"
+ * Carica la lista di tutte le carte dal server
  */
-function navigateToMainApp(username) {
-  currentUser = { ...currentUser, username };
-
-  document.body.innerHTML = `
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-      <div class="container-fluid">
-        <a class="navbar-brand">Pokémon Trade Platform</a>
-        <button class="btn btn-outline-primary ms-auto" onclick="showProfile()">Profile</button>
-      </div>
-    </nav>
-    <div class="container mt-5">
-      <h1 class="text-center">Welcome, ${username}!</h1>
-      <p class="text-center">Now you can offer and search for Pokémon.</p>
-      <div class="text-center mb-4">
-        <h3 id="offerHeading" class="mb-4">Offer a Pokémon</h3>
-        <div class="button-container d-flex justify-content-center align-items-center">
-          <button id="offerPokemonBtn" class="btn btn-primary me-1">Offer Pokémon</button>
-          <button id="searchPokemonBtn" class="btn btn-secondary">Search Pokémon</button>
-        </div>
-      </div>
-      <div id="actionArea" class="mt-4"></div>
-    </div>
-  `;
-
-  document.getElementById('offerPokemonBtn').addEventListener('click', activateOfferPokemon);
-  document.getElementById('searchPokemonBtn').addEventListener('click', activateSearchPokemon);
-  activateOfferPokemon();
-}
-
-// Attiva Offer Pokémon
-function activateOfferPokemon() {
-  const offerButton = document.getElementById('offerPokemonBtn');
-  const searchButton = document.getElementById('searchPokemonBtn');
-
-  offerButton.classList.remove('btn-secondary');
-  offerButton.classList.add('btn-primary');
-
-  searchButton.classList.remove('btn-primary');
-  searchButton.classList.add('btn-secondary');
-
-  offerPokemon();
-}
-
-// Attiva Search Pokémon
-function activateSearchPokemon() {
-  const offerButton = document.getElementById('offerPokemonBtn');
-  const searchButton = document.getElementById('searchPokemonBtn');
-
-  searchButton.classList.remove('btn-secondary');
-  searchButton.classList.add('btn-primary');
-
-  offerButton.classList.remove('btn-primary');
-  offerButton.classList.add('btn-secondary');
-
-  searchPokemon();
-}
-
-// parseComboString(comboStr)
-function parseComboString(comboStr) {
-  const pattern = /^(.*?)\s*\((.*?),\s*(.*?)\)$/;
-  const match = comboStr.match(pattern);
-  if (!match) return null;
-  return {
-    name: match[1].trim(),
-    expansion: match[2].trim(),
-    rarity: match[3].trim()
-  };
-}
-
-// loadExpansions(selectId)
-function loadExpansions(selectId) {
-  axios.get('/get_pokemon_names?list_expansions=true')
+function loadAllCards() {
+  return axios.get('/get_all_cards')
     .then(response => {
-      const expansions = response.data;
-      const selectEl = document.getElementById(selectId);
-      if (!selectEl) return;
-      const allOpt = document.createElement('option');
-      allOpt.value = '';
-      allOpt.textContent = '— ALL —';
-      selectEl.appendChild(allOpt);
-      expansions.forEach(exp => {
-        const opt = document.createElement('option');
-        opt.value = exp;
-        opt.textContent = exp;
-        selectEl.appendChild(opt);
-      });
+      allCards = response.data;
     })
     .catch(err => {
-      console.error("Errore expansions:", err);
+      console.error("Errore caricamento carte:", err);
+      allCards = [];
     });
 }
 
-// loadPokemonNamesDatalist(selectId, dataListId)
-function loadPokemonNamesDatalist(selectId, dataListId) {
-  const selectEl = document.getElementById(selectId);
-  if (!selectEl) return;
-  const expansionValue = selectEl.value || '';
-  let url = '/get_pokemon_names?with_rarity=true';
-  if (expansionValue) {
-    url += `&expansion=${encodeURIComponent(expansionValue.toLowerCase())}`;
+/**
+ * Mostra/Nasconde la griglia e popola con i filtri.
+ */
+function updateCardGrid(containerId, expansionFilter, nameFilter) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  // Se container è nascosto di default, lo rendiamo visibile
+  container.classList.remove('hidden');
+
+  const filterExp = expansionFilter.trim().toLowerCase();
+  const filterName = nameFilter.trim().toLowerCase();
+
+  // Filtriamo
+  const filtered = allCards.filter(card => {
+    const cExp = (card.expansion || '').toLowerCase();
+    const cName = (card.name || '').toLowerCase();
+    const passExp = !filterExp || cExp === filterExp;
+    const passName = !filterName || cName.includes(filterName);
+    return passExp && passName;
+  });
+
+  container.innerHTML = '';
+  filtered.forEach((card, idx) => {
+    const cardDiv = document.createElement('div');
+    cardDiv.className = 'pokemon-card';
+    cardDiv.setAttribute('data-index', idx);
+
+    const isSelected = selectedCards.some(
+      sc => sc.name === card.name && sc.expansion === card.expansion && sc.rarity === card.rarity
+    );
+    if (isSelected) {
+      cardDiv.classList.add('selected-card');
+    }
+
+    cardDiv.innerHTML = `
+      <img src="${card.image_url}" alt="${card.name}" />
+      <p>${card.name}</p>
+      <p style="font-size: 0.8rem;">${card.expansion} (${card.rarity})</p>
+    `;
+    cardDiv.addEventListener('click', () => toggleCardSelection(card));
+    container.appendChild(cardDiv);
+  });
+}
+
+function toggleCardSelection(card) {
+  const index = selectedCards.findIndex(
+    sc => sc.name === card.name && sc.expansion === card.expansion && sc.rarity === card.rarity
+  );
+  if (index === -1) {
+    selectedCards.push({ ...card });
+  } else {
+    selectedCards.splice(index, 1);
   }
 
-  axios.get(url)
-    .then(response => {
-      const dataList = document.getElementById(dataListId);
-      if (!dataList) return;
-      dataList.innerHTML = '';
-      response.data.forEach(combo => {
-        const opt = document.createElement('option');
-        opt.value = combo;
-        dataList.appendChild(opt);
-      });
-    })
-    .catch(error => {
-      console.error("Errore caricamento nomi Pokémon (with combos):", error);
-    });
+  // Ricarichiamo la griglia (sia in Offer che in Search, se presente)
+  const offExp = document.getElementById('offerExpansionSelect');
+  const offName = document.getElementById('offerPokemonName');
+  const searchExp = document.getElementById('searchExpansionSelect');
+  const searchName = document.getElementById('searchPokemonName');
+
+  if (offExp && offName && document.getElementById('cardGridContainerOffer')) {
+    updateCardGrid('cardGridContainerOffer', offExp.value, offName.value);
+  }
+  if (searchExp && searchName && document.getElementById('cardGridContainerSearch')) {
+    updateCardGrid('cardGridContainerSearch', searchExp.value, searchName.value);
+  }
 }
 
-// offerPokemon()
+/* -------------- OFFER ---------------- */
 function offerPokemon() {
+  // 1) Remove any leftover "outside-click" listener from previous pages
+  if (handleOfferOutsideClick) {
+    document.removeEventListener('mousedown', handleOfferOutsideClick);
+    handleOfferOutsideClick = null;
+  }
+  if (handleSearchOutsideClick) {
+    document.removeEventListener('mousedown', handleSearchOutsideClick);
+    handleSearchOutsideClick = null;
+  }
+
   const actionArea = document.getElementById('actionArea');
   actionArea.innerHTML = `
     <div class="centered-content">
@@ -210,55 +190,91 @@ function offerPokemon() {
             type="text"
             class="form-control"
             id="offerPokemonName"
-            list="offerPokemonList"
             placeholder="Enter Pokémon name"
-            required
           >
-          <datalist id="offerPokemonList"></datalist>
         </div>
+        <!-- Griglia nascosta di default: appare su focus/change -->
+        <div id="cardGridContainerOffer" class="pokemon-grid hidden"></div>
         <button type="submit" class="btn btn-primary">Submit Offer</button>
       </form>
       <h4 class="mt-4">Your Offered Pokémon</h4>
       <ul id="offeredPokemonList" class="list-group"></ul>
     </div>
   `;
+
   loadExpansions("offerExpansionSelect");
-  loadPokemonNamesDatalist("offerExpansionSelect", "offerPokemonList");
-  fetchOfferedPokemon();
-  document.getElementById('offerExpansionSelect')
-    .addEventListener('change', () => {
-      loadPokemonNamesDatalist("offerExpansionSelect", "offerPokemonList");
+  loadAllCards().then(() => {
+    selectedCards = [];
+
+    const selectExp = document.getElementById('offerExpansionSelect');
+    const inputName = document.getElementById('offerPokemonName');
+    const gridContainer = document.getElementById('cardGridContainerOffer');
+    const offerForm = document.getElementById('offerPokemonForm');
+
+    // Show the grid on focus or expansion change
+    selectExp.addEventListener('change', () => {
+      selectedCards = [];
+      updateCardGrid('cardGridContainerOffer', selectExp.value, inputName.value);
     });
+    inputName.addEventListener('focus', () => {
+      updateCardGrid('cardGridContainerOffer', selectExp.value, inputName.value);
+    });
+    inputName.addEventListener('input', () => {
+      selectedCards = [];
+      updateCardGrid('cardGridContainerOffer', selectExp.value, inputName.value);
+    });
+
+    // 2) Attach outside-click listener for the Offer page
+    handleOfferOutsideClick = (evt) => {
+      const clickInsideForm = offerForm.contains(evt.target);
+      const clickInsideGrid = gridContainer.contains(evt.target);
+      if (!clickInsideForm && !clickInsideGrid) {
+        // They clicked completely outside the Offer form and grid
+        if (!selectedCards.length) {
+          gridContainer.classList.add('hidden');
+        }
+      }
+    };
+    document.addEventListener('mousedown', handleOfferOutsideClick);
+
+    // The grid remains hidden by default
+    gridContainer.classList.add('hidden');
+  });
+
+  // Submit Offer
   document.getElementById('offerPokemonForm').addEventListener('submit', function (e) {
     e.preventDefault();
-    const typedValue = document.getElementById('offerPokemonName').value.trim();
-    const allOptions = [...document.querySelectorAll('#offerPokemonList option')].map(o => o.value);
-    if (!allOptions.includes(typedValue)) {
-      alert("Invalid Pokémon combo! Please select from the list.");
+    if (!selectedCards.length) {
+      alert("Please select at least one card to offer.");
       return;
     }
-    const parsed = parseComboString(typedValue);
-    if (!parsed) {
-      alert("Invalid combo format! Use: Name (Expansion, Rarity)");
-      return;
-    }
-    axios.post('/pokemon/offer', {
-      username: currentUser.username,
-      pokemon: parsed.name,
-      expansion: parsed.expansion,
-      rarity: parsed.rarity
-    })
-    .then(() => {
-      fetchOfferedPokemon();
-      document.getElementById('offerPokemonName').value = '';
-    })
-    .catch(error => {
-      alert('Error: ' + (error.response?.data?.message || error.message));
+    const promises = selectedCards.map(card => {
+      return axios.post('/pokemon/offer', {
+        username: currentUser.username,
+        pokemon: card.name,
+        expansion: card.expansion,
+        rarity: card.rarity
+      });
     });
+    Promise.all(promises)
+      .then(() => {
+        fetchOfferedPokemon();
+        selectedCards = [];
+        const expSel = document.getElementById('offerExpansionSelect');
+        const nameInput = document.getElementById('offerPokemonName');
+        // Reset grid to hidden
+        document.getElementById('cardGridContainerOffer').classList.add('hidden');
+        nameInput.value = "";
+        expSel.value = "";
+      })
+      .catch(error => {
+        alert('Error: ' + (error.response?.data?.message || error.message));
+      });
   });
+
+  fetchOfferedPokemon();
 }
 
-// fetchOfferedPokemon()
 function fetchOfferedPokemon() {
   axios.get(`/pokemon/offered?username=${currentUser.username}`)
     .then(response => {
@@ -306,7 +322,6 @@ function fetchOfferedPokemon() {
     });
 }
 
-// deleteOffer()
 function deleteOffer(offerId) {
   axios.delete('/pokemon/offer/delete', { data: { offer_id: offerId } })
     .then(() => {
@@ -317,8 +332,18 @@ function deleteOffer(offerId) {
     });
 }
 
-// searchPokemon()
+/* -------------- SEARCH ---------------- */
 function searchPokemon() {
+  // Remove leftover outside-click listeners
+  if (handleOfferOutsideClick) {
+    document.removeEventListener('mousedown', handleOfferOutsideClick);
+    handleOfferOutsideClick = null;
+  }
+  if (handleSearchOutsideClick) {
+    document.removeEventListener('mousedown', handleSearchOutsideClick);
+    handleSearchOutsideClick = null;
+  }
+
   const actionArea = document.getElementById('actionArea');
   actionArea.innerHTML = `
     <div class="centered-content">
@@ -338,55 +363,85 @@ function searchPokemon() {
             type="text"
             class="form-control"
             id="searchPokemonName"
-            list="searchPokemonList"
             placeholder="Enter Pokémon name"
-            required
           >
-          <datalist id="searchPokemonList"></datalist>
         </div>
+        <div id="cardGridContainerSearch" class="pokemon-grid hidden"></div>
         <button type="submit" class="btn btn-primary">Submit Search</button>
       </form>
       <h4 class="mt-4">Your Searched Pokémon</h4>
       <ul id="searchedPokemonList" class="list-group"></ul>
     </div>
   `;
+
   loadExpansions("searchExpansionSelect");
-  loadPokemonNamesDatalist("searchExpansionSelect", "searchPokemonList");
-  fetchSearchedPokemon();
-  document.getElementById('searchExpansionSelect')
-    .addEventListener('change', () => {
-      loadPokemonNamesDatalist("searchExpansionSelect", "searchPokemonList");
+  loadAllCards().then(() => {
+    selectedCards = [];
+    const selectExp = document.getElementById('searchExpansionSelect');
+    const inputName = document.getElementById('searchPokemonName');
+    const gridContainer = document.getElementById('cardGridContainerSearch');
+    const searchForm = document.getElementById('searchPokemonForm');
+
+    selectExp.addEventListener('change', () => {
+      selectedCards = [];
+      updateCardGrid('cardGridContainerSearch', selectExp.value, inputName.value);
     });
+    inputName.addEventListener('focus', () => {
+      updateCardGrid('cardGridContainerSearch', selectExp.value, inputName.value);
+    });
+    inputName.addEventListener('input', () => {
+      selectedCards = [];
+      updateCardGrid('cardGridContainerSearch', selectExp.value, inputName.value);
+    });
+
+    // Outside-click listener for the Search page
+    handleSearchOutsideClick = (evt) => {
+      const clickInsideForm = searchForm.contains(evt.target);
+      const clickInsideGrid = gridContainer.contains(evt.target);
+      if (!clickInsideForm && !clickInsideGrid) {
+        // They clicked completely outside the Search form and grid
+        if (!selectedCards.length) {
+          gridContainer.classList.add('hidden');
+        }
+      }
+    };
+    document.addEventListener('mousedown', handleSearchOutsideClick);
+
+    gridContainer.classList.add('hidden');
+  });
+
   document.getElementById('searchPokemonForm').addEventListener('submit', function (e) {
     e.preventDefault();
-    const typedValue = document.getElementById('searchPokemonName').value.trim();
-    const allOptions = [...document.querySelectorAll('#searchPokemonList option')].map(o => o.value);
-    if (!allOptions.includes(typedValue)) {
-      alert("Invalid Pokémon combo! Please select from the list.");
+    if (!selectedCards.length) {
+      alert("Please select at least one card to search.");
       return;
     }
-    const parsed = parseComboString(typedValue);
-    if (!parsed) {
-      alert("Invalid format! Use 'Name (Expansion, Rarity)'");
-      return;
-    }
-    axios.post('/pokemon/search', {
-      username: currentUser.username,
-      pokemon: parsed.name,
-      expansion: parsed.expansion,
-      rarity: parsed.rarity
-    })
-    .then(() => {
-      fetchSearchedPokemon();
-      document.getElementById('searchPokemonName').value = '';
-    })
-    .catch(error => {
-      alert('Error: ' + (error.response?.data?.message || error.message));
+    const promises = selectedCards.map(card => {
+      return axios.post('/pokemon/search', {
+        username: currentUser.username,
+        pokemon: card.name,
+        expansion: card.expansion,
+        rarity: card.rarity
+      });
     });
+    Promise.all(promises)
+      .then(() => {
+        fetchSearchedPokemon();
+        selectedCards = [];
+        const expSel = document.getElementById('searchExpansionSelect');
+        const nameInput = document.getElementById('searchPokemonName');
+        document.getElementById('cardGridContainerSearch').classList.add('hidden');
+        nameInput.value = "";
+        expSel.value = "";
+      })
+      .catch(error => {
+        alert('Error: ' + (error.response?.data?.message || error.message));
+      });
   });
+
+  fetchSearchedPokemon();
 }
 
-// fetchSearchedPokemon()
 function fetchSearchedPokemon() {
   axios.get(`/pokemon/searched?username=${currentUser.username}`)
     .then(response => {
@@ -434,7 +489,6 @@ function fetchSearchedPokemon() {
     });
 }
 
-// deleteSearch()
 function deleteSearch(searchId) {
   axios.delete('/pokemon/search/delete', { data: { search_id: searchId } })
     .then(() => {
@@ -445,27 +499,32 @@ function deleteSearch(searchId) {
     });
 }
 
+/* ------------ MAGICAL MATCH ------------ */
 function magicalMatch() {
+  // Remove leftover outside-click listeners (just in case)
+  if (handleOfferOutsideClick) {
+    document.removeEventListener('mousedown', handleOfferOutsideClick);
+    handleOfferOutsideClick = null;
+  }
+  if (handleSearchOutsideClick) {
+    document.removeEventListener('mousedown', handleSearchOutsideClick);
+    handleSearchOutsideClick = null;
+  }
+
   const someContainer = document.getElementById('actionArea');
   someContainer.innerHTML = '<h3>Two-Sided Magical Match Results</h3>';
 
   axios.get(`/pokemon/magical_match?username=${currentUser.username}`)
     .then(response => {
       const data = response.data;
-
-      // If the server returns something like { message: "..."} instead of an array
       if (data && data.message && !Array.isArray(data)) {
         someContainer.innerHTML += `<p>${data.message}</p>`;
         return;
       }
-
-      // If data is an array but empty => no matches found
       if (!data || data.length === 0) {
         someContainer.innerHTML += '<p>No users up for a trade at the moment.<br>Try adding ALL Pokémons you can offer and ALL Pokémons you search.<br>Try later on the Magical Match!</p>';
         return;
       }
-
-      // Otherwise, data is an array of matches
       let html = '';
       data.forEach(item => {
         const mySTO = item.mySearch_TheirOffer || [];
@@ -484,9 +543,7 @@ function magicalMatch() {
       someContainer.innerHTML += html;
     })
     .catch(error => {
-      // If the server responded with 403, meaning user in "ALL" condition
       if (error.response && error.response.status === 403) {
-        // Instead of a big alert, show the message inline
         const msg = error.response.data.message || "You are in a 'no trade' status, no matches found.";
         someContainer.innerHTML += `<p>${msg}</p>`;
       } else {
@@ -495,20 +552,16 @@ function magicalMatch() {
     });
 }
 
-/**
- * showProfile(), updateProfile(), closeProfileCard() -> Gestione del profilo utente
- */
+/* ------------ PROFILE ------------ */
 function showProfile() {
-  const profileCard = document.getElementById('profileCard');
-  const username = currentUser.username || 'Unknown User';
-  const email = currentUser.email || 'N/A';
-  const pokemonId = currentUser.pokemonId || 'N/A';
-
-  document.getElementById('profileUsername').textContent = username;
-  document.getElementById('profileEmail').textContent = email;
-  document.getElementById('profilePokemonId').textContent = pokemonId;
-
-  profileCard.classList.remove('hidden');
+  document.getElementById('mainAppContainer').classList.add('hidden');
+  document.getElementById('profileViewContainer').classList.remove('hidden');
+  document.getElementById('profile_username').value = currentUser?.username || '';
+  document.getElementById('profile_email').value = currentUser?.email || '';
+  document.getElementById('profile_pokemon_id').value = currentUser?.pokemonId || '';
+  document.getElementById('profile_password').value = currentUser?.password || '';
+  document.getElementById('profile_trade_condition').value = currentUser?.trade_condition || 'ALL';
+  document.getElementById('updateProfileForm').addEventListener('submit', updateProfile);
 }
 
 function updateProfile(event) {
@@ -529,14 +582,11 @@ function updateProfile(event) {
   })
   .then(response => {
     alert(response.data.message || 'Profile updated successfully!');
-
-    // Update currentUser in memory
     currentUser.username = newUsername;
     currentUser.email = newEmail;
     currentUser.password = newPassword;
     currentUser.pokemonId = newPokemonId;
     currentUser.trade_condition = newTradeCondition;
-
     navigateToMainApp(newUsername);
   })
   .catch(error => {
@@ -547,4 +597,31 @@ function updateProfile(event) {
 function closeProfileCard() {
   const profileCard = document.getElementById('profileCard');
   profileCard.classList.add('hidden');
+}
+
+/**
+ * Carica la lista delle espansioni nel select
+ */
+function loadExpansions(selectId) {
+  axios.get('/get_pokemon_names?list_expansions=true')
+    .then(response => {
+      const expansions = response.data;
+      const selectEl = document.getElementById(selectId);
+      if (!selectEl) return;
+      selectEl.innerHTML = '';
+      const defaultOpt = document.createElement('option');
+      defaultOpt.value = '';
+      defaultOpt.textContent = 'Select expansion';
+      selectEl.appendChild(defaultOpt);
+
+      expansions.forEach(exp => {
+        const opt = document.createElement('option');
+        opt.value = exp;
+        opt.textContent = exp;
+        selectEl.appendChild(opt);
+      });
+    })
+    .catch(err => {
+      console.error("Errore expansions:", err);
+    });
 }

@@ -30,7 +30,6 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
     pokemon_id = db.Column(db.String(50), nullable=False)
-    # Ora di default "ALL" invece che "NONE"
     trade_condition = db.Column(db.String(20), nullable=False, default="ALL")
 
 class Offer(db.Model):
@@ -51,7 +50,6 @@ class Search(db.Model):
 def index():
     return render_template('index.html')
 
-# Registration route
 @app.route('/register', methods=['POST'])
 def register():
     data = request.json
@@ -61,7 +59,7 @@ def register():
         email=data['email'],
         password=hashed_password,
         pokemon_id=data['pokemon_id'],
-        trade_condition="ALL"  # Impostato di default alla creazione
+        trade_condition="ALL"
     )
     db.session.add(new_user)
     db.session.commit()
@@ -73,7 +71,6 @@ def register():
         "trade_condition": new_user.trade_condition
     })
 
-# Login route
 @app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
@@ -89,14 +86,11 @@ def login():
             "username": user.username,
             "email": user.email,
             "pokemon_id": user.pokemon_id,
-            "trade_condition": user.trade_condition  # <--- Key line
+            "trade_condition": user.trade_condition
         })
     return jsonify({"message": "Invalid email or password"}), 401
 
 def send_mail_with_mailjet(to_email, subject, text_body):
-    """
-    Sends an email using the Mailjet REST API.
-    """
     api_key = os.getenv('MAILJET_API_KEY')
     api_secret = os.getenv('MAILJET_API_SECRET')
     if not api_key or not api_secret:
@@ -128,7 +122,6 @@ def send_mail_with_mailjet(to_email, subject, text_body):
 def forgot_password():
     data = request.json
     email = data.get('email')
-
     user = User.query.filter_by(email=email).first()
     if not user:
         return jsonify({"message": "No user with that email"}), 404
@@ -167,7 +160,6 @@ def reset_password(token):
     db.session.commit()
     return jsonify({"message": "Password reset successful!"})
 
-# Updates user credentials
 @app.route('/user/update', methods=['PUT'])
 def update_user():
     data = request.json
@@ -186,7 +178,6 @@ def update_user():
     user.pokemon_id = new_pokemon_id
     user.password = generate_password_hash(new_password)
 
-    # Make sure the request’s JSON includes 'trade_condition' if you want to allow changes
     new_trade_condition = data.get('trade_condition')
     if new_trade_condition in ["ALL", "COMMON", "NONE"]:
         user.trade_condition = new_trade_condition
@@ -194,9 +185,6 @@ def update_user():
     db.session.commit()
     return jsonify({"message": "Profile updated successfully!"})
 
-###############################################################################
-# OFFER POKEMON
-###############################################################################
 @app.route('/pokemon/offer', methods=['POST'])
 def add_offer():
     data = request.json
@@ -208,11 +196,8 @@ def add_offer():
     user_expansion = data.get('expansion', '').strip()
     user_rarity = data.get('rarity', '').strip()
 
-    # ONLY fallback if user_expansion is truly empty
     if not user_expansion:
         user_expansion = get_expansion_for_pokemon(pokemon_name)
-
-    # ONLY fallback if user_rarity is truly empty
     if not user_rarity:
         user_rarity = get_rarity_for_pokemon(pokemon_name)
 
@@ -244,7 +229,6 @@ def get_offered_pokemon():
         return jsonify({"message": "User not found!"}), 404
 
     offers = Offer.query.filter_by(user_id=user.id).all()
-    
     results = []
     for offer in offers:
         partial_image = get_image_for_pokemon(
@@ -260,7 +244,6 @@ def get_offered_pokemon():
             "rarity": offer.rarity,
             "image_url": full_image_url
         })
-
     return jsonify(results)
 
 @app.route('/pokemon/offer/delete', methods=['DELETE'])
@@ -273,9 +256,6 @@ def delete_offer():
         return jsonify({"message": "Offer deleted successfully!"})
     return jsonify({"message": "Offer not found!"}), 404
 
-###############################################################################
-# SEARCH POKEMON
-###############################################################################
 @app.route('/pokemon/search', methods=['POST'])
 def add_search():
     data = request.json
@@ -287,11 +267,8 @@ def add_search():
     user_expansion = data.get('expansion', '').strip()
     user_rarity = data.get('rarity', '').strip()
 
-    # ONLY fallback if user_expansion is truly empty
     if not user_expansion:
         user_expansion = get_expansion_for_pokemon(pokemon_name)
-
-    # ONLY fallback if user_rarity is truly empty
     if not user_rarity:
         user_rarity = get_rarity_for_pokemon(pokemon_name)
 
@@ -323,7 +300,6 @@ def get_searched_pokemon():
         return jsonify({"message": "User not found!"}), 404
 
     searches = Search.query.filter_by(user_id=user.id).all()
-
     results = []
     for s in searches:
         partial_image = get_image_for_pokemon(
@@ -332,7 +308,6 @@ def get_searched_pokemon():
             rarity_name=s.rarity
         )
         full_image_url = f"{BASE_URL}/{partial_image}" if partial_image else ""
-
         results.append({
             "id": s.id,
             "pokemon": s.pokemon,
@@ -346,17 +321,12 @@ def get_searched_pokemon():
 def delete_search():
     search_id = request.json.get('search_id')
     searched = Search.query.filter_by(id=search_id).first()
-
     if searched:
         db.session.delete(searched)
         db.session.commit()
         return jsonify({"message": "Searched Pokémon entry deleted successfully!"})
-
     return jsonify({"message": "Searched Pokémon entry not found!"}), 404
 
-###############################################################################
-# MAGIC MATCH
-###############################################################################
 @app.route('/pokemon/magical_match', methods=['GET'])
 def magical_match():
     username = request.args.get('username')
@@ -402,34 +372,15 @@ def magical_match():
     return jsonify(matches)
 
 def is_same_card(offer_or_search_obj, want_obj):
-    """
-    Checks if two objects describe the 'same card' by name + expansion + rarity.
-    Adjust if you want partial matching (e.g. ignoring expansion).
-    """
-    return (offer_or_search_obj.pokemon == want_obj.pokemon
-            and offer_or_search_obj.expansion == want_obj.expansion
-            and offer_or_search_obj.rarity == want_obj.rarity)
+    return (
+        offer_or_search_obj.pokemon == want_obj.pokemon and
+        offer_or_search_obj.expansion == want_obj.expansion and
+        offer_or_search_obj.rarity == want_obj.rarity
+    )
 
-###############################################################################
-# GET POKEMON NAMES
-###############################################################################
 @app.route('/get_pokemon_names', methods=['GET'])
 def get_pokemon_names():
-    """
-    Usage:
-      1) ?list_expansions=true => returns a list of expansions only
-      2) ?with_rarity=true     => returns combined strings "Name (Expansion, Rarity)"
-         filtered by expansion if ?expansion=<value> is also given
-      3) Else, if neither of the above, returns just the Pokémon names (the old logic).
-
-    CSV structure:
-      row[0] = Espansione
-      row[1] = Nome
-      row[2] = Rarità
-      (optionally row[3] = Immagine, but unused here)
-    """
     csv_path = os.path.join(app.root_path, 'static/files/Anagrafica_Pokemon.csv')
-
     list_expansions_flag = request.args.get('list_expansions', '').lower() == 'true'
     with_rarity_flag = request.args.get('with_rarity', '').lower() == 'true'
     expansion_param = request.args.get('expansion', '').strip().lower()
@@ -440,37 +391,25 @@ def get_pokemon_names():
     try:
         with open(csv_path, 'r') as file:
             csv_reader = csv.reader(file, delimiter=';')
-            next(csv_reader, None)  # Skip header if present
-
+            next(csv_reader, None)
             for row in csv_reader:
                 if len(row) < 2:
-                    continue  # We need at least [0]=Expansion, [1]=Name
-
+                    continue
                 csv_expansion = row[0].strip()
                 csv_expansion_lower = csv_expansion.lower()
-
                 nome_pokemon = row[1].strip()
-                # If available, get rarity
                 csv_rarity = row[2].strip() if len(row) >= 3 else ""
-
-                # Track expansions for the expansions-only list
                 if csv_expansion_lower:
                     expansions_set.add(csv_expansion_lower)
-
-                # If we're listing expansions => skip the rest of logic
                 if list_expansions_flag:
                     continue
-
-                # Check expansion filter
                 if expansion_param and csv_expansion_lower != expansion_param:
                     continue
-
                 if with_rarity_flag:
                     combo_str = f"{nome_pokemon} ({csv_expansion}, {csv_rarity})"
                     results_list.append(combo_str)
                 else:
                     results_list.append(nome_pokemon)
-
     except FileNotFoundError:
         return jsonify({"error": "File not found"}), 404
     except Exception as e:
@@ -479,27 +418,20 @@ def get_pokemon_names():
     if list_expansions_flag:
         expansions_sorted = sorted([exp.capitalize() for exp in expansions_set])
         return jsonify(expansions_sorted)
-
     unique_sorted = sorted(set(results_list))
     return jsonify(unique_sorted)
 
-###############################################################################
-# HELPER FUNCTIONS
-###############################################################################
 BASE_URL = "https://assets.pokemon-zone.com/game-assets/CardPreviews"
 
 def get_image_for_pokemon(pokemon_name, expansion_name, rarity_name):
     csv_path = os.path.join(app.root_path, 'static/files/Anagrafica_Pokemon.csv')
-    
     name_lower = pokemon_name.strip().lower()
     expansion_lower = expansion_name.strip().lower()
     rarity_lower = rarity_name.strip().lower()
-
     try:
         with open(csv_path, 'r', encoding='utf-8') as file:
             csv_reader = csv.reader(file, delimiter=';')
-            header = next(csv_reader, None)  # skip header if present
-
+            next(csv_reader, None)
             for row in csv_reader:
                 if len(row) < 4:
                     continue
@@ -507,18 +439,12 @@ def get_image_for_pokemon(pokemon_name, expansion_name, rarity_name):
                 csv_name = row[1].strip().lower()
                 csv_rarity = row[2].strip().lower()
                 csv_image = row[3].strip()
-
-                if (
-                    csv_expansion == expansion_lower and
-                    csv_name == name_lower and
-                    csv_rarity == rarity_lower
-                ):
+                if csv_expansion == expansion_lower and csv_name == name_lower and csv_rarity == rarity_lower:
                     return csv_image
     except FileNotFoundError:
         print("CSV file not found in get_image_for_pokemon.")
     except Exception as e:
         print("Error in get_image_for_pokemon:", e)
-
     return ""
 
 def get_rarity_for_pokemon(pokemon_name):
@@ -527,7 +453,7 @@ def get_rarity_for_pokemon(pokemon_name):
     try:
         with open(csv_path, 'r') as file:
             csv_reader = csv.reader(file, delimiter=';')
-            header = next(csv_reader, None)
+            next(csv_reader, None)
             for row in csv_reader:
                 if len(row) < 3:
                     continue
@@ -544,7 +470,6 @@ def get_rarity_for_pokemon(pokemon_name):
 def get_expansion_for_pokemon(pokemon_name):
     csv_path = os.path.join(app.root_path, 'static/files/Anagrafica_Pokemon.csv')
     name_lower = pokemon_name.strip().lower()
-
     try:
         with open(csv_path, 'r') as file:
             csv_reader = csv.reader(file, delimiter=';')
@@ -564,31 +489,48 @@ def get_expansion_for_pokemon(pokemon_name):
 
 @app.route('/user/trade_condition', methods=['PUT'])
 def update_trade_condition():
-    """
-    Aggiorna la condizione di scambio dell'utente (ALL, COMMON, NONE)
-    """
     data = request.json
     username = data.get('username')
     new_condition = data.get('trade_condition')
-
     if not username or not new_condition:
         return jsonify({"message": "username and trade_condition are required"}), 400
-
     if new_condition not in ["ALL", "COMMON", "NONE"]:
         return jsonify({"message": "Invalid trade_condition. Must be ALL, COMMON, or NONE."}), 400
-
     user = User.query.filter_by(username=username).first()
     if not user:
         return jsonify({"message": "User not found"}), 404
-
     user.trade_condition = new_condition
     db.session.commit()
-
     return jsonify({"message": f"Trade status updated to {new_condition} for user {username}."})
 
-###############################################################################
-# MAIN
-###############################################################################
+# Rotta per restituire l'elenco completo di (espansione, nome, rarità, immagine)
+@app.route('/get_all_cards', methods=['GET'])
+def get_all_cards():
+    csv_path = os.path.join(app.root_path, 'static/files/Anagrafica_Pokemon.csv')
+    cards = []
+    try:
+        with open(csv_path, 'r', encoding='utf-8') as file:
+            csv_reader = csv.reader(file, delimiter=';')
+            next(csv_reader, None)
+            for row in csv_reader:
+                if len(row) < 4:
+                    continue
+                exp = row[0].strip()
+                name = row[1].strip()
+                rar = row[2].strip()
+                img = row[3].strip()
+                cards.append({
+                    "expansion": exp,
+                    "name": name,
+                    "rarity": rar,
+                    "image_url": f"{BASE_URL}/{img}" if img else ""
+                })
+        return jsonify(cards)
+    except FileNotFoundError:
+        return jsonify({"error": "File not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
