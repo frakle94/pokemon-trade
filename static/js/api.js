@@ -4,13 +4,9 @@ let currentUser = null;
 let allCards = [];
 let selectedCards = [];
 
-// We'll store references so we can remove them when switching pages
 let handleOfferOutsideClick = null;
 let handleSearchOutsideClick = null;
 
-/**
- * Handles registration flow
- */
 function handleRegistration(e) {
   e.preventDefault();
   const username = document.getElementById('reg_username').value;
@@ -29,9 +25,6 @@ function handleRegistration(e) {
     });
 }
 
-/**
- * Handles login flow
- */
 function handleLogin(e) {
   e.preventDefault();
   const email = document.getElementById('login_email').value;
@@ -53,9 +46,6 @@ function handleLogin(e) {
     });
 }
 
-/**
- * Handles forgot password
- */
 function handleForgotPassword(e) {
   e.preventDefault();
   const email = document.getElementById('forgot_email').value;
@@ -68,17 +58,6 @@ function handleForgotPassword(e) {
     });
 }
 
-/**
- * Navigation to main features
- */
-function navigateToFeatures(username, email, pokemonId, password, tradeCondition = 'ALL') {
-  currentUser = { username, email, pokemonId, password, trade_condition: tradeCondition };
-  navigateToMainApp(username);
-}
-
-/**
- * Carica la lista di tutte le carte dal server
- */
 function loadAllCards() {
   return axios.get('/get_all_cards')
     .then(response => {
@@ -90,20 +69,15 @@ function loadAllCards() {
     });
 }
 
-/**
- * Mostra/Nasconde la griglia e popola con i filtri.
- */
 function updateCardGrid(containerId, expansionFilter, nameFilter) {
   const container = document.getElementById(containerId);
   if (!container) return;
 
-  // Se container è nascosto di default, lo rendiamo visibile
   container.classList.remove('hidden');
 
   const filterExp = expansionFilter.trim().toLowerCase();
   const filterName = nameFilter.trim().toLowerCase();
 
-  // Filtriamo
   const filtered = allCards.filter(card => {
     const cExp = (card.expansion || '').toLowerCase();
     const cName = (card.name || '').toLowerCase();
@@ -145,7 +119,6 @@ function toggleCardSelection(card) {
     selectedCards.splice(index, 1);
   }
 
-  // Ricarichiamo la griglia (sia in Offer che in Search, se presente)
   const offExp = document.getElementById('offerExpansionSelect');
   const offName = document.getElementById('offerPokemonName');
   const searchExp = document.getElementById('searchExpansionSelect');
@@ -159,9 +132,7 @@ function toggleCardSelection(card) {
   }
 }
 
-/* -------------- OFFER ---------------- */
 function offerPokemon() {
-  // 1) Remove any leftover "outside-click" listener from previous pages
   if (handleOfferOutsideClick) {
     document.removeEventListener('mousedown', handleOfferOutsideClick);
     handleOfferOutsideClick = null;
@@ -193,7 +164,6 @@ function offerPokemon() {
             placeholder="Enter Pokémon name"
           >
         </div>
-        <!-- Griglia nascosta di default: appare su focus/change -->
         <div id="cardGridContainerOffer" class="pokemon-grid hidden"></div>
         <button type="submit" class="btn btn-primary">Submit Offer</button>
       </form>
@@ -211,7 +181,6 @@ function offerPokemon() {
     const gridContainer = document.getElementById('cardGridContainerOffer');
     const offerForm = document.getElementById('offerPokemonForm');
 
-    // Show the grid on focus or expansion change
     selectExp.addEventListener('change', () => {
       selectedCards = [];
       updateCardGrid('cardGridContainerOffer', selectExp.value, inputName.value);
@@ -224,12 +193,10 @@ function offerPokemon() {
       updateCardGrid('cardGridContainerOffer', selectExp.value, inputName.value);
     });
 
-    // 2) Attach outside-click listener for the Offer page
     handleOfferOutsideClick = (evt) => {
       const clickInsideForm = offerForm.contains(evt.target);
       const clickInsideGrid = gridContainer.contains(evt.target);
       if (!clickInsideForm && !clickInsideGrid) {
-        // They clicked completely outside the Offer form and grid
         if (!selectedCards.length) {
           gridContainer.classList.add('hidden');
         }
@@ -237,11 +204,9 @@ function offerPokemon() {
     };
     document.addEventListener('mousedown', handleOfferOutsideClick);
 
-    // The grid remains hidden by default
     gridContainer.classList.add('hidden');
   });
 
-  // Submit Offer
   document.getElementById('offerPokemonForm').addEventListener('submit', function (e) {
     e.preventDefault();
     if (!selectedCards.length) {
@@ -262,7 +227,6 @@ function offerPokemon() {
         selectedCards = [];
         const expSel = document.getElementById('offerExpansionSelect');
         const nameInput = document.getElementById('offerPokemonName');
-        // Reset grid to hidden
         document.getElementById('cardGridContainerOffer').classList.add('hidden');
         nameInput.value = "";
         expSel.value = "";
@@ -332,9 +296,7 @@ function deleteOffer(offerId) {
     });
 }
 
-/* -------------- SEARCH ---------------- */
 function searchPokemon() {
-  // Remove leftover outside-click listeners
   if (handleOfferOutsideClick) {
     document.removeEventListener('mousedown', handleOfferOutsideClick);
     handleOfferOutsideClick = null;
@@ -394,12 +356,10 @@ function searchPokemon() {
       updateCardGrid('cardGridContainerSearch', selectExp.value, inputName.value);
     });
 
-    // Outside-click listener for the Search page
     handleSearchOutsideClick = (evt) => {
       const clickInsideForm = searchForm.contains(evt.target);
       const clickInsideGrid = gridContainer.contains(evt.target);
       if (!clickInsideForm && !clickInsideGrid) {
-        // They clicked completely outside the Search form and grid
         if (!selectedCards.length) {
           gridContainer.classList.add('hidden');
         }
@@ -499,9 +459,7 @@ function deleteSearch(searchId) {
     });
 }
 
-/* ------------ MAGICAL MATCH ------------ */
 function magicalMatch() {
-  // Remove leftover outside-click listeners (just in case)
   if (handleOfferOutsideClick) {
     document.removeEventListener('mousedown', handleOfferOutsideClick);
     handleOfferOutsideClick = null;
@@ -552,7 +510,6 @@ function magicalMatch() {
     });
 }
 
-/* ------------ PROFILE ------------ */
 function showProfile() {
   document.getElementById('mainAppContainer').classList.add('hidden');
   document.getElementById('profileViewContainer').classList.remove('hidden');
@@ -587,7 +544,14 @@ function updateProfile(event) {
     currentUser.password = newPassword;
     currentUser.pokemonId = newPokemonId;
     currentUser.trade_condition = newTradeCondition;
-    navigateToMainApp(newUsername);
+
+    navigateToFeatures(
+      currentUser.username,
+      currentUser.email,
+      currentUser.pokemonId,
+      currentUser.password,
+      currentUser.trade_condition
+    );
   })
   .catch(error => {
     alert('Error updating profile: ' + (error.response?.data?.message || error.message));
@@ -599,9 +563,6 @@ function closeProfileCard() {
   profileCard.classList.add('hidden');
 }
 
-/**
- * Carica la lista delle espansioni nel select
- */
 function loadExpansions(selectId) {
   axios.get('/get_pokemon_names?list_expansions=true')
     .then(response => {
