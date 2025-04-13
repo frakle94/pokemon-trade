@@ -69,21 +69,26 @@ function loadAllCards() {
     });
 }
 
-function updateCardGrid(containerId, expansionFilter, nameFilter) {
+function updateCardGrid(containerId, expansionFilter, nameFilter, rarityFilter) {
   const container = document.getElementById(containerId);
   if (!container) return;
 
   container.classList.remove('hidden');
 
-  const filterExp = expansionFilter.trim().toLowerCase();
-  const filterName = nameFilter.trim().toLowerCase();
+  const filterExp = (expansionFilter || '').trim().toLowerCase();
+  const filterName = (nameFilter || '').trim().toLowerCase();
+  const filterRarity = (rarityFilter || '').trim().toLowerCase();
 
   const filtered = allCards.filter(card => {
     const cExp = (card.expansion || '').toLowerCase();
     const cName = (card.name || '').toLowerCase();
+    const cRarity = (card.rarity || '').toLowerCase();
+
     const passExp = !filterExp || cExp === filterExp;
     const passName = !filterName || cName.includes(filterName);
-    return passExp && passName;
+    const passRarity = !filterRarity || cRarity === filterRarity;
+
+    return passExp && passName && passRarity;
   });
 
   container.innerHTML = '';
@@ -120,15 +125,33 @@ function toggleCardSelection(card) {
   }
 
   const offExp = document.getElementById('offerExpansionSelect');
+  const offRarity = document.getElementById('offerRaritySelect');
   const offName = document.getElementById('offerPokemonName');
-  const searchExp = document.getElementById('searchExpansionSelect');
-  const searchName = document.getElementById('searchPokemonName');
+  const cardGridOffer = document.getElementById('cardGridContainerOffer');
 
-  if (offExp && offName && document.getElementById('cardGridContainerOffer')) {
-    updateCardGrid('cardGridContainerOffer', offExp.value, offName.value);
+  const searchExp = document.getElementById('searchExpansionSelect');
+  const searchRarity = document.getElementById('searchRaritySelect');
+  const searchName = document.getElementById('searchPokemonName');
+  const cardGridSearch = document.getElementById('cardGridContainerSearch');
+
+  // If the offer grid exists, re-apply all filters (including rarity)
+  if (offExp && offRarity && offName && cardGridOffer) {
+    updateCardGrid(
+      'cardGridContainerOffer',
+      offExp.value,
+      offName.value,
+      offRarity.value
+    );
   }
-  if (searchExp && searchName && document.getElementById('cardGridContainerSearch')) {
-    updateCardGrid('cardGridContainerSearch', searchExp.value, searchName.value);
+
+  // If the search grid exists, re-apply all filters (including rarity)
+  if (searchExp && searchRarity && searchName && cardGridSearch) {
+    updateCardGrid(
+      'cardGridContainerSearch',
+      searchExp.value,
+      searchName.value,
+      searchRarity.value
+    );
   }
 }
 
@@ -155,6 +178,15 @@ function offerPokemon() {
           <option value="" selected>Select expansion</option>
         </select>
       </div>
+      <div class="mb-3">
+        <select
+          id="offerRaritySelect"
+          class="form-control"
+          style="background-color: #000; color: #fff;"
+        >
+          <option value="" selected>Select rarity</option>
+        </select>
+      </div>
       <form id="offerPokemonForm" class="mx-auto" autocomplete="off">
         <div class="mb-3">
           <input
@@ -173,26 +205,40 @@ function offerPokemon() {
   `;
 
   loadExpansions("offerExpansionSelect");
+  loadRarity("offerRaritySelect");
   loadAllCards().then(() => {
     selectedCards = [];
 
     const selectExp = document.getElementById('offerExpansionSelect');
+    const selectRarity = document.getElementById('offerRaritySelect');
     const inputName = document.getElementById('offerPokemonName');
     const gridContainer = document.getElementById('cardGridContainerOffer');
     const offerForm = document.getElementById('offerPokemonForm');
 
+    // When expansion changes, reset selectedCards and update the grid
     selectExp.addEventListener('change', () => {
       selectedCards = [];
-      updateCardGrid('cardGridContainerOffer', selectExp.value, inputName.value);
-    });
-    inputName.addEventListener('focus', () => {
-      updateCardGrid('cardGridContainerOffer', selectExp.value, inputName.value);
-    });
-    inputName.addEventListener('input', () => {
-      selectedCards = [];
-      updateCardGrid('cardGridContainerOffer', selectExp.value, inputName.value);
+      updateCardGrid('cardGridContainerOffer', selectExp.value, inputName.value, selectRarity.value);
     });
 
+    // When rarity changes, also filter the grid
+    selectRarity.addEventListener('change', () => {
+      selectedCards = [];
+      updateCardGrid('cardGridContainerOffer', selectExp.value, inputName.value, selectRarity.value);
+    });
+
+    // Focus in name field -> show grid with current filters
+    inputName.addEventListener('focus', () => {
+      updateCardGrid('cardGridContainerOffer', selectExp.value, inputName.value, selectRarity.value);
+    });
+
+    // Typing in name -> reset cards, then update grid
+    inputName.addEventListener('input', () => {
+      selectedCards = [];
+      updateCardGrid('cardGridContainerOffer', selectExp.value, inputName.value, selectRarity.value);
+    });
+
+    // Hide the grid when clicking outside, if no cards are selected
     handleOfferOutsideClick = (evt) => {
       const clickInsideForm = offerForm.contains(evt.target);
       const clickInsideGrid = gridContainer.contains(evt.target);
@@ -207,6 +253,7 @@ function offerPokemon() {
     gridContainer.classList.add('hidden');
   });
 
+  // Submitting the offer -> post each selected card
   document.getElementById('offerPokemonForm').addEventListener('submit', function (e) {
     e.preventDefault();
     if (!selectedCards.length) {
@@ -319,6 +366,15 @@ function searchPokemon() {
           <option value="" selected>Select expansion</option>
         </select>
       </div>
+      <div class="mb-3">
+        <select
+          id="searchRaritySelect"
+          class="form-control"
+          style="background-color: #000; color: #fff;"
+        >
+          <option value="" selected>Select rarity</option>
+        </select>
+      </div>
       <form id="searchPokemonForm" class="mx-auto" autocomplete="off">
         <div class="mb-3">
           <input
@@ -337,23 +393,34 @@ function searchPokemon() {
   `;
 
   loadExpansions("searchExpansionSelect");
+  loadRarity("searchRaritySelect");
   loadAllCards().then(() => {
     selectedCards = [];
+
     const selectExp = document.getElementById('searchExpansionSelect');
+    const selectRarity = document.getElementById('searchRaritySelect');
     const inputName = document.getElementById('searchPokemonName');
     const gridContainer = document.getElementById('cardGridContainerSearch');
     const searchForm = document.getElementById('searchPokemonForm');
 
+    // Filter by expansion, name, rarity
     selectExp.addEventListener('change', () => {
       selectedCards = [];
-      updateCardGrid('cardGridContainerSearch', selectExp.value, inputName.value);
+      updateCardGrid('cardGridContainerSearch', selectExp.value, inputName.value, selectRarity.value);
     });
+
+    selectRarity.addEventListener('change', () => {
+      selectedCards = [];
+      updateCardGrid('cardGridContainerSearch', selectExp.value, inputName.value, selectRarity.value);
+    });
+
     inputName.addEventListener('focus', () => {
-      updateCardGrid('cardGridContainerSearch', selectExp.value, inputName.value);
+      updateCardGrid('cardGridContainerSearch', selectExp.value, inputName.value, selectRarity.value);
     });
+
     inputName.addEventListener('input', () => {
       selectedCards = [];
-      updateCardGrid('cardGridContainerSearch', selectExp.value, inputName.value);
+      updateCardGrid('cardGridContainerSearch', selectExp.value, inputName.value, selectRarity.value);
     });
 
     handleSearchOutsideClick = (evt) => {
@@ -390,9 +457,11 @@ function searchPokemon() {
         selectedCards = [];
         const expSel = document.getElementById('searchExpansionSelect');
         const nameInput = document.getElementById('searchPokemonName');
+        const rarSel = document.getElementById('searchRaritySelect');
         document.getElementById('cardGridContainerSearch').classList.add('hidden');
         nameInput.value = "";
         expSel.value = "";
+        rarSel.value = "";
       })
       .catch(error => {
         alert('Error: ' + (error.response?.data?.message || error.message));
@@ -563,6 +632,7 @@ function closeProfileCard() {
   profileCard.classList.add('hidden');
 }
 
+// We add a function to load rarity as well
 function loadExpansions(selectId) {
   axios.get('/get_pokemon_names?list_expansions=true')
     .then(response => {
@@ -584,5 +654,30 @@ function loadExpansions(selectId) {
     })
     .catch(err => {
       console.error("Errore expansions:", err);
+    });
+}
+
+function loadRarity(selectId) {
+  axios.get('/get_pokemon_names?list_rarities=true')
+    .then(response => {
+      const rarities = response.data;  // array of all distinct rarities from CSV
+      const selectEl = document.getElementById(selectId);
+      if (!selectEl) return;
+      selectEl.innerHTML = '';
+
+      const defaultOpt = document.createElement('option');
+      defaultOpt.value = '';
+      defaultOpt.textContent = 'Select rarity';
+      selectEl.appendChild(defaultOpt);
+
+      rarities.forEach(rar => {
+        const opt = document.createElement('option');
+        opt.value = rar;
+        opt.textContent = rar;
+        selectEl.appendChild(opt);
+      });
+    })
+    .catch(err => {
+      console.error("Error fetching rarities:", err);
     });
 }

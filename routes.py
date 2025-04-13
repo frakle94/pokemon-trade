@@ -357,7 +357,11 @@ def get_pokemon_names():
     with_rarity_flag = request.args.get('with_rarity', '').lower() == 'true'
     expansion_param = request.args.get('expansion', '').strip().lower()
 
+    # New flag for rarities
+    list_rarities_flag = request.args.get('list_rarities', '').lower() == 'true'
+
     expansions_set = set()
+    rarities_set = set()
     results_list = []
 
     try:
@@ -365,31 +369,49 @@ def get_pokemon_names():
             csv_reader = csv.reader(file, delimiter=';')
             next(csv_reader, None)
             for row in csv_reader:
-                if len(row) < 2:
+                if len(row) < 3:
                     continue
+
                 csv_expansion = row[0].strip()
-                csv_expansion_lower = csv_expansion.lower()
                 nome_pokemon = row[1].strip()
-                csv_rarity = row[2].strip() if len(row) >= 3 else ""
-                if csv_expansion_lower:
-                    expansions_set.add(csv_expansion_lower)
-                if list_expansions_flag:
+                csv_rarity = row[2].strip()
+
+                # Track expansions
+                if csv_expansion:
+                    expansions_set.add(csv_expansion.lower())
+
+                # Track rarities
+                if csv_rarity:
+                    rarities_set.add(csv_rarity)
+
+                # If user wants only expansions or rarities, skip building results_list
+                if list_expansions_flag or list_rarities_flag:
                     continue
+
+                csv_expansion_lower = csv_expansion.lower()
                 if expansion_param and csv_expansion_lower != expansion_param:
                     continue
+
                 if with_rarity_flag:
                     combo_str = f"{nome_pokemon} ({csv_expansion}, {csv_rarity})"
                     results_list.append(combo_str)
                 else:
                     results_list.append(nome_pokemon)
+
     except FileNotFoundError:
         return jsonify({"error": "File not found"}), 404
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+    # If user wants expansions
     if list_expansions_flag:
         expansions_sorted = sorted([exp.capitalize() for exp in expansions_set])
         return jsonify(expansions_sorted)
+
+    # If user wants rarities
+    if list_rarities_flag:
+        rarities_sorted = sorted(rarities_set)
+        return jsonify(rarities_sorted)
 
     unique_sorted = sorted(set(results_list))
     return jsonify(unique_sorted)
