@@ -2,3 +2,5 @@ database.db
 .env
 backup_with_new_column.py
 create_db.ipynb
+__pycache__/
+*.pyc
