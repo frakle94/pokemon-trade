@@ -719,6 +719,34 @@ function groupByExpAndRarity(dataArray) {
   return grouped;
 }
 
+// Funzione di utilità per copiare testo (con fallback)
+function copyText(text) {
+  if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
+    // API Clipboard moderna
+    return navigator.clipboard.writeText(text);
+  } else {
+    // Fallback per browser / iOS meno recenti
+    return new Promise((resolve, reject) => {
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      // Posizioniamo il textarea fuori dallo schermo
+      textArea.style.position = "fixed";
+      textArea.style.left = "-9999px";
+      document.body.appendChild(textArea);
+      textArea.select();
+
+      try {
+        document.execCommand("copy");
+        document.body.removeChild(textArea);
+        resolve();
+      } catch (err) {
+        document.body.removeChild(textArea);
+        reject(err);
+      }
+    });
+  }
+}
+
 // Copia negli appunti la lista dei Pokémon Offerti
 function copyOfferedList() {
   axios.get(`/pokemon/offered?username=${currentUser.username}`)
@@ -742,8 +770,8 @@ function copyOfferedList() {
         });
       });
 
-      // Copia negli appunti
-      navigator.clipboard.writeText(textResult)
+      // Copia negli appunti usando la funzione di fallback
+      copyText(textResult)
         .then(() => {
           alert("Offered list copied to clipboard!");
         })
@@ -774,15 +802,15 @@ function copySearchedList() {
         textResult += `**${exp}**\n`;
         const raritiesSearched = Object.keys(groupedSearched[exp]).sort();
         raritiesSearched.forEach(rar => {
-          textResult += `${rar}\n`;
+          textResult += `  ${rar}\n`;
           groupedSearched[exp][rar].forEach(poke => {
             textResult += `    - ${poke.pokemon}\n`;
           });
         });
       });
 
-      // Copia negli appunti
-      navigator.clipboard.writeText(textResult)
+      // Copia negli appunti usando la funzione di fallback
+      copyText(textResult)
         .then(() => {
           alert("Searched list copied to clipboard!");
         })
