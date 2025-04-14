@@ -4,6 +4,10 @@ let currentUser = null;
 let allCards = [];
 let selectedCards = [];
 
+// Global caches for offered/searched data (two-step approach for iOS copy)
+let cachedOfferedData = [];
+let cachedSearchedData = [];
+
 let handleOfferOutsideClick = null;
 let handleSearchOutsideClick = null;
 
@@ -302,6 +306,10 @@ function fetchOfferedPokemon() {
       const offeredList = document.getElementById('offeredPokemonList');
       if (!offeredList) return;
       offeredList.innerHTML = '';
+
+      // Cache the data for two-step approach
+      cachedOfferedData = response.data;
+
       response.data.forEach(offer => {
         const listItem = document.createElement('li');
         listItem.className = 'list-group-item';
@@ -497,6 +505,10 @@ function fetchSearchedPokemon() {
       const searchedList = document.getElementById('searchedPokemonList');
       if (!searchedList) return;
       searchedList.innerHTML = '';
+
+      // Cache the data for two-step approach
+      cachedSearchedData = response.data;
+
       response.data.forEach(search => {
         const listItem = document.createElement('li');
         listItem.className = 'list-group-item';
@@ -746,74 +758,64 @@ async function copyText(text) {
   }
 }
 
-function groupByExpAndRarity(dataArray) {
-  const grouped = {};
-  dataArray.forEach(item => {
-    const exp = item.expansion || 'Unknown';
-    const rar = item.rarity || 'Unknown';
-    if (!grouped[exp]) grouped[exp] = {};
-    if (!grouped[exp][rar]) grouped[exp][rar] = [];
-    grouped[exp][rar].push(item);
+// Copy the list of offered Pokémon from cache only (two-step approach)
+function copyOfferedList() {
+  if (!cachedOfferedData || !cachedOfferedData.length) {
+    alert("No offered data is loaded yet. Please refresh or add some offers first!");
+    return;
+  }
+  const groupedOffered = groupByExpAndRarity(cachedOfferedData);
+  let textResult = "**FOR TRADE:**\n";
+
+  const expansionsOffered = Object.keys(groupedOffered).sort();
+  expansionsOffered.forEach(exp => {
+    textResult += `**${exp}**\n`;
+    const raritiesOffered = Object.keys(groupedOffered[exp]).sort();
+    raritiesOffered.forEach(rar => {
+      textResult += `  ${rar}\n`;
+      groupedOffered[exp][rar].forEach(poke => {
+        textResult += `    - ${poke.pokemon}\n`;
+      });
+    });
   });
-  return grouped;
+
+  copyText(textResult)
+    .then(() => {
+      alert("Offered list copied to clipboard!");
+    })
+    .catch(err => {
+      console.error("Failed to copy offered list:", err);
+      alert("Unable to copy the offered list to clipboard.");
+    });
 }
 
-// Copy the list of offered Pokémon
-async function copyOfferedList() {
-  try {
-    // Use await so we're still in the same call stack as the user gesture
-    const response = await axios.get(`/pokemon/offered?username=${currentUser.username}`);
-    const offeredData = response.data;
-    const groupedOffered = groupByExpAndRarity(offeredData);
+// Copy the list of searched Pokémon from cache only (two-step approach)
+function copySearchedList() {
+  if (!cachedSearchedData || !cachedSearchedData.length) {
+    alert("No searched data is loaded yet. Please refresh or add some searches first!");
+    return;
+  }
+  const groupedSearched = groupByExpAndRarity(cachedSearchedData);
+  let textResult = "**LOOKING FOR:**\n";
 
-    let textResult = "**FOR TRADE:**\n";
-    const expansionsOffered = Object.keys(groupedOffered).sort();
-    expansionsOffered.forEach(exp => {
-      textResult += `**${exp}**\n`;
-      const raritiesOffered = Object.keys(groupedOffered[exp]).sort();
-      raritiesOffered.forEach(rar => {
-        textResult += `  ${rar}\n`;
-        groupedOffered[exp][rar].forEach(poke => {
-          textResult += `    - ${poke.pokemon}\n`;
-        });
+  const expansionsSearched = Object.keys(groupedSearched).sort();
+  expansionsSearched.forEach(exp => {
+    textResult += `**${exp}**\n`;
+    const raritiesSearched = Object.keys(groupedSearched[exp]).sort();
+    raritiesSearched.forEach(rar => {
+      textResult += `  ${rar}\n`;
+      groupedSearched[exp][rar].forEach(poke => {
+        textResult += `    - ${poke.pokemon}\n`;
       });
     });
+  });
 
-    // Copy in the same async function call
-    await copyText(textResult);
-    alert("Offered list copied to clipboard!");
-  } catch (err) {
-    console.error("Failed to copy offered list:", err);
-    alert("Unable to copy the offered list to clipboard.");
-  }
-}
-
-// Copy the list of searched Pokémon
-async function copySearchedList() {
-  try {
-    // Same approach
-    const response = await axios.get(`/pokemon/searched?username=${currentUser.username}`);
-    const searchedData = response.data;
-    const groupedSearched = groupByExpAndRarity(searchedData);
-
-    let textResult = "**LOOKING FOR:**\n";
-    const expansionsSearched = Object.keys(groupedSearched).sort();
-    expansionsSearched.forEach(exp => {
-      textResult += `**${exp}**\n`;
-      const raritiesSearched = Object.keys(groupedSearched[exp]).sort();
-      raritiesSearched.forEach(rar => {
-        textResult += `  ${rar}\n`;
-        groupedSearched[exp][rar].forEach(poke => {
-          textResult += `    - ${poke.pokemon}\n`;
-        });
-      });
+  copyText(textResult)
+    .then(() => {
+      alert("Searched list copied to clipboard!");
+    })
+    .catch(err => {
+      console.error("Failed to copy searched list:", err);
+      alert("Unable to copy the searched list to clipboard.");
     });
-
-    // Copy in the same async function call
-    await copyText(textResult);
-    alert("Searched list copied to clipboard!");
-  } catch (err) {
-    console.error("Failed to copy searched list:", err);
-    alert("Unable to copy the searched list to clipboard.");
-  }
 }
