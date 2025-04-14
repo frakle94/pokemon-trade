@@ -206,7 +206,7 @@ function offerPokemon() {
 
       <!-- Titolo + pulsante Copy list fianco a fianco -->
       <div class="d-flex align-items-center justify-content-between mt-4" style="width:100%;">
-        <h4 class="mb-0">Your Offered Pokémon</h4>
+        <h4 class="mb-0">Traded Pokémons</h4>
         <button
           class="btn btn-info btn-sm"
           onclick="copyOfferedList()"
@@ -408,7 +408,7 @@ function searchPokemon() {
 
       <!-- Titolo + pulsante Copy list fianco a fianco -->
       <div class="d-flex align-items-center justify-content-between mt-4" style="width:100%;">
-        <h4 class="mb-0">Your Searched Pokémon</h4>
+        <h4 class="mb-0">Pokémons you Look For</h4>
         <button
           class="btn btn-info btn-sm"
           onclick="copySearchedList()"
@@ -571,7 +571,7 @@ function magicalMatch() {
   }
 
   const someContainer = document.getElementById('actionArea');
-  someContainer.innerHTML = '<h3>Two-Sided Magical Match Results</h3>';
+  someContainer.innerHTML = '<h3>Two-Sided Match Results</h3>';
 
   axios.get(`/pokemon/magical_match?username=${currentUser.username}`)
     .then(response => {
@@ -581,7 +581,7 @@ function magicalMatch() {
         return;
       }
       if (!data || data.length === 0) {
-        someContainer.innerHTML += '<p>No users up for a trade at the moment.<br>Try adding ALL Pokémons you can offer and ALL Pokémons you search.<br>Try later on the Magical Match!</p>';
+        someContainer.innerHTML += '<p>No users up for a trade at the moment.<br>Try adding ALL Pokémons you can trade and ALL Pokémons you look for.<br>Try later on the Match!</p>';
         return;
       }
       let html = '';
