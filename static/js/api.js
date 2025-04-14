@@ -726,16 +726,18 @@ function copyOfferedList() {
       const offeredData = response.data;
       const groupedOffered = groupByExpAndRarity(offeredData);
 
-      let textResult = "Offered:\n";
-      const expansionsOffered = Object.keys(groupedOffered).sort();
+      // Titolo in grassetto
+      let textResult = "**FOR TRADE:**\n";
 
+      const expansionsOffered = Object.keys(groupedOffered).sort();
       expansionsOffered.forEach(exp => {
-        textResult += `- ${exp}\n`;
+        // Espansione in grassetto
+        textResult += `**${exp}**\n`;
         const raritiesOffered = Object.keys(groupedOffered[exp]).sort();
         raritiesOffered.forEach(rar => {
-          textResult += `  - ${rar}\n`;
+          textResult += `  ${rar}\n`;
           groupedOffered[exp][rar].forEach(poke => {
-            textResult += `    * ${poke.pokemon}\n`;
+            textResult += `    - ${poke.pokemon}\n`;
           });
         });
       });
@@ -763,16 +765,18 @@ function copySearchedList() {
       const searchedData = response.data;
       const groupedSearched = groupByExpAndRarity(searchedData);
 
-      let textResult = "Searched:\n";
-      const expansionsSearched = Object.keys(groupedSearched).sort();
+      // Titolo in grassetto
+      let textResult = "**LOOKING FOR:**\n";
 
+      const expansionsSearched = Object.keys(groupedSearched).sort();
       expansionsSearched.forEach(exp => {
-        textResult += `- ${exp}\n`;
+        // Espansione in grassetto
+        textResult += `**${exp}**\n`;
         const raritiesSearched = Object.keys(groupedSearched[exp]).sort();
         raritiesSearched.forEach(rar => {
-          textResult += `  - ${rar}\n`;
+          textResult += `${rar}\n`;
           groupedSearched[exp][rar].forEach(poke => {
-            textResult += `    * ${poke.pokemon}\n`;
+            textResult += `    - ${poke.pokemon}\n`;
           });
         });
       });
@@ -792,4 +796,3 @@ function copySearchedList() {
       alert("Error fetching searched data.");
     });
 }
-
