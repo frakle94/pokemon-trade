@@ -515,9 +515,9 @@ function fetchSearchedPokemon() {
         let displayHTML = `
           <div class="d-flex align-items-center justify-content-between">
             <div>
-              ${offer.pokemon}<br/>
-              ${offer.expansion || 'N/A'}<br/>
-              ${offer.rarity || 'N/A'}
+              ${search.pokemon}<br/>
+              ${search.expansion || 'N/A'}<br/>
+              ${search.rarity || 'N/A'}
             </div>
             <div class="d-flex align-items-center">
         `;
