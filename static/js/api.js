@@ -316,9 +316,9 @@ function fetchOfferedPokemon() {
         let displayHTML = `
           <div class="d-flex align-items-center justify-content-between">
             <div>
-              <strong>Pokémon:</strong> ${offer.pokemon}<br/>
-              <strong>Expansion:</strong> ${offer.expansion || 'N/A'}<br/>
-              <strong>Rarity:</strong> ${offer.rarity || 'N/A'}
+              <strong>${offer.pokemon}</strong><br/>
+              <strong>${offer.expansion || 'N/A'}</strong><br/>
+              <strong>${offer.rarity || 'N/A'}</strong>
             </div>
             <div class="d-flex align-items-center">
         `;
@@ -515,9 +515,9 @@ function fetchSearchedPokemon() {
         let displayHTML = `
           <div class="d-flex align-items-center justify-content-between">
             <div>
-              <strong>Pokémon:</strong> ${search.pokemon}<br/>
-              <strong>Expansion:</strong> ${search.expansion || 'N/A'}<br/>
-              <strong>Rarity:</strong> ${search.rarity || 'N/A'}
+              <strong>${offer.pokemon}</strong><br/>
+              <strong>${offer.expansion || 'N/A'}</strong><br/>
+              <strong>${offer.rarity || 'N/A'}</strong>
             </div>
             <div class="d-flex align-items-center">
         `;
