@@ -733,17 +733,16 @@ function groupByExpAndRarity(dataArray) {
   return grouped;
 }
 
-// Utility function for copying text (with a fallback for iOS/older browsers)
+// Utility function for copying text (con fallback per iOS/Older Browsers)
 async function copyText(text) {
   if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
     // Modern Clipboard API
     return navigator.clipboard.writeText(text);
   } else {
-    // Fallback for older Safari / other browsers
+    // Fallback per Safari / browser meno recenti
     return new Promise((resolve, reject) => {
       const textArea = document.createElement("textarea");
       textArea.value = text;
-      // Position it off-screen
       textArea.style.position = "fixed";
       textArea.style.left = "-9999px";
       document.body.appendChild(textArea);
@@ -760,25 +759,28 @@ async function copyText(text) {
   }
 }
 
-// Copy the list of offered Pokémon from cache only (two-step approach)
+// Copia la lista dei Pokémon offerti dal cache (two-step approach)
 function copyOfferedList() {
   if (!cachedOfferedData || !cachedOfferedData.length) {
     alert("No offered data is loaded yet. Please refresh or add some offers first!");
     return;
   }
+
   const groupedOffered = groupByExpAndRarity(cachedOfferedData);
   let textResult = "**FOR TRADE:**\n";
 
   const expansionsOffered = Object.keys(groupedOffered).sort();
   expansionsOffered.forEach(exp => {
-    textResult += `**${exp}**\n`;
+    textResult += `**${exp}**\n`; // Espansione in grassetto
     const raritiesOffered = Object.keys(groupedOffered[exp]).sort();
+
     raritiesOffered.forEach(rar => {
-      textResult += `  ${rar}\n`;
+      textResult += `${rar}\n`; // Rarità su riga normale
       groupedOffered[exp][rar].forEach(poke => {
-        textResult += `    - ${poke.pokemon}\n`;
+        // Unico carattere elenco "-", senza spazi davanti
+        textResult += `- ${poke.pokemon}\n`;
       });
-      // Extra newline to separate rarities clearly
+      // Riga vuota per separare le rarità
       textResult += `\n`;
     });
   });
@@ -793,25 +795,28 @@ function copyOfferedList() {
     });
 }
 
-// Copy the list of searched Pokémon from cache only (two-step approach)
+// Copia la lista dei Pokémon cercati dal cache (two-step approach)
 function copySearchedList() {
   if (!cachedSearchedData || !cachedSearchedData.length) {
     alert("No searched data is loaded yet. Please refresh or add some searches first!");
     return;
   }
+
   const groupedSearched = groupByExpAndRarity(cachedSearchedData);
   let textResult = "**LOOKING FOR:**\n";
 
   const expansionsSearched = Object.keys(groupedSearched).sort();
   expansionsSearched.forEach(exp => {
-    textResult += `**${exp}**\n`;
+    textResult += `**${exp}**\n`; // Espansione in grassetto
     const raritiesSearched = Object.keys(groupedSearched[exp]).sort();
+
     raritiesSearched.forEach(rar => {
-      textResult += `  ${rar}\n`;
+      textResult += `${rar}\n`; // Rarità su riga normale
       groupedSearched[exp][rar].forEach(poke => {
-        textResult += `    - ${poke.pokemon}\n`;
+        // Unico carattere elenco "-", senza spazi davanti
+        textResult += `- ${poke.pokemon}\n`;
       });
-      // Extra newline to separate rarities clearly
+      // Riga vuota per separare le rarità
       textResult += `\n`;
     });
   });
