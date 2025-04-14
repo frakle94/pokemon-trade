@@ -294,7 +294,7 @@ def magical_match():
     user_wants = Search.query.filter_by(user_id=user.id).all()
 
     if user.trade_condition == "COMMON":
-        user_offers = [o for o in user_offers if o.rarity in ["C", "U", "R"]]
+        user_offers = [o for o in user_offers if o.rarity in ["♦", "♦♦", "♦♦♦"]]
 
     matches = []
     all_users = User.query.all()
@@ -309,7 +309,7 @@ def magical_match():
         other_wants = Search.query.filter_by(user_id=other_user.id).all()
 
         if other_user.trade_condition == "COMMON":
-            other_offers = [o for o in other_offers if o.rarity in ["C", "U", "R"]]
+            other_offers = [o for o in other_offers if o.rarity in ["♦", "♦♦", "♦♦♦"]]
 
         trade_pairs = []
         for cardA in user_offers:

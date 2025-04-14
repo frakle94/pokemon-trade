@@ -199,8 +199,18 @@ function offerPokemon() {
         <div id="cardGridContainerOffer" class="pokemon-grid hidden"></div>
         <button type="submit" class="btn btn-primary">Submit Offer</button>
       </form>
-      <h4 class="mt-4">Your Offered Pokémon</h4>
-      <ul id="offeredPokemonList" class="list-group"></ul>
+
+      <!-- Titolo + pulsante Copy list fianco a fianco -->
+      <div class="d-flex align-items-center justify-content-between mt-4" style="width:100%;">
+        <h4 class="mb-0">Your Offered Pokémon</h4>
+        <button
+          class="btn btn-info btn-sm"
+          onclick="copyOfferedList()"
+          style="white-space:nowrap;">
+          Copy list
+        </button>
+      </div>
+      <ul id="offeredPokemonList" class="list-group mt-2"></ul>
     </div>
   `;
 
@@ -387,8 +397,18 @@ function searchPokemon() {
         <div id="cardGridContainerSearch" class="pokemon-grid hidden"></div>
         <button type="submit" class="btn btn-primary">Submit Search</button>
       </form>
-      <h4 class="mt-4">Your Searched Pokémon</h4>
-      <ul id="searchedPokemonList" class="list-group"></ul>
+
+      <!-- Titolo + pulsante Copy list fianco a fianco -->
+      <div class="d-flex align-items-center justify-content-between mt-4" style="width:100%;">
+        <h4 class="mb-0">Your Searched Pokémon</h4>
+        <button
+          class="btn btn-info btn-sm"
+          onclick="copySearchedList()"
+          style="white-space:nowrap;">
+          Copy list
+        </button>
+      </div>
+      <ul id="searchedPokemonList" class="list-group mt-2"></ul>
     </div>
   `;
 
@@ -681,3 +701,95 @@ function loadRarity(selectId) {
       console.error("Error fetching rarities:", err);
     });
 }
+
+// Funzione di supporto per raggruppare i dati per Espansione e Rarità
+function groupByExpAndRarity(dataArray) {
+  const grouped = {};
+  dataArray.forEach(item => {
+    const exp = item.expansion || 'Unknown';
+    const rar = item.rarity || 'Unknown';
+    if (!grouped[exp]) {
+      grouped[exp] = {};
+    }
+    if (!grouped[exp][rar]) {
+      grouped[exp][rar] = [];
+    }
+    grouped[exp][rar].push(item);
+  });
+  return grouped;
+}
+
+// Copia negli appunti la lista dei Pokémon Offerti
+function copyOfferedList() {
+  axios.get(`/pokemon/offered?username=${currentUser.username}`)
+    .then(response => {
+      const offeredData = response.data;
+      const groupedOffered = groupByExpAndRarity(offeredData);
+
+      let textResult = "Offered:\n";
+      const expansionsOffered = Object.keys(groupedOffered).sort();
+
+      expansionsOffered.forEach(exp => {
+        textResult += `- ${exp}\n`;
+        const raritiesOffered = Object.keys(groupedOffered[exp]).sort();
+        raritiesOffered.forEach(rar => {
+          textResult += `  - ${rar}\n`;
+          groupedOffered[exp][rar].forEach(poke => {
+            textResult += `    * ${poke.pokemon}\n`;
+          });
+        });
+      });
+
+      // Copia negli appunti
+      navigator.clipboard.writeText(textResult)
+        .then(() => {
+          alert("Offered list copied to clipboard!");
+        })
+        .catch(err => {
+          console.error("Failed to copy text: ", err);
+          alert("Unable to copy the offered list to clipboard.");
+        });
+    })
+    .catch(err => {
+      console.error("Error fetching offered data: ", err);
+      alert("Error fetching offered data.");
+    });
+}
+
+// Copia negli appunti la lista dei Pokémon Cercati
+function copySearchedList() {
+  axios.get(`/pokemon/searched?username=${currentUser.username}`)
+    .then(response => {
+      const searchedData = response.data;
+      const groupedSearched = groupByExpAndRarity(searchedData);
+
+      let textResult = "Searched:\n";
+      const expansionsSearched = Object.keys(groupedSearched).sort();
+
+      expansionsSearched.forEach(exp => {
+        textResult += `- ${exp}\n`;
+        const raritiesSearched = Object.keys(groupedSearched[exp]).sort();
+        raritiesSearched.forEach(rar => {
+          textResult += `  - ${rar}\n`;
+          groupedSearched[exp][rar].forEach(poke => {
+            textResult += `    * ${poke.pokemon}\n`;
+          });
+        });
+      });
+
+      // Copia negli appunti
+      navigator.clipboard.writeText(textResult)
+        .then(() => {
+          alert("Searched list copied to clipboard!");
+        })
+        .catch(err => {
+          console.error("Failed to copy text: ", err);
+          alert("Unable to copy the searched list to clipboard.");
+        });
+    })
+    .catch(err => {
+      console.error("Error fetching searched data: ", err);
+      alert("Error fetching searched data.");
+    });
+}
+
