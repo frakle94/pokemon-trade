@@ -778,6 +778,8 @@ function copyOfferedList() {
       groupedOffered[exp][rar].forEach(poke => {
         textResult += `    - ${poke.pokemon}\n`;
       });
+      // Extra newline to separate rarities clearly
+      textResult += `\n`;
     });
   });
 
@@ -809,6 +811,8 @@ function copySearchedList() {
       groupedSearched[exp][rar].forEach(poke => {
         textResult += `    - ${poke.pokemon}\n`;
       });
+      // Extra newline to separate rarities clearly
+      textResult += `\n`;
     });
   });
 
