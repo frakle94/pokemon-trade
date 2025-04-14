@@ -203,7 +203,7 @@ function offerPokemon() {
         <div id="cardGridContainerOffer" class="pokemon-grid hidden"></div>
         <button type="submit" class="btn btn-primary">Submit Offer</button>
       </form>
-
+      </br>
       <!-- Titolo + pulsante Copy list fianco a fianco -->
       <div class="d-flex align-items-center justify-content-between mt-4" style="width:100%;">
         <h4 class="mb-0">Traded Pokémons</h4>
@@ -405,7 +405,7 @@ function searchPokemon() {
         <div id="cardGridContainerSearch" class="pokemon-grid hidden"></div>
         <button type="submit" class="btn btn-primary">Submit Search</button>
       </form>
-
+      </br>
       <!-- Titolo + pulsante Copy list fianco a fianco -->
       <div class="d-flex align-items-center justify-content-between mt-4" style="width:100%;">
         <h4 class="mb-0">Pokémons you Look For</h4>
