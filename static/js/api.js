@@ -11,6 +11,15 @@ let cachedSearchedData = [];
 let handleOfferOutsideClick = null;
 let handleSearchOutsideClick = null;
 
+// Helper: chunk an array into sub-arrays of length `size`
+function chunkArray(arr, size) {
+  const result = [];
+  for (let i = 0; i < arr.length; i += size) {
+    result.push(arr.slice(i, i + size));
+  }
+  return result;
+}
+
 function handleRegistration(e) {
   e.preventDefault();
   const username = document.getElementById('reg_username').value;
@@ -214,7 +223,8 @@ function offerPokemon() {
           Copy list
         </button>
       </div>
-      </br>
+      <br/>
+      <!-- We'll display the items in a 3-column grid below -->
       <ul id="offeredPokemonList" class="list-group mt-2"></ul>
     </div>
   `;
@@ -301,6 +311,16 @@ function offerPokemon() {
   fetchOfferedPokemon();
 }
 
+// CHUNKING UTILITY: divides an array into sub-arrays of length `size`
+function chunkArray(array, size) {
+  const chunks = [];
+  for (let i = 0; i < array.length; i += size) {
+    chunks.push(array.slice(i, i + size));
+  }
+  return chunks;
+}
+
+// Now we create a 3-column grid for offered Pokémon
 function fetchOfferedPokemon() {
   axios.get(`/pokemon/offered?username=${currentUser.username}`)
     .then(response => {
@@ -311,39 +331,50 @@ function fetchOfferedPokemon() {
       // Cache the data for two-step approach
       cachedOfferedData = response.data;
 
-      response.data.forEach(offer => {
+      // Break the array into groups of 3 so each row can have up to 3 items
+      const chunkedOffers = chunkArray(response.data, 3);
+
+      // For each chunk, create a single <li class="list-group-item"> that has a .row inside
+      chunkedOffers.forEach(triple => {
         const listItem = document.createElement('li');
         listItem.className = 'list-group-item';
-        let displayHTML = `
-          <div class="d-flex align-items-center justify-content-between">
-            <div>
-            ${offer.pokemon}<br/>
-            ${offer.expansion || 'N/A'}<br/>
-            ${offer.rarity || 'N/A'}
-            </div>
-            <div class="d-flex align-items-center">
-        `;
-        if (offer.image_url) {
-          displayHTML += `
+
+        // We'll build up the row's HTML by creating up to 3 columns
+        let rowHTML = '<div class="row text-center">';
+
+        triple.forEach(offer => {
+          rowHTML += `
+            <div class="col-4" style="margin-bottom: 1rem;">
+              <strong>${offer.pokemon}</strong><br/>
+              ${offer.expansion || 'N/A'}<br/>
+              ${offer.rarity || 'N/A'}<br/>
+          `;
+
+          if (offer.image_url) {
+            rowHTML += `
               <img
                 src="${offer.image_url}"
                 alt="Pokémon Image"
-                style="max-width: 80px; height: auto; margin-right: 12px;"
-              />
-          `;
-        } else {
-          displayHTML += `<span style="margin-right: 12px;">No image</span>`;
-        }
-        displayHTML += `
+                style="max-width: 80px; height: auto; margin: 0.5rem 0;"
+              /><br/>
+            `;
+          } else {
+            rowHTML += `<span>No image</span><br/>`;
+          }
+
+          rowHTML += `
               <button
                 class="btn btn-danger btn-sm"
-                onclick="deleteOffer(${offer.id})">
+                onclick="deleteOffer(${offer.id})"
+              >
                 Delete
               </button>
             </div>
-          </div>
-        `;
-        listItem.innerHTML = displayHTML;
+          `;
+        });
+
+        rowHTML += '</div>'; // Close the .row
+        listItem.innerHTML = rowHTML;
         offeredList.appendChild(listItem);
       });
     })
@@ -417,7 +448,8 @@ function searchPokemon() {
           Copy list
         </button>
       </div>
-      </br>
+      <br/>
+      <!-- We'll display the items in a 3-column grid below -->
       <ul id="searchedPokemonList" class="list-group mt-2"></ul>
     </div>
   `;
@@ -501,6 +533,7 @@ function searchPokemon() {
   fetchSearchedPokemon();
 }
 
+// Create a 3-column grid for searched Pokémon
 function fetchSearchedPokemon() {
   axios.get(`/pokemon/searched?username=${currentUser.username}`)
     .then(response => {
@@ -511,39 +544,48 @@ function fetchSearchedPokemon() {
       // Cache the data for two-step approach
       cachedSearchedData = response.data;
 
-      response.data.forEach(search => {
+      // Break data into groups of 3 so each row can have up to 3 items
+      const chunkedSearches = chunkArray(response.data, 3);
+
+      chunkedSearches.forEach(triple => {
         const listItem = document.createElement('li');
         listItem.className = 'list-group-item';
-        let displayHTML = `
-          <div class="d-flex align-items-center justify-content-between">
-            <div>
-              ${search.pokemon}<br/>
+
+        let rowHTML = '<div class="row text-center">';
+
+        triple.forEach(search => {
+          rowHTML += `
+            <div class="col-4" style="margin-bottom: 1rem;">
+              <strong>${search.pokemon}</strong><br/>
               ${search.expansion || 'N/A'}<br/>
-              ${search.rarity || 'N/A'}
-            </div>
-            <div class="d-flex align-items-center">
-        `;
-        if (search.image_url) {
-          displayHTML += `
-            <img
-              src="${search.image_url}"
-              alt="Pokémon Image"
-              style="max-width: 80px; height: auto; margin-right: 12px;"
-            />
+              ${search.rarity || 'N/A'}<br/>
           `;
-        } else {
-          displayHTML += `<span style="margin-right: 12px;">No image</span>`;
-        }
-        displayHTML += `
-            <button
-              class="btn btn-danger btn-sm"
-              onclick="deleteSearch(${search.id})">
-              Delete
-            </button>
-          </div>
-        </div>
-        `;
-        listItem.innerHTML = displayHTML;
+
+          if (search.image_url) {
+            rowHTML += `
+              <img
+                src="${search.image_url}"
+                alt="Pokémon Image"
+                style="max-width: 80px; height: auto; margin: 0.5rem 0;"
+              /><br/>
+            `;
+          } else {
+            rowHTML += `<span>No image</span><br/>`;
+          }
+
+          rowHTML += `
+              <button
+                class="btn btn-danger btn-sm"
+                onclick="deleteSearch(${search.id})"
+              >
+                Delete
+              </button>
+            </div>
+          `;
+        });
+
+        rowHTML += '</div>'; // close row
+        listItem.innerHTML = rowHTML;
         searchedList.appendChild(listItem);
       });
     })
