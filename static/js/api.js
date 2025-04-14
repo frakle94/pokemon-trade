@@ -206,7 +206,7 @@ function offerPokemon() {
       
       <!-- Titolo + pulsante Copy list fianco a fianco -->
       <div class="d-flex align-items-center justify-content-between mt-4" style="width:100%;">
-        <h4 class="mb-0">Traded Pokémons</h4>
+        <h4 class="mb-0">Pokémons For Trade</h4>
         <button
           class="btn btn-info btn-sm"
           onclick="copyOfferedList()"
