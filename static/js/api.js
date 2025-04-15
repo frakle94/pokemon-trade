@@ -20,6 +20,20 @@ function chunkArray(arr, size) {
   return result;
 }
 
+// Rarity comparator: returns a number for each rarity
+// so that sorting places them in the desired order:
+// star, 4 diamonds, 3 diamonds, 2 diamonds, 1 diamond
+function rarityOrder(rar) {
+  switch (rar) {
+    case '★':      return 0;
+    case '♦♦♦♦':   return 1;
+    case '♦♦♦':    return 2;
+    case '♦♦':     return 3;
+    case '♦':      return 4;
+    default:       return 999; // put unknown or other rarities at the end
+  }
+}
+
 function handleRegistration(e) {
   e.preventDefault();
   const username = document.getElementById('reg_username').value;
@@ -224,7 +238,6 @@ function offerPokemon() {
         </button>
       </div>
       <br/>
-      <!-- We'll display the items in a 3-column grid below -->
       <ul id="offeredPokemonList" class="list-group mt-2"></ul>
     </div>
   `;
@@ -320,7 +333,7 @@ function chunkArray(array, size) {
   return chunks;
 }
 
-// Now we create a 3-column grid for offered Pokémon
+// fetchOfferedPokemon, sorted by rarity
 function fetchOfferedPokemon() {
   axios.get(`/pokemon/offered?username=${currentUser.username}`)
     .then(response => {
@@ -328,18 +341,21 @@ function fetchOfferedPokemon() {
       if (!offeredList) return;
       offeredList.innerHTML = '';
 
-      // Cache the data for two-step approach
-      cachedOfferedData = response.data;
+      // Sort by custom rarity order
+      const sortedOffers = response.data.slice().sort((a, b) => {
+        return rarityOrder(a.rarity) - rarityOrder(b.rarity);
+      });
+
+      // Cache the sorted data for two-step approach
+      cachedOfferedData = sortedOffers;
 
       // Break the array into groups of 3 so each row can have up to 3 items
-      const chunkedOffers = chunkArray(response.data, 3);
+      const chunkedOffers = chunkArray(sortedOffers, 3);
 
-      // For each chunk, create a single <li class="list-group-item"> that has a .row inside
       chunkedOffers.forEach(triple => {
         const listItem = document.createElement('li');
         listItem.className = 'list-group-item';
 
-        // We'll build up the row's HTML by creating up to 3 columns
         let rowHTML = '<div class="row text-center">';
 
         triple.forEach(offer => {
@@ -373,7 +389,7 @@ function fetchOfferedPokemon() {
           `;
         });
 
-        rowHTML += '</div>'; // Close the .row
+        rowHTML += '</div>'; // close row
         listItem.innerHTML = rowHTML;
         offeredList.appendChild(listItem);
       });
@@ -449,7 +465,6 @@ function searchPokemon() {
         </button>
       </div>
       <br/>
-      <!-- We'll display the items in a 3-column grid below -->
       <ul id="searchedPokemonList" class="list-group mt-2"></ul>
     </div>
   `;
@@ -533,7 +548,7 @@ function searchPokemon() {
   fetchSearchedPokemon();
 }
 
-// Create a 3-column grid for searched Pokémon
+// fetchSearchedPokemon, also sorted by custom rarity
 function fetchSearchedPokemon() {
   axios.get(`/pokemon/searched?username=${currentUser.username}`)
     .then(response => {
@@ -541,11 +556,16 @@ function fetchSearchedPokemon() {
       if (!searchedList) return;
       searchedList.innerHTML = '';
 
-      // Cache the data for two-step approach
-      cachedSearchedData = response.data;
+      // Sort by custom rarity order
+      const sortedSearches = response.data.slice().sort((a, b) => {
+        return rarityOrder(a.rarity) - rarityOrder(b.rarity);
+      });
+
+      // Cache the sorted data for two-step approach
+      cachedSearchedData = sortedSearches;
 
       // Break data into groups of 3 so each row can have up to 3 items
-      const chunkedSearches = chunkArray(response.data, 3);
+      const chunkedSearches = chunkArray(sortedSearches, 3);
 
       chunkedSearches.forEach(triple => {
         const listItem = document.createElement('li');
