@@ -778,7 +778,6 @@ function loadRarity(selectId) {
     });
 }
 
-// Nuova funzione di supporto per raggruppare i dati per Rarità ed Espansione
 function groupByRarityAndExpansion(dataArray) {
   const grouped = {};
   dataArray.forEach(item => {
@@ -795,13 +794,10 @@ function groupByRarityAndExpansion(dataArray) {
   return grouped;
 }
 
-// Utility function for copying text (con fallback per iOS/Older Browsers)
 async function copyText(text) {
   if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
-    // Modern Clipboard API
     return navigator.clipboard.writeText(text);
   } else {
-    // Fallback per Safari / browser meno recenti
     return new Promise((resolve, reject) => {
       const textArea = document.createElement("textarea");
       textArea.value = text;
@@ -821,36 +817,38 @@ async function copyText(text) {
   }
 }
 
-// Copia la lista dei Pokémon offerti dal cache (two-step approach)
+// Copy FOR TRADE list (rarity -> expansion)
 function copyOfferedList() {
   if (!cachedOfferedData || !cachedOfferedData.length) {
     alert("No offered data is loaded yet. Please refresh or add some offers first!");
     return;
   }
 
-  // Usa la nuova funzione di raggruppamento
   const groupedOffered = groupByRarityAndExpansion(cachedOfferedData);
+  let textResult = "**FOR TRADE:**\n\n";
 
-  let textResult = "**FOR TRADE:**\n";
-
-  // Ordina le rarità
   const rarities = Object.keys(groupedOffered).sort();
+  let isFirstRarity = true;
 
   rarities.forEach(rar => {
+    if (!isFirstRarity) {
+      // Add a blank line before printing the next rarity
+      textResult += "\n";
+    } else {
+      isFirstRarity = false;
+    }
+
     textResult += `**${rar}**\n`; // Rarità in grassetto
 
-    // Per ogni rarità, prendiamo le espansioni
-    const expansionsForThisRar = Object.keys(groupedOffered[rar]).sort();
-    expansionsForThisRar.forEach(exp => {
-      textResult += `${exp}\n`; // Espansione su riga normale
+    const expansions = Object.keys(groupedOffered[rar]).sort();
+    expansions.forEach(exp => {
+      // Expansion in bold
+      textResult += `**${exp}**\n`;
 
-      // Lista di Pokémon in questa combinazione (rar, exp)
+      // List Pokémon
       groupedOffered[rar][exp].forEach(poke => {
         textResult += `- ${poke.pokemon}\n`;
       });
-
-      // Riga vuota per separare le espansioni
-      textResult += "\n";
     });
   });
 
@@ -864,36 +862,35 @@ function copyOfferedList() {
     });
 }
 
-// Copia la lista dei Pokémon cercati dal cache (two-step approach)
+// Copy LOOKING FOR list (rarity -> expansion)
 function copySearchedList() {
   if (!cachedSearchedData || !cachedSearchedData.length) {
     alert("No searched data is loaded yet. Please refresh or add some searches first!");
     return;
   }
 
-  // Usa la nuova funzione di raggruppamento
   const groupedSearched = groupByRarityAndExpansion(cachedSearchedData);
+  let textResult = "**LOOKING FOR:**\n\n";
 
-  let textResult = "**LOOKING FOR:**\n";
-
-  // Ordina le rarità
   const rarities = Object.keys(groupedSearched).sort();
+  let isFirstRarity = true;
 
   rarities.forEach(rar => {
+    if (!isFirstRarity) {
+      textResult += "\n";
+    } else {
+      isFirstRarity = false;
+    }
+
     textResult += `**${rar}**\n`; // Rarità in grassetto
 
-    // Per ogni rarità, prendiamo le espansioni
-    const expansionsForThisRar = Object.keys(groupedSearched[rar]).sort();
-    expansionsForThisRar.forEach(exp => {
-      textResult += `${exp}\n`; // Espansione su riga normale
+    const expansions = Object.keys(groupedSearched[rar]).sort();
+    expansions.forEach(exp => {
+      textResult += `**${exp}**\n`; // Expansion in bold
 
-      // Lista di Pokémon in questa combinazione (rar, exp)
       groupedSearched[rar][exp].forEach(poke => {
         textResult += `- ${poke.pokemon}\n`;
       });
-
-      // Riga vuota per separare le espansioni
-      textResult += "\n";
     });
   });
 
