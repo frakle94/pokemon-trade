@@ -63,22 +63,6 @@ function showInfo() {
         infoViewContainer.id = 'infoViewContainer';
         document.body.appendChild(infoViewContainer);
     }
-
-    // Populate the info view (solo "Lorem Ipsum" e pulsante Back)
-    infoViewContainer.innerHTML = `
-        <nav class="navbar navbar-expand-lg navbar-light bg-light">
-            <div class="container-fluid">
-                <a class="navbar-brand">Pokémon Trade Platform</a>
-                <button class="btn btn-secondary ms-auto me-2" onclick="navigateToMainApp()">Back</button>
-            </div>
-        </nav>
-        <div class="container mt-5">
-            <h1 class="text-center">Lorem ipsum</h1>
-        </div>
-    `;
-
-    // Show the Info View
-    infoViewContainer.classList.remove('hidden');
 }
 
 // Handle Logout

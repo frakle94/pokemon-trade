@@ -130,7 +130,7 @@ function showInfo() {
     document.body.appendChild(infoViewContainer);
   }
 
-  // Navbar identica a quella del profilo, ma senza Logout
+  // Guida corretta, con i titoli H4 fuori dalle liste
   infoViewContainer.innerHTML = `
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
       <div class="container">
@@ -143,7 +143,26 @@ function showInfo() {
       </div>
     </nav>
     <div class="container mt-5">
-      <h1 class="text-center">Lorem ipsum</h1>
+      <h2 class="text-center">Turn the website link to an app on your smartphone home screen</h2>
+      <div class="mt-4" style="max-width: 600px; margin: 0 auto;">
+        <h4 class="mt-3">iPhone</h4>
+        <ol>
+          <li>Open your browser (Safari, Chrome) and paste the link.</li>
+          <li>Tap the <strong>Share</strong> icon.</li>
+          <li>Tap <strong>Add to Home Screen</strong>.</li>
+          <li>Tap <strong>Add</strong>.</li>
+          <li>Enjoy the <strong>cool icon</strong>!</li>
+        </ol>
+
+        <h4 class="mt-3">Android</h4>
+        <ol>
+          <li>Open Chrome and paste the link.</li>
+          <li>Tap the <strong>Menu</strong> (three dots).</li>
+          <li>Select <strong>Add to Home screen</strong>.</li>
+          <li>Tap <strong>Add</strong>.</li>
+          <li>Enjoy the <strong>cool icon</strong>!</li>
+        </ol>
+      </div>
     </div>
   `;
 
