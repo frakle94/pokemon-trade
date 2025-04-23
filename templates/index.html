@@ -107,12 +107,15 @@
                 required
               />
             </div>
+            <!-- Pokémon Pocket ID: 16 numeri -->
             <div class="mb-3">
               <input
                 type="text"
                 class="form-control"
                 id="reg_pokemon_id"
                 placeholder="Pokémon Pocket ID"
+                pattern="^[0-9]{16}$"
+                title="Enter 16 numbers ID"
                 required
               />
             </div>
@@ -146,11 +149,14 @@
 
   <div class="hidden" id="mainAppContainer">
     <nav class="navbar navbar-light bg-light">
-      <div class="container d-flex justify-content-end">
+      <div class="container d-flex justify-content-between">
+        <!-- Icona Info a sinistra (i) -->
+        <span style="cursor: pointer; font-size: 2rem;" onclick="showInfo()">&#9432;</span>
+        <!-- Icona Profilo a destra (personaggino) -->
         <span style="cursor: pointer; font-size: 2rem;" onclick="showProfile()">&#128100;</span>
       </div>
     </nav>
-    <!-- Cambiato mt-5 in mt-2 per ridurre lo spazio -->
+
     <div class="container mt-1">
       <h1 class="text-center">
         Welcome, <span id="username"></span>!
