@@ -116,13 +116,13 @@ function logout() {
 /* ======================== */
 
 function showInfo() {
-  // Nascondi il container principale
+  // Hide main app container
   const mainAppContainer = document.getElementById('mainAppContainer');
   if (mainAppContainer) {
     mainAppContainer.classList.add('hidden');
   }
 
-  // Crea o recupera il container delle info
+  // Create or reuse the info container
   let infoViewContainer = document.getElementById('infoViewContainer');
   if (!infoViewContainer) {
     infoViewContainer = document.createElement('div');
@@ -130,7 +130,7 @@ function showInfo() {
     document.body.appendChild(infoViewContainer);
   }
 
-  // Guida corretta, con i titoli H4 fuori dalle liste
+  // Left-align everything (no .text-center, no auto margins)
   infoViewContainer.innerHTML = `
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
       <div class="container">
@@ -143,8 +143,8 @@ function showInfo() {
       </div>
     </nav>
     <div class="container mt-5">
-      <h2 class="text-center">Turn the website link to an app on your smartphone home screen</h2>
-      <div class="mt-4" style="max-width: 600px; margin: 0 auto;">
+      <h2>Turn the website link to an app on your smartphone home screen</h3>
+      <div class="mt-4" style="max-width: 600px;">
         <h4 class="mt-3">iPhone</h4>
         <ol>
           <li>Open your browser (Safari, Chrome) and paste the link.</li>
@@ -166,6 +166,6 @@ function showInfo() {
     </div>
   `;
 
-  // Mostra il container
+  // Show the container
   infoViewContainer.classList.remove('hidden');
 }
