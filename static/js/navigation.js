@@ -133,37 +133,52 @@ function showInfo() {
   // Left-align everything (no .text-center, no auto margins)
   infoViewContainer.innerHTML = `
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
-      <div class="container">
-        <a class="navbar-brand">Pokémon Trade Platform</a>
-        <div class="ms-auto">
-          <button class="btn btn-secondary btn-sm me-2" onclick="backFromProfile()">
-            Back
-          </button>
-        </div>
-      </div>
-    </nav>
-    <div class="container mt-5">
-      <h2>Turn the website link to an app on your smartphone home screen</h3>
-      <div class="mt-4" style="max-width: 600px;">
-        <h4 class="mt-3">iPhone</h4>
-        <ol>
-          <li>Open your browser (Safari, Chrome) and paste the link.</li>
-          <li>Tap the <strong>Share</strong> icon.</li>
-          <li>Tap <strong>Add to Home Screen</strong>.</li>
-          <li>Tap <strong>Add</strong>.</li>
-          <li>Enjoy the <strong>cool icon</strong>!</li>
-        </ol>
-
-        <h4 class="mt-3">Android</h4>
-        <ol>
-          <li>Open Chrome and paste the link.</li>
-          <li>Tap the <strong>Menu</strong> (three dots).</li>
-          <li>Select <strong>Add to Home screen</strong>.</li>
-          <li>Tap <strong>Add</strong>.</li>
-          <li>Enjoy the <strong>cool icon</strong>!</li>
-        </ol>
-      </div>
+  <div class="container">
+    <a class="navbar-brand">Pokémon Trade Platform</a>
+    <div class="ms-auto">
+      <button class="btn btn-secondary btn-sm me-2" onclick="backFromProfile()">
+        Back
+      </button>
     </div>
+  </div>
+</nav>
+
+<div class="container mt-5">
+  <!-- First heading -->
+  <h2>Turn the website link to an app on your smartphone home screen</h2>
+
+  <!-- Instructions (max-width: 600px) -->
+  <div class="mt-4" style="max-width: 600px;">
+    <h4 class="mt-3">iPhone</h4>
+    <ol>
+      <li>Open your browser (Safari, Chrome) and paste the link.</li>
+      <li>Tap the <strong>Share</strong> icon.</li>
+      <li>Tap <strong>Add to Home Screen</strong>.</li>
+      <li>Tap <strong>Add</strong>.</li>
+      <li>Enjoy the <strong>cool icon</strong>!</li>
+    </ol>
+
+    <h4 class="mt-3">Android</h4>
+    <ol>
+      <li>Open Chrome and paste the link.</li>
+      <li>Tap the <strong>Menu</strong> (three dots).</li>
+      <li>Select <strong>Add to Home screen</strong>.</li>
+      <li>Tap <strong>Add</strong>.</li>
+      <li>Enjoy the <strong>cool icon</strong>!</li>
+    </ol>
+  </div>
+  
+  <!-- Separator line -->
+  <hr class="my-4">
+
+  <!-- Second heading + steps -->
+  <h2>Update your Trade Status when you have low or no trading points</h2>
+  <ol>
+    <li>Open Profile</li>
+    <li>Tap on Trade Status</li>
+    <li>Select your current status</li>
+  </ol>
+</div>
   `;
 
   // Show the container
