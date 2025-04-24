@@ -144,34 +144,34 @@ function showInfo() {
 </nav>
 
 <div class="container mt-5">
-  <!-- First heading -->
-  <h2>Turn the website link to an app on your smartphone home screen</h2>
+  <!-- Titles (headings) are bold by default -->
+  <h2>Turn the website link into an app on your smartphone home screen</h2>
 
   <!-- Instructions (max-width: 600px) -->
   <div class="mt-4" style="max-width: 600px;">
+    <!-- Heading h4 is also bold by default -->
     <h4 class="mt-3">iPhone</h4>
     <ol>
       <li>Open your browser (Safari, Chrome) and paste the link.</li>
-      <li>Tap the <strong>Share</strong> icon.</li>
-      <li>Tap <strong>Add to Home Screen</strong>.</li>
-      <li>Tap <strong>Add</strong>.</li>
-      <li>Enjoy the <strong>cool icon</strong>!</li>
+      <li>Tap the Share icon.</li>
+      <li>Tap Add to Home Screen.</li>
+      <li>Tap Add.</li>
+      <li>Enjoy the cool icon!</li>
     </ol>
 
     <h4 class="mt-3">Android</h4>
     <ol>
       <li>Open Chrome and paste the link.</li>
-      <li>Tap the <strong>Menu</strong> (three dots).</li>
-      <li>Select <strong>Add to Home screen</strong>.</li>
-      <li>Tap <strong>Add</strong>.</li>
-      <li>Enjoy the <strong>cool icon</strong>!</li>
+      <li>Tap the Menu (three dots).</li>
+      <li>Select Add to Home screen.</li>
+      <li>Tap Add.</li>
+      <li>Enjoy the cool icon!</li>
     </ol>
   </div>
   
-  <!-- Separator line -->
   <hr class="my-4">
 
-  <!-- Second heading + steps -->
+  <!-- Another heading in bold by default -->
   <h2>Update your Trade Status when you have low or no trading points</h2>
   <ol>
     <li>Open Profile</li>
