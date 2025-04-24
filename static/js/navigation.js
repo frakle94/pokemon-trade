@@ -172,7 +172,7 @@ function showInfo() {
   <hr class="my-4">
 
   <!-- Another heading in bold by default -->
-  <h2>Update your Trade Status when you have low or no trading points</h2>
+  <h2>Update your Trade Status when you are low on trading points</h2>
   <ol>
     <li>Open Profile</li>
     <li>Tap on Trade Status</li>
