@@ -246,7 +246,7 @@ form {
 #updateProfileForm .form-control,
 #updateProfileForm .btn {
     width: 100%;
-    max-width: 260px;   /* box leggermente più stretti di prima */
+    max-width: 300px;   /* box leggermente più stretti di prima */
     margin: 0 auto 1rem;
 }
 
@@ -254,7 +254,7 @@ form {
 #updateProfileForm label {
     display: block;
     width: 100%;
-    max-width: 260px;   /* identico ai campi */
+    max-width: 300px;   /* identico ai campi */
     margin: 0 auto 0.25rem; /* poco spazio sotto la label */
 }
 
