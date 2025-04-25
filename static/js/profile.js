@@ -19,14 +19,12 @@ function showProfile() {
     <button class="btn btn-danger" onclick="logout()">Logout</button>
   </div>
 </nav>
-
-<div class="container mt-5">
-  <!-- titolo ora a sinistra (nessuna .text-center) -->
-  <h1 class="mb-4">Your Profile</h1>
+<div class="container mt-3">
+  <h1 class="mb-5">Your Profile</h1>
 
   <form id="updateProfileForm">
     <div class="mb-3">
-      <label for="profile_username" class="form-label">Username</label>
+      <label for="profile_username" class="form-label">Pokémon Pocket Username</label>
       <input
         type="text"
         class="form-control"

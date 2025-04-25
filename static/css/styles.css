@@ -242,3 +242,12 @@ form {
     max-width: 300px;     /* lasciamo il limite se serve */
     margin: 0 auto 1rem;  /* bottone ancora centrato */
 }
+
+/* Spaziatura specifica per il form profilo */
+#profileViewContainer .container {           /* riduce spazio sopra */
+    margin-top: 1.5rem !important;
+}
+
+#profileViewContainer h1 {                   /* aumenta spazio sotto */
+    margin-bottom: 3rem !important;
+}
