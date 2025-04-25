@@ -259,6 +259,13 @@ form {
 }
 
 /* Spaziatura titolo / input nella vista profilo */
-#profileViewContainer .container{ margin-top:0rem !important; }
-#profileViewContainer h1         { margin-bottom:2rem !important; }
+#profileViewContainer .container{
+    margin-top: 0 !important;   /* nessun margine esterno */
+    padding-top: 0 !important;  /* rimuove il padding interno di Bootstrap */
+}
+
+#profileViewContainer h1{
+    margin-top: 0 !important;   /* elimina il margine superiore dell’h1 */
+    margin-bottom: 2rem !important;  /* spazio sotto il titolo */
+}
 
