@@ -243,11 +243,22 @@ form {
     margin: 0 auto 1rem;  /* bottone ancora centrato */
 }
 
-/* Spaziatura specifica per il form profilo */
-#profileViewContainer .container {           /* riduce spazio sopra */
-    margin-top: 1.5rem !important;
+#updateProfileForm .form-control,
+#updateProfileForm .btn {
+    width: 100%;
+    max-width: 260px;   /* box leggermente più stretti di prima */
+    margin: 0 auto 1rem;
 }
 
-#profileViewContainer h1 {                   /* aumenta spazio sotto */
-    margin-bottom: 3rem !important;
+/* le label ora hanno la stessa larghezza e sono centrate come i box */
+#updateProfileForm label {
+    display: block;
+    width: 100%;
+    max-width: 260px;   /* identico ai campi */
+    margin: 0 auto 0.25rem; /* poco spazio sotto la label */
 }
+
+/* Spaziatura titolo / input nella vista profilo */
+#profileViewContainer .container{ margin-top:0rem !important; }
+#profileViewContainer h1         { margin-bottom:2rem !important; }
+
