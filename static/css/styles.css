@@ -266,6 +266,6 @@ form {
 
 #profileViewContainer h1{
     margin-top: 0 !important;   /* elimina il margine superiore dell’h1 */
-    margin-bottom: 2rem !important;  /* spazio sotto il titolo */
+    margin-bottom: 3rem !important;  /* spazio sotto il titolo */
 }
 
