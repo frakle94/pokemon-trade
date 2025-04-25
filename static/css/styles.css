@@ -37,7 +37,7 @@
     background-color: #000 !important;
     color: #fff !important;
     -webkit-box-shadow: 0 0 0px 1000px #000 inset !important;
-    box-shadow: 0 0 0px 1000px #000 inset !important;
+            box-shadow: 0 0 0px 1000px #000 inset !important;
 }
 .form-control:-webkit-autofill::first-line {
     color: #fff !important;
@@ -231,4 +231,14 @@ form {
     outline: 3px solid #007bff;
     outline-offset: -3px;
     background-color: #e2f0ff !important;
+}
+
+#updateProfileForm .form-control {
+    max-width: 100%;      /* larghezza completa della riga */
+    margin: 0 0 1rem;     /* rimosso auto-centering */
+}
+
+#updateProfileForm .btn {
+    max-width: 300px;     /* lasciamo il limite se serve */
+    margin: 0 auto 1rem;  /* bottone ancora centrato */
 }
