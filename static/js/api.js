@@ -625,6 +625,9 @@ function deleteSearch(searchId) {
 }
 
 function magicalMatch() {
+  /* ------------------------------------------------------------------ */
+  /*  pulizia dei listener esterni                                       */
+  /* ------------------------------------------------------------------ */
   if (handleOfferOutsideClick) {
     document.removeEventListener('mousedown', handleOfferOutsideClick);
     handleOfferOutsideClick = null;
@@ -634,45 +637,144 @@ function magicalMatch() {
     handleSearchOutsideClick = null;
   }
 
-  const someContainer = document.getElementById('actionArea');
-  someContainer.innerHTML = '<h3>Two-Sided Match Results</h3>';
+  /* ------------------------------------------------------------------ */
+  /*  struttura fissa dell’area Match                                    */
+  /* ------------------------------------------------------------------ */
+  const actionArea = document.getElementById('actionArea');
+  actionArea.innerHTML = `
+  <!-- Box Trade Status identico a quelli del profilo -->
+  <div class="mb-3" style="max-width: 300px;">
+    <label for="match_trade_condition" class="form-label">Trade Status:</label>
 
-  axios.get(`/pokemon/magical_match?username=${currentUser.username}`)
-    .then(response => {
-      const data = response.data;
-      if (data && data.message && !Array.isArray(data)) {
-        someContainer.innerHTML += `<p>${data.message}</p>`;
-        return;
-      }
-      if (!data || data.length === 0) {
-        someContainer.innerHTML += '<p>No users up for a trade at the moment.<br>Try adding ALL Pokémons you can trade and ALL Pokémons you look for.<br>Try later on the Match!</p>';
-        return;
-      }
-      let html = '';
-      data.forEach(item => {
-        const mySTO = item.mySearch_TheirOffer || [];
-        const theirSMO = item.theirSearch_MyOffer || [];
-        html += `
-          <div class="card my-3">
-            <div class="card-body">
-              <h5 class="card-title">Match with ${item.other_user}</h5>
-              <p>Other User's Pokémon Pocket ID: ${item.other_user_pokemon_id}</p>
-              <p>You want from them: ${mySTO.join(', ')}</p>
-              <p>They want from you: ${theirSMO.join(', ')}</p>
+    <select id="match_trade_condition"
+            class="form-control"
+            required>
+      <option value="NONE">Cannot trade</option>
+      <option value="COMMON">Can trade up to ♦♦♦</option>
+      <option value="ALL">Can trade all cards</option>
+    </select>
+  </div>
+
+  <!-- Risultati dei match verranno inseriti qui -->
+  <div id="matchResults"></div>
+`;
+
+  /* ------------------------------------------------------------------ */
+  /*  inizializza il selettore                                           */
+  /* ------------------------------------------------------------------ */
+  const tradeSel = document.getElementById('match_trade_condition');
+  tradeSel.value = currentUser.trade_condition || 'ALL';
+
+  /* ------------------------------------------------------------------ */
+  /*  ricarica risultati (o messaggio)                                   */
+  /* ------------------------------------------------------------------ */
+  function loadMatchResults() {
+    const resBox = document.getElementById('matchResults');
+    resBox.innerHTML = '';               // svuota sempre
+
+    // se lo stato è NONE, mostra solo il messaggio e basta
+    if (currentUser.trade_condition === 'NONE') {
+      resBox.innerHTML =
+        '<p>Your Trade Status is set to "<strong>Cannot trade</strong>".<br>' +
+        'Change it to see potential matches.</p>';
+      return;
+    }
+
+    // altrimenti interroga il backend per i match
+    axios
+      .get(`/pokemon/magical_match?username=${currentUser.username}`)
+      .then(({ data }) => {
+        if (!data || (data.message && !Array.isArray(data))) {
+          // caso “COMMON” senza match o risposta vuota
+          resBox.innerHTML =
+            `<p>${data.message || 'No users up for a trade at the moment.'}</p>`;
+          return;
+        }
+
+        if (Array.isArray(data) && data.length === 0) {
+          resBox.innerHTML =
+            '<p>No users up for a trade at the moment.<br>' +
+            'Try adding ALL Pokémons you can trade and ALL Pokémons you look for.</p>';
+          return;
+        }
+
+        // costruiamo le card dei match
+        data.forEach(item => {
+          const mySTO  = item.mySearch_TheirOffer  || [];
+          const theirSMO = item.theirSearch_MyOffer || [];
+
+          resBox.insertAdjacentHTML('beforeend', `
+            <div class="card my-3 position-relative">
+              <!-- padding-bottom extra per far spazio al pulsante -->
+              <div class="card-body" style="padding-bottom: 4rem;">
+                <h5 class="card-title">Match with ${item.other_user}</h5>
+                <p>Other User's Pokémon Pocket ID: ${item.other_user_pokemon_id}</p>
+                <p><strong>You want from them:</strong> ${mySTO.join(', ')}</p>
+                <p><strong>They want from you:</strong> ${theirSMO.join(', ')}</p>
+                <button
+                  class="btn btn-primary btn-sm send-pokeball-btn d-flex align-items-center"
+                  style="position:absolute; bottom:10px; right:10px; gap:4px;"
+                  onclick="sendPokeball('${item.other_user}')">
+                  Send&nbsp;Pokéball <span style="font-size:1.1rem;">◓</span>
+                </button>
+              </div>
             </div>
-          </div>
-        `;
+          `);
+        });
+      })
+      .catch(err => {
+        // caso 403 (utente in NONE dal server) o altri errori imprevisti
+        const msg = err.response?.data?.message ||
+                    'Unexpected error while fetching matches.';
+        resBox.innerHTML = `<p>${msg}</p>`;
       });
-      someContainer.innerHTML += html;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /*  listener sul cambio di Trade Status                                */
+  /* ------------------------------------------------------------------ */
+  tradeSel.addEventListener('change', e => {
+    const newVal = e.target.value;
+
+    axios.put('/user/trade_condition', {
+      username: currentUser.username,
+      trade_condition: newVal
     })
-    .catch(error => {
-      if (error.response && error.response.status === 403) {
-        const msg = error.response.data.message || "You are in a 'no trade' status, no matches found.";
-        someContainer.innerHTML += `<p>${msg}</p>`;
-      } else {
-        alert('Error fetching two-sided match: ' + (error.response?.data?.message || error.message));
-      }
+    .then(() => {
+      currentUser.trade_condition = newVal;   // memorizza a client-side
+      loadMatchResults();                     // ricarica in base al nuovo stato
+    })
+    .catch(err => {
+      alert(
+        'Error updating Trade Status: ' +
+        (err.response?.data?.message || err.message)
+      );
+      tradeSel.value = currentUser.trade_condition; // ripristina selettore
     });
+  });
+
+  /* ------------------------------------------------------------------ */
+  /*  prima visualizzazione                                              */
+  /* ------------------------------------------------------------------ */
+  loadMatchResults();
+}
+
+/* ===================  NUOVA FUNZIONE sendPokeball  ===================== */
+
+function sendPokeball(otherUsername) {
+  axios.post('/send_pokeball', {
+    from_username: currentUser.username,
+    to_username: otherUsername
+  })
+  .then(() => {
+    alert(`Pokeball sent to ${otherUsername} via email`);
+  })
+  .catch(err => {
+    alert(
+      'Error sending Pokeball: ' +
+      (err.response?.data?.message || err.message)
+    );
+  });
 }
 
 function showProfile() {

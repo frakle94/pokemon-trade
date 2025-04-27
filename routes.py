@@ -5,6 +5,9 @@ import csv
 from flask import Blueprint, request, jsonify, render_template
 from werkzeug.security import generate_password_hash, check_password_hash
 from itsdangerous import URLSafeTimedSerializer
+from flask import Blueprint, request, jsonify
+import smtplib
+from email.message import EmailMessage
 
 # Import dal file "models.py"
 from models import db, User, Offer, Search
@@ -16,6 +19,7 @@ from utils import (
     get_image_for_pokemon,
     get_rarity_for_pokemon,
     get_expansion_for_pokemon,
+    send_mail,
     BASE_URL
 )
 
@@ -442,3 +446,27 @@ def get_all_cards():
         return jsonify({"error": "File not found"}), 404
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+@routes_bp.route('/send_pokeball', methods=['POST'])
+def send_pokeball():
+    data = request.get_json(silent=True) or {}
+    from_username = data.get('from_username')
+    to_username   = data.get('to_username')
+    if not (from_username and to_username):
+        return jsonify({'message': 'Missing usernames'}), 400
+
+    recipient = User.query.filter_by(username=to_username).first()
+    if not recipient or not recipient.email:
+        return jsonify({'message': 'Recipient not found'}), 404
+
+    try:
+        send_mail(
+            recipient.email,
+            'You received a pokéball!',
+            f'Hi {recipient.username},\n\n'
+            f'you just received a pokéball from {from_username}, check the match on Pokémon Trade Platform!\n\n'
+            'https://cescot.pythonanywhere.com/'
+        )
+        return jsonify({'message': 'Pokéball sent via email!'}), 200
+    except Exception as exc:
+        return jsonify({'message': f'Error sending email: {exc}'}), 500

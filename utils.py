@@ -6,8 +6,10 @@ import csv
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 from itsdangerous import URLSafeTimedSerializer
+import smtplib
+from email.message import EmailMessage
 
-load_dotenv()  # Se non lo carichi altrove
+load_dotenv()
 
 # Tua costante base per l'URL delle immagini
 BASE_URL = "https://assets.pokemon-zone.com/game-assets/CardPreviews"
@@ -126,3 +128,34 @@ def get_expansion_for_pokemon(pokemon_name):
     except Exception as e:
         print("Errore get_expansion_for_pokemon:", e)
     return ""
+
+# -----------------------------------------------------------------------------
+#  NEW UTILITY: send_mail (Gmail SMTP)
+# -----------------------------------------------------------------------------
+
+def send_mail(to_addr: str, subject: str, body: str):
+    import smtplib, ssl
+    from email.message import EmailMessage
+    from os import getenv
+
+    GMAIL_USER = getenv("GMAIL_USER")
+    GMAIL_PWD  = getenv("GMAIL_PWD")
+    if not (GMAIL_USER and GMAIL_PWD):
+        raise RuntimeError("Set GMAIL_USER and GMAIL_PWD!")
+
+    msg = EmailMessage()
+    msg["From"] = GMAIL_USER
+    msg["To"]   = to_addr
+    msg["Subject"] = subject
+    msg.set_content(body)
+
+    context = ssl.create_default_context()
+    try:
+        with smtplib.SMTP("smtp.gmail.com", 587, timeout=10) as smtp:
+            smtp.starttls(context=context)
+            smtp.login(GMAIL_USER, GMAIL_PWD)
+            smtp.send_message(msg)
+    except smtplib.SMTPException as exc:
+        # log oppure fallback/alert amministratore
+        print("Gmail SMTP failed:", exc)
+        raise
