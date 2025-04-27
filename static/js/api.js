@@ -767,7 +767,7 @@ function sendPokeball(otherUsername) {
     to_username: otherUsername
   })
   .then(() => {
-    alert(`Pokeball sent to ${otherUsername} via email`);
+    alert(`Pokeball sent to ${otherUsername} via email. Check your inbox or spam for received pokéballs!`);
   })
   .catch(err => {
     alert(

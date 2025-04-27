@@ -1,6 +1,6 @@
 database.db
 .env
 backup_with_new_column.py
-create_db.ipynb
+*.ipynb
 __pycache__/
 *.pyc
