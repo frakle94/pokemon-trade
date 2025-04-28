@@ -11,15 +11,6 @@ let cachedSearchedData = [];
 let handleOfferOutsideClick = null;
 let handleSearchOutsideClick = null;
 
-// Helper: chunk an array into sub-arrays of length `size`
-function chunkArray(arr, size) {
-  const result = [];
-  for (let i = 0; i < arr.length; i += size) {
-    result.push(arr.slice(i, i + size));
-  }
-  return result;
-}
-
 // Rarity comparator: returns a number for each rarity
 // so that sorting places them in the desired order:
 // star, 4 diamonds, 3 diamonds, 2 diamonds, 1 diamond
@@ -778,23 +769,32 @@ function sendPokeball(otherUsername) {
 }
 
 function showProfile() {
+  // mostra/occulta i contenitori
   document.getElementById('mainAppContainer').classList.add('hidden');
   document.getElementById('profileViewContainer').classList.remove('hidden');
-  document.getElementById('profile_username').value = currentUser?.username || '';
-  document.getElementById('profile_email').value = currentUser?.email || '';
-  document.getElementById('profile_pokemon_id').value = currentUser?.pokemonId || '';
-  document.getElementById('profile_password').value = currentUser?.password || '';
-  document.getElementById('profile_trade_condition').value = currentUser?.trade_condition || 'ALL';
-  document.getElementById('updateProfileForm').addEventListener('submit', updateProfile);
+
+  // popola i campi ancora presenti nel form
+  document.getElementById('profile_username').value   = currentUser.username  || '';
+  document.getElementById('profile_email').value      = currentUser.email     || '';
+  document.getElementById('profile_pokemon_id').value = currentUser.pokemonId || '';
+  document.getElementById('profile_password').value   = currentUser.password  || '';
+
+  // registra **una sola** volta il listener per l’update
+  const form = document.getElementById('updateProfileForm');
+  form.removeEventListener('submit', updateProfile);   // evita duplicati
+  form.addEventListener   ('submit', updateProfile);
 }
 
 function updateProfile(event) {
   event.preventDefault();
-  const newUsername = document.getElementById('profile_username').value;
-  const newEmail = document.getElementById('profile_email').value;
+
+  const newUsername  = document.getElementById('profile_username').value;
+  const newEmail     = document.getElementById('profile_email').value;
   const newPokemonId = document.getElementById('profile_pokemon_id').value;
-  const newPassword = document.getElementById('profile_password').value;
-  const newTradeCondition = document.getElementById('profile_trade_condition').value;
+  const newPassword  = document.getElementById('profile_password').value;
+
+  // Trade Status non è più nel form → usiamo quello già in memoria
+  const newTradeCondition = currentUser.trade_condition;
 
   axios.put('/user/update', {
     old_username: currentUser.username,
@@ -802,16 +802,21 @@ function updateProfile(event) {
     email: newEmail,
     pokemon_id: newPokemonId,
     password: newPassword,
-    trade_condition: newTradeCondition
+    trade_condition: newTradeCondition        // manteniamo invariato
   })
-  .then(response => {
-    alert(response.data.message || 'Profile updated successfully!');
-    currentUser.username = newUsername;
-    currentUser.email = newEmail;
-    currentUser.password = newPassword;
-    currentUser.pokemonId = newPokemonId;
-    currentUser.trade_condition = newTradeCondition;
+  .then(res => {
+    alert(res.data.message || 'Profile updated successfully!');
 
+    // aggiorna l’oggetto utente in cache
+    Object.assign(currentUser, {
+      username: newUsername,
+      email: newEmail,
+      password: newPassword,
+      pokemonId: newPokemonId,
+      trade_condition: newTradeCondition
+    });
+
+    // torna alla schermata principale
     navigateToFeatures(
       currentUser.username,
       currentUser.email,
@@ -820,8 +825,11 @@ function updateProfile(event) {
       currentUser.trade_condition
     );
   })
-  .catch(error => {
-    alert('Error updating profile: ' + (error.response?.data?.message || error.message));
+  .catch(err => {
+    alert(
+      'Error updating profile: ' +
+      (err.response?.data?.message || err.message)
+    );
   });
 }
 

@@ -231,9 +231,14 @@
         </div>
         <div class="mb-3">
           <label for="profile_pokemon_id" class="form-label"
-            >Pokémon Pocket ID</label
+            >Pokémon Pocket ID (16 numbers only)</label
           >
-          <input type="text" class="form-control" id="profile_pokemon_id" required />
+          <input type="text"
+            class="form-control"
+            id="profile_pokemon_id"
+            inputmode="numeric"
+            maxlength="16"
+            placeholder="16-digit ID" />
         </div>
         <button type="submit" class="btn btn-primary w-100">
           Update Profile
