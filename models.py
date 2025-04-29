@@ -11,6 +11,7 @@ class User(db.Model):
     password = db.Column(db.String(200), nullable=False)
     pokemon_id = db.Column(db.String(50), nullable=False)
     trade_condition = db.Column(db.String(20), nullable=False, default="ALL")
+    login_time = db.Column(db.DateTime, nullable=True) 
 
 class Offer(db.Model):
     id = db.Column(db.Integer, primary_key=True)

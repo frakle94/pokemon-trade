@@ -693,13 +693,17 @@ function magicalMatch() {
         data.forEach(item => {
           const mySTO  = item.mySearch_TheirOffer  || [];
           const theirSMO = item.theirSearch_MyOffer || [];
+          const lastLogin = item.other_user_last_login
+            ? new Date(item.other_user_last_login).toLocaleString()
+            : 'unknown';
 
           resBox.insertAdjacentHTML('beforeend', `
             <div class="card my-3 position-relative">
               <!-- padding-bottom extra per far spazio al pulsante -->
               <div class="card-body" style="padding-bottom: 4rem;">
                 <h5 class="card-title">Match with ${item.other_user}</h5>
-                <p>Other User's Pokémon Pocket ID: ${item.other_user_pokemon_id}</p>
+                <p><strong>Other User's Pokémon Pocket ID:</strong> ${item.other_user_pokemon_id}</p>
+                <p><strong>Last login:</strong> ${lastLogin}</p>
                 <p><strong>You want from them:</strong> ${mySTO.join(', ')}</p>
                 <p><strong>They want from you:</strong> ${theirSMO.join(', ')}</p>
                 <button

@@ -8,6 +8,7 @@ from itsdangerous import URLSafeTimedSerializer
 from flask import Blueprint, request, jsonify
 import smtplib
 from email.message import EmailMessage
+from datetime import datetime
 
 # Import dal file "models.py"
 from models import db, User, Offer, Search
@@ -43,7 +44,8 @@ def register():
         email=data['email'],
         password=hashed_password,
         pokemon_id=data['pokemon_id'],
-        trade_condition="ALL"
+        trade_condition="ALL",
+        login_time= datetime.utcnow()
     )
     db.session.add(new_user)
     db.session.commit()
@@ -58,13 +60,18 @@ def register():
 @routes_bp.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
-    email = data.get('email')
+    email    = data.get('email')
     password = data.get('password')
+
     if not email or not password:
         return jsonify({"message": "Email and password required"}), 400
 
     user = User.query.filter_by(email=email).first()
     if user and check_password_hash(user.password, password):
+        # ─── Salva l’istante dell’accesso ───────────────────────
+        user.login_time = datetime.utcnow()
+        db.session.commit()
+        # ────────────────────────────────────────────────────────
         return jsonify({
             "message": "Login successful!",
             "username": user.username,
@@ -329,6 +336,9 @@ def magical_match():
             match_info = {
                 "other_user": other_user.username,
                 "other_user_pokemon_id": other_user.pokemon_id,
+                "other_user_last_login": (
+                    other_user.login_time.isoformat() if other_user.login_time else None
+                ),
                 "mySearch_TheirOffer": sorted(mySearch_TheirOffer_set),
                 "theirSearch_MyOffer": sorted(theirSearch_MyOffer_set)
             }
