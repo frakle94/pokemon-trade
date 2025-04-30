@@ -34,7 +34,11 @@ function handleRegistration(e) {
 
   axios.post('/register', { username, email, password, pokemon_id: pokemonId })
     .then(response => {
-      alert(response.data.message);
+      alert(
+        response.data.message +
+        '\n' +
+        'Please check your email inbox or your spam folder.'
+        );
       const tc = response.data.trade_condition || 'ALL';
       navigateToFeatures(response.data.username, email, pokemonId, password, tc);
     })

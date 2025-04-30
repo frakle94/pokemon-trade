@@ -2,13 +2,14 @@
 
 import os
 import csv
-from flask import Blueprint, request, jsonify, render_template
+from flask import Blueprint, request, jsonify, render_template, current_app
 from werkzeug.security import generate_password_hash, check_password_hash
 from itsdangerous import URLSafeTimedSerializer
 from flask import Blueprint, request, jsonify
 import smtplib
 from email.message import EmailMessage
 from datetime import datetime
+from textwrap import dedent
 
 # Import dal file "models.py"
 from models import db, User, Offer, Search
@@ -21,6 +22,7 @@ from utils import (
     get_rarity_for_pokemon,
     get_expansion_for_pokemon,
     send_mail,
+    send_mail_with_retry,
     BASE_URL
 )
 
@@ -45,12 +47,55 @@ def register():
         password=hashed_password,
         pokemon_id=data['pokemon_id'],
         trade_condition="ALL",
-        login_time= datetime.utcnow()
+        login_time=datetime.utcnow()
     )
     db.session.add(new_user)
     db.session.commit()
+
+    mail_sent = send_mail_with_retry(
+        new_user.email,
+        'Welcome to the Pokémon Trade Platform!',
+        dedent(f"""\
+Hi {new_user.username},
+
+Welcome to the Pokémon Trade Platform!
+
+Here are a few steps to help you get started:
+
+1. Eventually move this email out of your Spam folder.
+
+2. Log in to the platform: https://cescot.pythonanywhere.com/
+
+3. Save the link as it was an app:
+    • iPhone video guide:  https://www.youtube.com/watch?v=_1p-rVIOjYA  
+    • Android video guide: https://www.youtube.com/watch?v=O1xEXKB6tNg
+
+4. Update your "For Trade" and "Looking For" sections with your Pokémon needs.
+ 
+5. Tap "Match" to find users who are up for a trade.
+
+6. Add the user on the official Pokémon Pocket app.
+ 
+7. Send the trade request and get the Pokémon you've been looking for!
+
+We're growing fast, and it's all thanks to awesome traders like you!  
+The more we grow, the better it gets for everyone, so feel free to share the link and keep trading!
+
+Enjoy the process, and happy trading!
+
+Best,  
+Cesco_t
+""")
+)
+    if not mail_sent:
+        current_app.logger.warning(
+            "Welcome e-mail permanently failed for user %s <%s>",
+            new_user.username,
+            new_user.email
+        )
+
     return jsonify({
-        "message": "User registered successfully!",
+        "message": "You registered successfully.",
         "username": new_user.username,
         "email": new_user.email,
         "pokemon_id": new_user.pokemon_id,

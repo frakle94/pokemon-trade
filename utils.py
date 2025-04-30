@@ -8,6 +8,8 @@ from dotenv import load_dotenv
 from itsdangerous import URLSafeTimedSerializer
 import smtplib
 from email.message import EmailMessage
+import time
+import logging
 
 load_dotenv()
 
@@ -159,3 +161,22 @@ def send_mail(to_addr: str, subject: str, body: str):
         # log oppure fallback/alert amministratore
         print("Gmail SMTP failed:", exc)
         raise
+
+def send_mail_with_retry(to_addr: str, subject: str, body: str,
+                         max_attempts: int = 3, delay_sec: int = 2) -> bool:
+    """
+    Invio G-Mail con fino a `max_attempts` tentativi.
+    Ritorna True se almeno un tentativo va a buon fine, False altrimenti.
+    """
+    for attempt in range(1, max_attempts + 1):
+        try:
+            send_mail(to_addr, subject, body)
+            return True
+        except Exception as exc:
+            logging.warning(
+                "Email attempt %s/%s to %s failed: %s",
+                attempt, max_attempts, to_addr, exc
+            )
+            if attempt < max_attempts:
+                time.sleep(delay_sec)
+    return False
