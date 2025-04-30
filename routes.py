@@ -66,7 +66,7 @@ Here are a few steps to help you get started:
 
 2. Log in to the platform: https://cescot.pythonanywhere.com/
 
-3. Save the link as it was an app:
+3. Save the link so it becomes an app with its own icon on your smartphone:
     • iPhone video guide:  https://www.youtube.com/watch?v=_1p-rVIOjYA  
     • Android video guide: https://www.youtube.com/watch?v=O1xEXKB6tNg
 
@@ -74,7 +74,7 @@ Here are a few steps to help you get started:
  
 5. Tap "Match" to find users who are up for a trade.
 
-6. Add the user on the official Pokémon Pocket app.
+6. Add the user as a friend on the official Pokémon Pocket app.
  
 7. Send the trade request and get the Pokémon you've been looking for!
 
