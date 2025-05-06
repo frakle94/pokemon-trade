@@ -16,37 +16,6 @@ load_dotenv()
 # Tua costante base per l'URL delle immagini
 BASE_URL = "https://assets.pokemon-zone.com/game-assets/CardPreviews"
 
-def send_mail_with_mailjet(to_email, subject, text_body):
-    """
-    Invia un'email usando l'API di Mailjet.
-    """
-    api_key = os.getenv('MAILJET_API_KEY')
-    api_secret = os.getenv('MAILJET_API_SECRET')
-    if not api_key or not api_secret:
-        raise ValueError("Missing Mailjet credentials (MAILJET_API_KEY or MAILJET_API_SECRET).")
-
-    url = "https://api.mailjet.com/v3.1/send"
-    data = {
-        "Messages": [
-            {
-                "From": {
-                    "Email": str(os.getenv('MAILJET_SENDER')),
-                    "Name": "MyPokemonApp"
-                },
-                "To": [
-                    {
-                        "Email": to_email
-                    }
-                ],
-                "Subject": subject,
-                "TextPart": text_body
-            }
-        ]
-    }
-    response = requests.post(url, auth=(api_key, api_secret), json=data)
-    response.raise_for_status()
-    return response
-
 def is_same_card(offer_or_search_obj, want_obj):
     """
     Verifica se due carte sono le stesse, confrontando nome Pokémon, espansione e rarità.

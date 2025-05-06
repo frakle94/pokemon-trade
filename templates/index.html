@@ -85,6 +85,9 @@
           <div class="text-center mt-3">
             <span class="btn btn-link" id="showRegisterBtn">Click here to register</span>
           </div>
+          <div class="text-center">
+            <span id="showForgotBtn" class="forgot-link">Forgot your password?</span>
+          </div>
         </div>
 
         <div id="registrationFormContainer" class="hidden">
@@ -146,7 +149,7 @@
                 required
               />
             </div>
-            <button type="submit" class="btn btn-warning w-100">Send Reset Link</button>
+            <button type="submit" class="btn btn-primary w-100">Send Reset Link</button>
           </form>
           <div class="text-center mt-3">
             <span class="go-back" id="goBackToLoginBtn">Back to Login</span>
@@ -262,11 +265,18 @@
     const showRegisterBtn = document.getElementById('showRegisterBtn');
     const goBackBtn = document.getElementById('goBackBtn');
     const goBackToLoginBtn = document.getElementById('goBackToLoginBtn');
+    const showForgotBtn = document.getElementById('showForgotBtn');
+
 
     showRegisterBtn.addEventListener('click', () => {
       loginFormContainer.classList.add('hidden');
       registrationFormContainer.classList.remove('hidden');
     });
+
+    showForgotBtn.addEventListener('click', () => {
+      loginFormContainer.classList.add('hidden');
+      forgotPasswordFormContainer.classList.remove('hidden');
+    });    
 
     goBackBtn.addEventListener('click', () => {
       registrationFormContainer.classList.add('hidden');

@@ -16,7 +16,6 @@ from models import db, User, Offer, Search
 
 # Import delle funzioni di utilità
 from utils import (
-    send_mail_with_mailjet,
     is_same_card,
     get_image_for_pokemon,
     get_rarity_for_pokemon,
@@ -128,24 +127,35 @@ def login():
 
 @routes_bp.route('/forgot-password', methods=['POST'])
 def forgot_password():
-    data = request.json
-    email = data.get('email')
+    data = request.json or {}
+    email = (data.get('email') or '').strip().lower()
+
+    # risposta “neutra” per evitare user-enumeration
+    generic_ok = jsonify({"message": "If the address exists, instructions were sent."})
+
     user = User.query.filter_by(email=email).first()
     if not user:
-        return jsonify({"message": "No user with that email"}), 404
+        return generic_ok, 200          # esce qui se l’email non è registrata
 
     token = s.dumps(email, salt='password-reset')
-    frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:5000')
-    reset_url = f"{frontend_url}/reset-password/{token}"
+    reset_url = f"{request.host_url.rstrip('/')}/reset-password/{token}"
 
-    subject = "Pokémon Trade Password Reset"
-    body = f"Hi {user.username}, click here to reset your password:\n{reset_url}"
+    subject = "Pokémon Trade – reset your password"
+    body    = (
+        f"Hi {user.username},\n\n"
+        "Click the link below to reset your password (valid for 1 hour):\n"
+        f"{reset_url}\n\n"
+        "If you didn’t request it, just ignore this email."
+    )
 
-    try:
-        send_mail_with_mailjet(email, subject, body)
-        return jsonify({"message": "Password reset email sent!"}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    ok = send_mail_with_retry(user.email, subject, body)   # 🔄 usa Gmail + retry
+
+    if not ok:                                             # log in caso di fallimento
+        current_app.logger.error(
+            "Pwd-reset mail error for %s: delivery failed", user.email
+        )
+
+    return generic_ok, 200
 
 @routes_bp.route('/reset-password/<token>', methods=['GET'])
 def reset_password_form(token):

@@ -269,3 +269,13 @@ form {
     margin-bottom: 3rem !important;  /* spazio sotto il titolo */
 }
 
+.forgot-link{
+    color:#8b0000;
+    text-decoration:underline;
+    cursor:pointer;
+  }
+
+.forgot-link:hover {
+    text-decoration: underline;
+}
+  
