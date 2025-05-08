@@ -763,14 +763,22 @@ function magicalMatch() {
 function sendPokeball(otherUsername) {
   axios.post('/send_pokeball', {
     from_username: currentUser.username,
-    to_username: otherUsername
+    to_username  : otherUsername
   })
   .then(() => {
-    alert(`Pokeball sent to ${otherUsername} via email. Check your inbox or spam for received pokéballs!`);
+    alert(`Pokéball sent to ${otherUsername} via email. Check your inbox or spam for received pokéballs!`);
+
+    if (window.goatcounter && typeof goatcounter.count === 'function') {
+      goatcounter.count({
+        path : '/event/pokeball',   // comparirà come “/event/pokeball”
+        title: 'Send Pokéball',
+        event: true                // lo marca come evento, non page-view
+      });
+    }
   })
   .catch(err => {
     alert(
-      'Error sending Pokeball: ' +
+      'Error sending Pokéball: ' +
       (err.response?.data?.message || err.message)
     );
   });
