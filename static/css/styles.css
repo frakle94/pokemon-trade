@@ -194,5 +194,5 @@ form{ max-width:400px;width:100%; }
 
 @media (max-width:575.98px){
   #landingLoginWrapper .card{ font-size:1.05rem;padding:1.5rem; }
-  #landingLoginWrapper{ margin-top:-10rem; } /* offset più mite su mobile */
+  #landingLoginWrapper{ margin-top:-18rem; } /* offset più mite su mobile */
 }
