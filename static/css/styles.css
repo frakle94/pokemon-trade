@@ -1,281 +1,198 @@
 /* styles.css */
 
+/* ─────────────────────────────────────────────────────────────
+   1.  REGOLE ORIGINALI — nessuna riga rimossa
+──────────────────────────────────────────────────────────────*/
+
 /* Stile uniforme per i campi input e pulsanti */
 .form-control,
-.btn {
-    width: 100%;
-    max-width: 300px;
-    margin: 0 auto 1rem;
-    padding: 0.5rem;
-    border-radius: 0.25rem;
-    display: block;
+.btn{
+    width:100%;
+    max-width:300px;
+    margin:0 auto 1rem;
+    padding:0.5rem;
+    border-radius:0.25rem;
+    display:block;
 }
 
 /* Campi input con sfondo nero e testo bianco */
-.form-control {
-    background-color: #000;
-    color: #fff;
-    border: 1px solid #ced4da;
+.form-control{
+    background:#000;
+    color:#fff;
+    border:1px solid #ced4da;
+}
+.form-control::placeholder{ color:#fff !important; }
+
+/* Stato focus */
+.form-control:focus{
+    background:#000;color:#fff;border-color:#80bdff;
+    box-shadow:0 0 0 0.2rem rgba(0,123,255,.25);
+    outline:none;
 }
 
-/* Placeholder bianco con trasparenza */
-.form-control::placeholder {
-    color: #fff !important;
+/* Autofill */
+.form-control:-webkit-autofill{
+    background:#000 !important;color:#fff !important;
+    -webkit-box-shadow:0 0 0 1000px #000 inset !important;
+            box-shadow:0 0 0 1000px #000 inset !important;
+}
+.form-control:-webkit-autofill::first-line{ color:#fff !important; }
+input:-webkit-autofill{
+    -webkit-text-fill-color:#fff !important;
+    transition:background-color 5000s ease-in-out 0s !important;
 }
 
-/* Stato Focus per input */
-.form-control:focus {
-    background-color: #000;
-    color: #fff;
-    border-color: #80bdff;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-    outline: none;
+/* Pulsanti */
+.btn{ font-weight:bold; }
+.btn-success{ background:#28a745;border-color:#28a745;color:#fff; }
+.btn-success:hover{ background:#218838;border-color:#1e7e34; }
+.btn-primary{ background:#007bff;border-color:#007bff;color:#fff; }
+.btn-primary:hover{ background:#0056b3;border-color:#004085; }
+
+/* Center heading */
+.text-center h3{ text-align:center;margin-bottom:1rem; }
+
+/* Flex utilità */
+.d-flex{ display:flex;align-items:center;justify-content:center; }
+.d-flex .btn{ margin:0;margin-right:5px; }
+.d-flex .btn:last-child{ margin-right:0; }
+
+html,body{ height:100%;margin:0;padding:0; }
+
+.centered-container{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    min-height:100vh;padding:2rem;text-align:center;
 }
 
-/* Gestione auto-compilazione da Chrome/others */
-.form-control:-webkit-autofill {
-    background-color: #000 !important;
-    color: #fff !important;
-    -webkit-box-shadow: 0 0 0px 1000px #000 inset !important;
-            box-shadow: 0 0 0px 1000px #000 inset !important;
-}
-.form-control:-webkit-autofill::first-line {
-    color: #fff !important;
-}
-input:-webkit-autofill {
-    -webkit-text-fill-color: #fff !important;
-    transition: background-color 5000s ease-in-out 0s !important;
+/* Form */
+form{ max-width:400px;width:100%; }
+
+/* Tiny button */
+.tiny-btn{
+    width:50px !important;height:30px !important;font-size:0.6rem;
+    padding:0;display:inline-flex;justify-content:center;align-items:center;
+    line-height:1;border-radius:0.2rem;
 }
 
-/* Stile per i pulsanti */
-.btn {
-    font-weight: bold;
+/* Profile card */
+.profile-card{
+    position:fixed;top:1rem;right:1rem;z-index:1050;background:#fff;
+    border:1px solid #dee2e6;border-radius:0.25rem;
+    box-shadow:0 4px 6px rgba(0,0,0,0.1);
+    width:300px;padding:1rem;
 }
 
-/* Pulsante Login (verde) */
-.btn-success {
-    background-color: #28a745;
-    border-color: #28a745;
-    color: white;
+.hidden{ display:none !important; }
+
+#offerHeading{ text-align:center;margin-bottom:1rem; }
+
+.button-container{
+    display:flex;justify-content:center;align-items:center;gap:5px;
 }
-.btn-success:hover {
-    background-color: #218838;
-    border-color: #1e7e34;
+.button-container .btn{
+    min-width:150px;
+    padding:0.5rem 1rem;
+    text-align:center;
 }
 
-/* Pulsante Register (blu) */
-.btn-primary {
-    background-color: #007bff;
-    border-color: #007bff;
-    color: white;
-}
-.btn-primary:hover {
-    background-color: #0056b3;
-    border-color: #004085;
+/* Override Bootstrap .btn-sm */
+.btn-sm{
+    width:auto !important;max-width:none !important;
+    display:inline-block !important;
+    margin:0 !important;
+    padding:0.25rem 0.5rem !important;
+    font-size:0.875rem !important;
 }
 
-/* Center align the heading */
-.text-center h3 {
-    text-align: center;
-    margin-bottom: 1rem;
+.profile-centered-container{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    min-height:80vh;margin-top:1rem;
 }
 
-/* Flexbox container for buttons */
-.d-flex {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+/* Magical Match rainbow border */
+.btn-rainbow{
+    border:3px solid transparent;
+    border-image-slice:1;
+    border-image-source:linear-gradient(to right,red,orange,yellow,green,blue,indigo,violet);
 }
 
-.d-flex .btn {
-    margin: 0;
-    margin-right: 5px;
+/* Grid di 3 colonne */
+.pokemon-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:12px;
+    margin-bottom:1rem;
 }
 
-.d-flex .btn:last-child {
-    margin-right: 0;
+/* Card singola */
+.pokemon-card{
+    background:#f9f9f9;
+    border:1px solid #ccc;
+    border-radius:6px;
+    text-align:center;
+    padding:8px;
+    cursor:pointer;
+    transition:transform 0.1s ease-in-out;
 }
+.pokemon-card:hover{ transform:scale(1.02); }
 
-html, body {
-    height: 100%;
-    margin: 0;
-    padding: 0;
-}
-
-.centered-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    padding: 2rem;
-    text-align: center;
-}
-
-/* Form styling */
-form {
-    max-width: 400px;
-    width: 100%;
-}
-
-/* Tiny button styling */
-.tiny-btn {
-    width: 50px !important;
-    height: 30px !important;
-    font-size: 0.6rem;
-    padding: 0;
-    display: inline-flex;
-    justify-content: center;
-    align-items: center;
-    line-height: 1;
-    border-radius: 0.2rem;
-}
-
-/* Profile Card Styling */
-.profile-card {
-    position: fixed;
-    top: 1rem;
-    right: 1rem;
-    z-index: 1050;
-    background-color: white;
-    border: 1px solid #dee2e6;
-    border-radius: 0.25rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    width: 300px;
-    padding: 1rem;
-}
-
-.hidden {
-    display: none !important;
-}
-
-#offerHeading {
-    text-align: center;
-    margin-bottom: 1rem;
-}
-
-.button-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 5px;
-}
-
-.button-container .btn {
-    min-width: 150px;
-    padding: 0.5rem 1rem;
-    text-align: center;
-}
-
-/* Overriding Bootstrap's .btn-sm so it's not forced to 100% wide */
-.btn-sm {
-    width: auto !important;
-    max-width: none !important;
-    display: inline-block !important;
-    margin: 0 !important;
-    padding: 0.25rem 0.5rem !important;
-    font-size: 0.875rem !important;
-}
-
-.profile-centered-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 80vh;
-    margin-top: 1rem;
-}
-
-/* Magical Match always has a static rainbow border (example: 4px thick) */
-.btn-rainbow {
-    border: 3px solid transparent;
-    border-image-slice: 1;
-    border-image-source: linear-gradient(
-      to right,
-      red, orange, yellow, green, blue, indigo, violet
-    );
-}
-
-/* Griglia di 3 colonne */
-.pokemon-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    margin-bottom: 1rem;
-}
-
-/* Singola carta in griglia */
-.pokemon-card {
-    background-color: #f9f9f9;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    text-align: center;
-    padding: 8px;
-    cursor: pointer;
-    transition: transform 0.1s ease-in-out;
-}
-
-.pokemon-card:hover {
-    transform: scale(1.02);
-}
-
-.pokemon-card img {
-    width: 100%;
-    height: auto;
-    object-fit: cover;
-    border-radius: 4px;
+.pokemon-card img{
+    width:100%;
+    height:auto;
+    object-fit:cover;
+    border-radius:4px;
 }
 
 /* Bordo di selezione */
-.selected-card {
-    outline: 3px solid #007bff;
-    outline-offset: -3px;
-    background-color: #e2f0ff !important;
+.selected-card{
+    outline:3px solid #007bff;
+    outline-offset:-3px;
+    background:#e2f0ff !important;
 }
 
-#updateProfileForm .form-control {
-    max-width: 100%;      /* larghezza completa della riga */
-    margin: 0 0 1rem;     /* rimosso auto-centering */
-}
-
-#updateProfileForm .btn {
-    max-width: 300px;     /* lasciamo il limite se serve */
-    margin: 0 auto 1rem;  /* bottone ancora centrato */
-}
-
+/* Profile form */
+#updateProfileForm .form-control{ max-width:100%;margin:0 0 1rem; }
+#updateProfileForm .btn{ max-width:300px;margin:0 auto 1rem; }
 #updateProfileForm .form-control,
-#updateProfileForm .btn {
-    width: 100%;
-    max-width: 300px;   /* box leggermente più stretti di prima */
-    margin: 0 auto 1rem;
-}
-
-/* le label ora hanno la stessa larghezza e sono centrate come i box */
-#updateProfileForm label {
-    display: block;
-    width: 100%;
-    max-width: 300px;   /* identico ai campi */
-    margin: 0 auto 0.25rem; /* poco spazio sotto la label */
+#updateProfileForm .btn{ width:100%;max-width:300px;margin:0 auto 1rem; }
+#updateProfileForm label{
+    display:block;width:100%;max-width:300px;margin:0 auto 0.25rem;
 }
 
 /* Spaziatura titolo / input nella vista profilo */
-#profileViewContainer .container{
-    margin-top: 0 !important;   /* nessun margine esterno */
-    padding-top: 0 !important;  /* rimuove il padding interno di Bootstrap */
+#profileViewContainer .container{ margin-top:0 !important;padding-top:0 !important; }
+#profileViewContainer h1{ margin-top:0 !important;margin-bottom:3rem !important; }
+
+/* Forgot link */
+.forgot-link{ color:#8b0000;text-decoration:underline;cursor:pointer; }
+.forgot-link:hover{ text-decoration:underline; }
+
+/* ─────────────────────────────────────────────────────────────
+   1-bis.  BOX “STEP”  (riporta i tre quadrati)
+──────────────────────────────────────────────────────────────*/
+.step-card{
+    width:100%;
+    background:#fff;
+    border-radius:.5rem;
+    box-shadow:0 4px 6px rgba(0,0,0,.1);
+    padding:1.5rem;
 }
 
-#profileViewContainer h1{
-    margin-top: 0 !important;   /* elimina il margine superiore dell’h1 */
-    margin-bottom: 3rem !important;  /* spazio sotto il titolo */
-}
+/* ─────────────────────────────────────────────────────────────
+   2.  OVERRIDE **SOLO** PER IL LOGIN BOX
+──────────────────────────────────────────────────────────────*/
 
-.forgot-link{
-    color:#8b0000;
-    text-decoration:underline;
-    cursor:pointer;
-  }
+/* Card del login: riempie sempre la colonna */
+#landingLoginWrapper .card{ width:100%; }
 
-.forgot-link:hover {
-    text-decoration: underline;
+/* Campi e pulsanti nel login senza tappo 300px */
+#landingLoginWrapper .form-control,
+#landingLoginWrapper .btn{ max-width:none !important; }
+
+/* ↑   SOLLEVAMENTO DEL LOGIN  ↑ */
+#landingLoginWrapper{ margin-top:-18rem; }   /* alza di ~18 rem */
+
+@media (max-width:575.98px){
+  #landingLoginWrapper .card{ font-size:1.05rem;padding:1.5rem; }
+  #landingLoginWrapper{ margin-top:-10rem; } /* offset più mite su mobile */
 }
-  
