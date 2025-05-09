@@ -1,312 +1,264 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
-  <!-- Icone e manifest invariati -->
+  <!-- ─────────── META / ICONS ─────────── -->
   <link rel="apple-touch-icon" sizes="180x180" href="static/files/redketchup/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="static/files/redketchup/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="static/files/redketchup/favicon-16x16.png">
   <link rel="manifest" href="static/files/redketchup/site.webmanifest">
-
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <!-- Aggiunta per coprire la status bar con lo stesso colore di bg-light -->
-  <meta name="theme-color" content="#f8f9fa" />
-
-  <script data-goatcounter="https://cescot.goatcounter.com/count"
-        async src="//gc.zgo.at/count.js"></script>
-
+  <meta name="theme-color" content="#f8f9fa"/>
   <title>Pokémon Trade Platform</title>
 
-  <link
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-  />
-  <link rel="stylesheet" href="/static/css/styles.css" />
+  <!-- GoatCounter -->
+  <script data-goatcounter="https://cescot.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+
+  <!-- CSS / JS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="/static/css/styles.css"/>
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
   <style>
-    .centered-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      padding: 2rem;
+    /* ---------- layout generali ---------- */
+    .centered-container{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem}
+    .card{max-width:400px;box-shadow:0 4px 6px rgba(0,0,0,.1)}
+    .hidden{display:none}
+    .go-back{color:#007bff;cursor:pointer;text-decoration:underline}
+    .go-back:hover{text-decoration:none}
+    #mainAppContainer{padding-bottom:3rem}
+
+    /* ---------- landing hero fix ---------- */
+    .steps-section       {padding-top:2rem;}
+    .steps-section h2{
+      margin-bottom:0;      /* azzera il vecchio margine */
+      padding-bottom:1.0rem;  /* ↑ regola qui la distanza */
     }
-    .card {
-      max-width: 400px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-    .hidden {
-      display: none;
-    }
-    .go-back {
-      color: #007bff;
-      cursor: pointer;
-      text-decoration: underline;
-    }
-    .go-back:hover {
-      text-decoration: none;
-    }
-    #mainAppContainer {
-      padding-bottom: 3rem;
+
+    /* solleva il login-box: regola questo valore finché ti piace l’effetto */
+    #landingLoginWrapper{
+      margin-top:-18rem;   /* ← prova -14 rem invece di -18 rem */
+      flex:0 0 320px;
+      max-width:100%;
     }
   </style>
 </head>
 <body class="bg-light">
-  <div class="centered-container" id="authContainer">
-    <div class="card">
-      <div class="card-body">
-        <h1 class="text-center mb-4"><strong>Pokémon Trade Platform</strong></h1>
 
-        <div id="loginFormContainer">
-          <form id="loginForm">
-            <div class="mb-3">
-              <input
-                type="email"
-                class="form-control"
-                id="login_email"
-                name="username"
-                autocomplete="username"
-                placeholder="Email"
-                required
-              />
-            </div>
-            <div class="mb-3">
-              <input
-                type="password"
-                class="form-control"
-                id="login_password"
-                name="password"
-                autocomplete="current-password"
-                placeholder="Password"
-                required
-              />
-            </div>
-            <button type="submit" class="btn btn-success w-100">Login</button>
-          </form>
-          <div class="text-center mt-3">
-            <span class="btn btn-link" id="showRegisterBtn">Click here to register</span>
-          </div>
-          <div class="text-center">
-            <span id="showForgotBtn" class="forgot-link">Forgot your password?</span>
-          </div>
+  <!-- ============ HERO + 3 STEPS ============ -->
+  <section id="heroSection" class="steps-section text-center">
+    <div class="container">
+      <h2 class="fw-bold mb-4">Pokémon Trade Platform</h2>
+      <div class="row g-4 justify-content-center">
+        <div class="col-12 col-md-4">
+          <h3 class="display-5 fw-bold text-primary">1</h3>
+          <p>Create your list of <strong>For Trade</strong> &amp; <strong>Looking For</strong> Pokémon cards.</p>
         </div>
-
-        <div id="registrationFormContainer" class="hidden">
-          <form id="registerForm">
-            <div class="mb-3">
-              <input
-                type="text"
-                class="form-control"
-                id="reg_username"
-                placeholder="Pokémon Pocket Username"
-                required
-              />
-            </div>
-            <div class="mb-3">
-              <input
-                type="email"
-                class="form-control"
-                id="reg_email"
-                placeholder="Email"
-                required
-              />
-            </div>
-            <div class="mb-3">
-              <input
-                type="password"
-                class="form-control"
-                id="reg_password"
-                placeholder="Password"
-                required
-              />
-            </div>
-            <!-- Pokémon Pocket ID: 16 numeri -->
-            <div class="mb-3">
-              <input
-                type="text"
-                class="form-control"
-                id="reg_pokemon_id"
-                placeholder="Pokémon Pocket ID"
-                pattern="^[0-9]{16}$"
-                title="Enter 16 numbers ID"
-                required
-              />
-            </div>
-            <button type="submit" class="btn btn-primary w-100">Register</button>
-          </form>
-          <div class="text-center mt-3">
-            <span class="go-back" id="goBackBtn">Go back to Login</span>
-          </div>
+        <div class="col-12 col-md-4">
+          <h3 class="display-5 fw-bold text-primary">2</h3>
+          <p>Tap <strong>Match</strong> and find someone to trade with in seconds.</p>
         </div>
-
-        <div id="forgotPasswordFormContainer" class="hidden">
-          <form id="forgotPasswordForm">
-            <div class="mb-3">
-              <input
-                type="email"
-                class="form-control"
-                id="forgot_email"
-                placeholder="Enter your registered email"
-                required
-              />
-            </div>
-            <button type="submit" class="btn btn-primary w-100">Send Reset Link</button>
-          </form>
-          <div class="text-center mt-3">
-            <span class="go-back" id="goBackToLoginBtn">Back to Login</span>
-          </div>
+        <div class="col-12 col-md-4">
+          <h3 class="display-5 fw-bold text-primary">3</h3>
+          <p>Complete the trade in Pokémon Pocket official app by <strong>adding a new friend</strong>.</p>
         </div>
       </div>
     </div>
-  </div>
+  </section>
 
+  <!-- ============ AUTH ============ -->
+  <div class="centered-container" id="authContainer">
+    <div id="landingLoginWrapper">
+      <div class="card">
+        <div class="card-body">
+          <!--h1 class="text-center mb-4"><strong>Pokémon Trade Platform</strong></h1-->
+          <!-- logo / title -->
+          <div class="text-center mb-4">
+            <img src="static/files/redketchup/apple-touch-icon.png"
+                alt="Pokéball logo"
+                width="64"
+                height="64">
+          </div>
+          <!-- Login -->
+          <div id="loginFormContainer">
+            <form id="loginForm">
+              <div class="mb-3">
+                <input type="email" class="form-control" id="login_email"
+                       name="username" autocomplete="username"
+                       placeholder="Email" required>
+              </div>
+              <div class="mb-3">
+                <input type="password" class="form-control" id="login_password"
+                       name="password" autocomplete="current-password"
+                       placeholder="Password" required>
+              </div>
+              <button type="submit" class="btn btn-success w-100">Login</button>
+            </form>
+            <div class="text-center mt-3">
+              <span class="btn btn-link" id="showRegisterBtn">Click here to register</span>
+            </div>
+            <div class="text-center">
+              <span id="showForgotBtn" class="forgot-link">Forgot your password?</span>
+            </div>
+          </div>
+
+          <!-- Registration -->
+          <div id="registrationFormContainer" class="hidden">
+            <form id="registerForm">
+              <div class="mb-3">
+                <input type="text" class="form-control" id="reg_username"
+                       placeholder="Pokémon Pocket Username" required>
+              </div>
+              <div class="mb-3">
+                <input type="email" class="form-control" id="reg_email"
+                       placeholder="Email" required>
+              </div>
+              <div class="mb-3">
+                <input type="password" class="form-control" id="reg_password"
+                       placeholder="Password" required>
+              </div>
+              <div class="mb-3">
+                <input type="text" class="form-control" id="reg_pokemon_id"
+                       placeholder="Pokémon Pocket ID"
+                       pattern="^[0-9]{16}$" title="Enter 16 numbers ID" required>
+              </div>
+              <button type="submit" class="btn btn-primary w-100">Register</button>
+            </form>
+            <div class="text-center mt-3">
+              <span class="go-back" id="goBackBtn">Go back to Login</span>
+            </div>
+          </div>
+
+          <!-- Forgot password -->
+          <div id="forgotPasswordFormContainer" class="hidden">
+            <form id="forgotPasswordForm">
+              <div class="mb-3">
+                <input type="email" class="form-control" id="forgot_email"
+                       placeholder="Enter your registered email" required>
+              </div>
+              <button type="submit" class="btn btn-primary w-100">Send Reset Link</button>
+            </form>
+            <div class="text-center mt-3">
+              <span class="go-back" id="goBackToLoginBtn">Back to Login</span>
+            </div>
+          </div>
+        </div>
+      </div><!-- /.card -->
+    </div><!-- /landingLoginWrapper -->
+  </div><!-- /authContainer -->
+
+  <!-- ============ MAIN APP (For Trade / Match) ============ -->
   <div class="hidden" id="mainAppContainer">
     <nav class="navbar navbar-light bg-light">
       <div class="container d-flex justify-content-between">
-        <!-- Icona Info a sinistra (i) -->
-        <span style="cursor: pointer; font-size: 2rem;" onclick="showInfo()">&#9432;</span>
-        <!-- Icona Profilo a destra (personaggino) -->
-        <span style="cursor: pointer; font-size: 2rem;" onclick="showProfile()">&#128100;</span>
+        <span style="cursor:pointer;font-size:2rem" onclick="showInfo()">&#9432;</span>
+        <span style="cursor:pointer;font-size:2rem" onclick="showProfile()">&#128100;</span>
       </div>
     </nav>
 
     <div class="container mt-1">
-      <h1 class="text-center">
-        Welcome, <span id="username"></span>!
-      </h1>
-      <p
-        class="text-center"
-        style="border: 2px solid black; padding: 0.5rem; border-radius: 0.5rem; display: none;"
-      >
-        Update Pokémons <strong>for trade</strong>,<br />
-        Update Pokémons you <strong>look for</strong>,<br />
-        <strong>Match</strong> with other users.<br />
-        <br />
-        Update your Profile <strong>Trade Status</strong> when you are low on
-        points.<br />
+      <h1 class="text-center">Welcome, <span id="username"></span>!</h1>
+      <p class="text-center" style="border:2px solid #000;padding:.5rem;border-radius:.5rem;display:none">
+        Update Pokémons <strong>for trade</strong>,<br/>
+        Update Pokémons you <strong>look for</strong>,<br/>
+        <strong>Match</strong> with other users.<br/><br/>
+        Update your Profile <strong>Trade Status</strong> when you are low on points.
       </p>
-      <br />
+
       <div class="d-flex justify-content-center mb-4 align-items-center">
-        <button id="offerPokemonBtn" class="btn btn-primary me-1">
-          For Trade
-        </button>
-        <button id="searchPokemonBtn" class="btn btn-secondary">
-          Looking For
-        </button>
-        <button id="magicalMatchBtn" class="btn btn-secondary btn-rainbow">
-          Match
-        </button>
+        <button id="offerPokemonBtn"  class="btn btn-primary   me-1">For Trade</button>
+        <button id="searchPokemonBtn" class="btn btn-secondary me-1">Looking For</button>
+        <button id="magicalMatchBtn" class="btn btn-secondary btn-rainbow">Match</button>
       </div>
       <div id="actionArea" class="mt-4"></div>
     </div>
   </div>
 
+  <!-- ============ PROFILE VIEW ============ -->
   <div class="hidden" id="profileViewContainer">
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
       <div class="container">
         <a class="navbar-brand">Pokémon Trade Platform</a>
         <div class="ms-auto">
-          <button class="btn btn-secondary btn-sm me-2" onclick="backFromProfile()">
-            Back
-          </button>
-          <button class="btn btn-danger btn-sm" onclick="logout()">
-            Logout
-          </button>
+          <button class="btn btn-secondary btn-sm me-2" onclick="backFromProfile()">Back</button>
+          <button class="btn btn-danger   btn-sm" onclick="logout()">Logout</button>
         </div>
       </div>
     </nav>
+
     <div class="container profile-centered-container">
       <h1 class="text-center">Your Profile</h1>
       <form id="updateProfileForm">
         <div class="mb-3">
-          <label for="profile_username" class="form-label"
-            >Pokémon Pocket Username</label
-          >
-          <input type="text" class="form-control" id="profile_username" required />
+          <label for="profile_username" class="form-label">Pokémon Pocket Username</label>
+          <input type="text" class="form-control" id="profile_username" required>
         </div>
         <div class="mb-3">
           <label for="profile_email" class="form-label">Email</label>
-          <input type="text" class="form-control" id="profile_email" required />
+          <input type="text" class="form-control" id="profile_email" required>
         </div>
         <div class="mb-3">
           <label for="profile_password" class="form-label">Password</label>
-          <input
-            type="password"
-            class="form-control"
-            id="profile_password"
-            required
-          />
+          <input type="password" class="form-control" id="profile_password" required>
         </div>
         <div class="mb-3">
-          <label for="profile_pokemon_id" class="form-label"
-            >Pokémon Pocket ID (16 numbers only)</label
-          >
-          <input type="text"
-            class="form-control"
-            id="profile_pokemon_id"
-            inputmode="numeric"
-            maxlength="16"
-            placeholder="16-digit ID" />
+          <label for="profile_pokemon_id" class="form-label">Pokémon Pocket ID (16 numbers only)</label>
+          <input type="text" class="form-control" id="profile_pokemon_id"
+                 inputmode="numeric" maxlength="16" placeholder="16-digit ID">
         </div>
-        <button type="submit" class="btn btn-primary w-100">
-          Update Profile
-        </button>
+        <button type="submit" class="btn btn-primary w-100">Update Profile</button>
       </form>
     </div>
   </div>
 
+  <!-- ============ JS ============ -->
   <script src="/static/js/api.js"></script>
   <script src="/static/js/navigation.js"></script>
   <script src="/static/js/main.js"></script>
 
   <script>
-    const loginFormContainer = document.getElementById('loginFormContainer');
-    const registrationFormContainer = document.getElementById('registrationFormContainer');
-    const forgotPasswordFormContainer = document.getElementById('forgotPasswordFormContainer');
-    const showRegisterBtn = document.getElementById('showRegisterBtn');
-    const goBackBtn = document.getElementById('goBackBtn');
-    const goBackToLoginBtn = document.getElementById('goBackToLoginBtn');
-    const showForgotBtn = document.getElementById('showForgotBtn');
-
+    /* toggle helper */
+    const loginFormContainer         = document.getElementById('loginFormContainer');
+    const registrationFormContainer  = document.getElementById('registrationFormContainer');
+    const forgotPasswordFormContainer= document.getElementById('forgotPasswordFormContainer');
+    const showRegisterBtn            = document.getElementById('showRegisterBtn');
+    const goBackBtn                  = document.getElementById('goBackBtn');
+    const goBackToLoginBtn           = document.getElementById('goBackToLoginBtn');
+    const showForgotBtn              = document.getElementById('showForgotBtn');
 
     showRegisterBtn.addEventListener('click', () => {
       loginFormContainer.classList.add('hidden');
       registrationFormContainer.classList.remove('hidden');
     });
-
-    showForgotBtn.addEventListener('click', () => {
+    showForgotBtn .addEventListener('click', () => {
       loginFormContainer.classList.add('hidden');
       forgotPasswordFormContainer.classList.remove('hidden');
-    });    
-
-    goBackBtn.addEventListener('click', () => {
+    });
+    goBackBtn     .addEventListener('click', () => {
       registrationFormContainer.classList.add('hidden');
-      loginFormContainer.classList.remove('hidden');
+      loginFormContainer   .classList.remove('hidden');
+    });
+    goBackToLoginBtn.addEventListener('click', () => {
+      forgotPasswordFormContainer.classList.add('hidden');
+      loginFormContainer   .classList.remove('hidden');
     });
 
-    document.getElementById('loginForm').addEventListener('submit', handleLogin);
+    /* form actions (già in api.js) */
+    document.getElementById('loginForm')   .addEventListener('submit', handleLogin);
     document.getElementById('registerForm').addEventListener('submit', handleRegistration);
-
-    document.getElementById('forgotPasswordForm').addEventListener('submit', function (e) {
+    document.getElementById('forgotPasswordForm').addEventListener('submit', e => {
       e.preventDefault();
       const email = document.getElementById('forgot_email').value;
       axios.post('/forgot-password', { email })
         .then(() => {
           alert('Reset email sent! Check your inbox.');
           forgotPasswordFormContainer.classList.add('hidden');
-          loginFormContainer.classList.remove('hidden');
+          loginFormContainer          .classList.remove('hidden');
         })
         .catch(err => {
-          alert('Error sending reset email: ' + (err.response?.data?.message || err.message));
+          alert('Error sending reset email: ' +
+                (err.response?.data?.message || err.message));
         });
-    });
-
-    goBackToLoginBtn.addEventListener('click', () => {
-      forgotPasswordFormContainer.classList.add('hidden');
-      loginFormContainer.classList.remove('hidden');
     });
   </script>
 </body>
