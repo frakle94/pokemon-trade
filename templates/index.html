@@ -37,9 +37,10 @@
 
     /* solleva il login-box: regola questo valore finché ti piace l’effetto */
     #landingLoginWrapper{
-      margin-top:-18rem;   /* ← prova -14 rem invece di -18 rem */
-      flex:0 0 320px;
-      max-width:100%;
+      flex:0 0 100%;          /* occu-pa tutta la riga sui device stretti      */
+      max-width:440px;        /* ma non superare ~440 px sui device larghi     */
+      margin-top:-18rem;      /* mantiene la sovrapposizione sotto i “3 step”  */
+      padding:0 .75rem;       /* respiro ai lati su smartphone                 */
     }
   </style>
 </head>
