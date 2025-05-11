@@ -347,57 +347,115 @@ def delete_search():
 
 @routes_bp.route('/pokemon/magical_match', methods=['GET'])
 def magical_match():
+    """
+    Return 1-for-1 matches for <username>, honouring rarity-parity and
+    filtering out users that never logged in (login_time is NULL).
+    """
     username = request.args.get('username')
     if not username:
         return jsonify({"message": "Please specify ?username=<value>"}), 400
+
     user = User.query.filter_by(username=username).first()
     if not user:
         return jsonify({"message": f"User '{username}' not found"}), 404
-    if user.trade_condition == "NONE":
-        return jsonify({"message": "Your Trade Status is set on 'Cannot trade', update your Profile settings if you have enough points for trading!"}), 403
 
-    user_offers = Offer.query.filter_by(user_id=user.id).all()
-    user_wants = Search.query.filter_by(user_id=user.id).all()
+    if user.trade_condition == "NONE":
+        return jsonify({
+            "message": (
+                "Your Trade Status is set on 'Cannot trade'. "
+                "Update your Profile settings if you have enough points."
+            )
+        }), 403
+
+    # ------------------------------------------------------------------ #
+    #  Load ALL offers & wants once → no per-user queries                #
+    # ------------------------------------------------------------------ #
+    from collections import defaultdict
+
+    offers_by_user:  dict[int, list[Offer]]   = defaultdict(list)
+    wants_by_user:   dict[int, list[Search]]  = defaultdict(list)
+
+    for off in Offer.query.all():
+        offers_by_user[off.user_id].append(off)
+    for srh in Search.query.all():
+        wants_by_user[srh.user_id].append(srh)
+
+    COMMON_RAR = {"♦", "♦♦", "♦♦♦"}
+
+    def card_key(card) -> tuple[str, str, str]:
+        """Return (pokemon, expansion, rarity) tuple — hashable key."""
+        return (card.pokemon, card.expansion, card.rarity)
+
+    # Caller’s own sets / buckets
+    user_offers = offers_by_user[user.id]
+    user_wants  = wants_by_user[user.id]
 
     if user.trade_condition == "COMMON":
-        user_offers = [o for o in user_offers if o.rarity in ["♦", "♦♦", "♦♦♦"]]
+        user_offers = [o for o in user_offers if o.rarity in COMMON_RAR]
 
+    # bucket by rarity so we can enforce cardA.rarity == cardB.rarity
+    def bucket_by_rarity(cards):
+        buckets = defaultdict(set)
+        for c in cards:
+            buckets[c.rarity].add(card_key(c))
+        return buckets
+
+    user_offer_buckets = bucket_by_rarity(user_offers)
+    user_want_buckets  = bucket_by_rarity(user_wants)
+
+    # ------------------------------------------------------------------ #
+    #  Iterate other users                                               #
+    # ------------------------------------------------------------------ #
     matches = []
-    all_users = User.query.all()
-
-    for other_user in all_users:
-        if other_user.id == user.id:
+    for other in User.query:               # single query, ORM-cached
+        if other.id == user.id:
             continue
-        if other_user.trade_condition == "NONE":
+        if other.trade_condition == "NONE":
+            continue
+        if other.login_time is None:       # NEW filter: never logged in
             continue
 
-        other_offers = Offer.query.filter_by(user_id=other_user.id).all()
-        other_wants = Search.query.filter_by(user_id=other_user.id).all()
+        other_offers = offers_by_user.get(other.id, [])
+        other_wants  = wants_by_user .get(other.id, [])
 
-        if other_user.trade_condition == "COMMON":
-            other_offers = [o for o in other_offers if o.rarity in ["♦", "♦♦", "♦♦♦"]]
+        if other.trade_condition == "COMMON":
+            other_offers = [o for o in other_offers if o.rarity in COMMON_RAR]
 
-        trade_pairs = []
-        for cardA in user_offers:
-            if any(is_same_card(cardA, w) for w in other_wants):
-                for cardB in other_offers:
-                    if any(is_same_card(cardB, w) for w in user_wants):
-                        if cardA.rarity == cardB.rarity:
-                            trade_pairs.append((cardA, cardB))
+        if not other_offers or not other_wants:
+            continue
 
-        if trade_pairs:
-            mySearch_TheirOffer_set = {f"{b.pokemon} ({b.expansion}, {b.rarity})" for (a, b) in trade_pairs}
-            theirSearch_MyOffer_set = {f"{a.pokemon} ({a.expansion}, {a.rarity})" for (a, b) in trade_pairs}
-            match_info = {
-                "other_user": other_user.username,
-                "other_user_pokemon_id": other_user.pokemon_id,
+        other_offer_buckets = bucket_by_rarity(other_offers)
+        other_want_buckets  = bucket_by_rarity(other_wants)
+
+        give_me   = set()   # what *I* want from them
+        give_them = set()   # what *they* want from me
+
+        # Enforce same-rarity swap exactly as old logic did
+        for rar in set(user_offer_buckets) | set(other_offer_buckets):
+            want_from_other = user_want_buckets .get(rar, set())
+            off_from_other  = other_offer_buckets.get(rar, set())
+            want_from_me    = other_want_buckets .get(rar, set())
+            off_from_me     = user_offer_buckets.get(rar, set())
+
+            rar_give_me   = off_from_other & want_from_other
+            rar_give_them = off_from_me    & want_from_me
+
+            if rar_give_me and rar_give_them:
+                give_me   |= rar_give_me
+                give_them |= rar_give_them
+
+        if give_me and give_them:          # at least one balanced pair
+            matches.append({
+                "other_user"           : other.username,
+                "other_user_pokemon_id": other.pokemon_id,
                 "other_user_last_login": (
-                    other_user.login_time.isoformat() if other_user.login_time else None
+                    other.login_time.isoformat() if other.login_time else None
                 ),
-                "mySearch_TheirOffer": sorted(mySearch_TheirOffer_set),
-                "theirSearch_MyOffer": sorted(theirSearch_MyOffer_set)
-            }
-            matches.append(match_info)
+                "mySearch_TheirOffer"  : sorted(f"{p} ({e}, {r})"
+                                                for p, e, r in give_me),
+                "theirSearch_MyOffer"  : sorted(f"{p} ({e}, {r})"
+                                                for p, e, r in give_them)
+            })
 
     return jsonify(matches)
 
