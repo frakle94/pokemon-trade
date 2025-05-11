@@ -20,9 +20,9 @@
 
   <!-- Titolo più grande -->
   <style>
-    .landing-title{ font-size:3.0rem; }      /* desktop */
+    .landing-title{ font-size:3rem; }            /* desktop / tablet */
     @media (max-width:575.98px){
-      .landing-title{ font-size:2.0rem; }    /* phones */
+      .landing-title{ font-size:2rem; }          /* phones */
     }
   </style>
 
@@ -34,7 +34,6 @@
   <!-- ============ HERO + 3 STEPS ============ -->
   <section id="heroSection" class="steps-section text-center pt-4">
     <div class="container">
-      <!-- titolo ingrandito -->
       <h2 class="fw-bold mb-4 landing-title">Pokémon Trade Platform</h2>
 
       <div class="row g-4 justify-content-center">
@@ -74,7 +73,7 @@
 
               <!-- Login -->
               <div id="loginFormContainer">
-                <form id="loginForm">
+                <form id="loginForm" method="post" action="/login">
                   <div class="mb-3">
                     <input type="email" class="form-control" id="login_email"
                            name="username" autocomplete="username"
@@ -97,22 +96,22 @@
 
               <!-- Registration -->
               <div id="registrationFormContainer" class="hidden">
-                <form id="registerForm">
+                <form id="registerForm" method="post" action="/register">
                   <div class="mb-3">
                     <input type="text" class="form-control" id="reg_username"
-                           placeholder="Pokémon Pocket Username" required>
+                           name="username" placeholder="Pokémon Pocket Username" required>
                   </div>
                   <div class="mb-3">
                     <input type="email" class="form-control" id="reg_email"
-                           placeholder="Email" required>
+                           name="email" placeholder="Email" required>
                   </div>
                   <div class="mb-3">
                     <input type="password" class="form-control" id="reg_password"
-                           placeholder="Password" required>
+                           name="password" placeholder="Password" required>
                   </div>
                   <div class="mb-3">
                     <input type="text" class="form-control" id="reg_pokemon_id"
-                           placeholder="Pokémon Pocket ID"
+                           name="pokemon_id" placeholder="Pokémon Pocket ID"
                            pattern="^[0-9]{16}$" title="Enter 16 numbers ID" required>
                   </div>
                   <button type="submit" class="btn btn-primary">Register</button>
@@ -124,10 +123,10 @@
 
               <!-- Forgot password -->
               <div id="forgotPasswordFormContainer" class="hidden">
-                <form id="forgotPasswordForm">
+                <form id="forgotPasswordForm" method="post" action="/forgot-password">
                   <div class="mb-3">
                     <input type="email" class="form-control" id="forgot_email"
-                           placeholder="Enter your registered email" required>
+                           name="email" placeholder="Enter your registered email" required>
                   </div>
                   <button type="submit" class="btn btn-primary">Send Reset Link</button>
                 </form>
