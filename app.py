@@ -1,35 +1,49 @@
 # app.py
-
 import os
+from pathlib import Path
+
 from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
 
-from models import db
-from routes import routes_bp
+from models import db                 # il tuo oggetto SQLAlchemy
+from routes import routes_bp          # blueprint con tutte le route
+
+# ------------------------------------------------------------------ #
+# 1.  Carica variabili d’ambiente da .env se esiste (dev-only)       #
+# ------------------------------------------------------------------ #
+load_dotenv()                         # non fa nulla in produzione
+
+# ------------------------------------------------------------------ #
+# 2.  Config comuni                                                  #
+# ------------------------------------------------------------------ #
+BASEDIR          = Path(__file__).resolve().parent
+SQLITE_FALLBACK  = f"sqlite:///{BASEDIR / 'database.db'}"
+
+class Config:
+    SECRET_KEY = os.getenv("SECRET_KEY", "super-secret-key")
+    SQLALCHEMY_DATABASE_URI = os.getenv("SQLALCHEMY_DATABASE_URI", SQLITE_FALLBACK)
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "pool_recycle": 280,       # evita ‘MySQL server has gone away’
+        "pool_pre_ping": True
+    }
 
 def create_app():
-    load_dotenv()
     app = Flask(__name__)
+    app.config.from_object(Config)
 
-    # Configurazione della chiave segreta
-    app.secret_key = "super-secret-key"
-
-    # Configurazione del database
-    basedir = os.path.abspath(os.path.dirname(__file__))
-    db_path = os.path.join(basedir, 'database.db')
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-    # Inizializza il db con l'app
+    # Inizializza db e blueprint
     db.init_app(app)
-
-    # Registra il blueprint con tutte le route
     app.register_blueprint(routes_bp)
 
     return app
 
-if __name__ == '__main__':
+# ------------------------------------------------------------------ #
+# 3.  Avvio in locale                                                #
+# ------------------------------------------------------------------ #
+if __name__ == "__main__":
     app = create_app()
     with app.app_context():
-        db.create_all()
-    app.run(debug=True)
+        db.create_all()            # crea tabelle sul DB scelto
+    app.run(debug=os.getenv("FLASK_DEBUG", "0") == "1")
