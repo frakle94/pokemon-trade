@@ -593,3 +593,31 @@ def send_pokeball():
         return jsonify({'message': 'Pokéball sent via email!'}), 200
     except Exception as exc:
         return jsonify({'message': f'Error sending email: {exc}'}), 500
+    
+@routes_bp.route("/pokemon/offer_count", methods=["GET"])
+def offer_count():
+    """
+    Ritorna il numero di *utenti* con login_time valorizzato
+    che stanno offrendo quel Pokémon.  Se vengono passati
+    expansion e/o rarity restringe il conteggio.
+    """
+    name      = request.args.get("pokemon",   "").strip()
+    expansion = request.args.get("expansion", "").strip()
+    rarity    = request.args.get("rarity",    "").strip()
+
+    if not name:
+        return jsonify({"message": "pokemon is required"}), 400
+
+    q = (
+        db.session.query(Offer.user_id)
+        .join(User, User.id == Offer.user_id)
+        .filter(User.login_time.isnot(None),      # filtra utenti “attivi”
+                Offer.pokemon == name)
+    )
+    if expansion:
+        q = q.filter(Offer.expansion == expansion)
+    if rarity:
+        q = q.filter(Offer.rarity == rarity)
+
+    count = q.distinct().count()
+    return jsonify({"count": count})

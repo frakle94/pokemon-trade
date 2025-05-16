@@ -65,6 +65,24 @@
       <div class="row justify-content-center">
         <div id="landingLoginWrapper" class="col-12 col-md-4 login-scope">
 
+          <!-- QUICK FIND -->
+          <div id="quickFindContainer" class="mb-4 px-3 py-3 border rounded shadow-sm bg-white">
+            <h5 class="mb-3">Find a match now</h5>
+
+            <input id="qfName" type="text" class="form-control mb-2"
+                  placeholder="Pokémon name">
+
+            <div id="qfGrid" class="pokemon-grid hidden"></div>
+
+            <button id="qfSubmit" class="btn btn-primary w-100">
+              How many offers?
+            </button>
+
+            <p id="qfResult" class="mt-3 fw-bold"></p>
+          </div>
+          <!-- / QUICK FIND -->
+
+
           <div class="card shadow">
             <div class="card-body">
               <div class="text-center mb-4">
@@ -206,6 +224,7 @@
   <script src="/static/js/api.js"></script>
   <script src="/static/js/navigation.js"></script>
   <script src="/static/js/main.js"></script>
+  <script src="/static/js/quick_find.js"></script>
 
   <!-- ---------- toggle helper + forgot-password submit ---------- -->
   <script>

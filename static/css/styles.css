@@ -189,10 +189,30 @@ form{ max-width:400px;width:100%; }
 #landingLoginWrapper .form-control,
 #landingLoginWrapper .btn{ max-width:none !important; }
 
-/* ↑   SOLLEVAMENTO DEL LOGIN  ↑ */
-#landingLoginWrapper{ margin-top:-18rem; }   /* alza di ~18 rem */
-
-@media (max-width:575.98px){
-  #landingLoginWrapper .card{ font-size:1.05rem;padding:1.5rem; }
-  #landingLoginWrapper{ margin-top:-20rem; } /* offset più mite su mobile */
+#landingLoginWrapper {
+    margin-top: -2.5rem !important;    /* push it down under the steps */
 }
+  
+@media (max-width: 575.98px) {
+#landingLoginWrapper {
+    margin-top: -2.5rem !important;  /* a bit less on small screens */
+    }
+}
+
+/* Quick-Find spacing sotto l’hero */
+#quickFindContainer{
+    margin-top:2rem;    /* separa dai 3 step */
+}
+
+/* ─────────────────────────────────────────────────────────────
+   3. Make the auth section grow down instead of centering up
+──────────────────────────────────────────────────────────────*/
+#authContainer.centered-container {
+    /* stop vertically centering the login + Quick-Find box */
+    justify-content: flex-start;
+    /* give a little breathing room under the hero */
+    padding-top: 2rem;
+    /* don’t force full-viewport min-height here */
+    min-height: auto;
+  }
+  
