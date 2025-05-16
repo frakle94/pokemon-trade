@@ -222,4 +222,11 @@ form{ max-width:400px;width:100%; }
     margin-left: auto;
     margin-right: auto;
   }
-  
+
+/* ─────────────────────────────────────────────────────────────
+   4. Ensure Quick-Find cards never overshoot on first letter
+──────────────────────────────────────────────────────────────*/
+#quickFindContainer .pokemon-card {
+    width: 100%;
+    box-sizing: border-box;
+}
