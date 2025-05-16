@@ -215,4 +215,11 @@ form{ max-width:400px;width:100%; }
     /* don’t force full-viewport min-height here */
     min-height: auto;
   }
+
+  #quickFindContainer {
+    width: 100%;
+    max-width: var(--hero-card-max);
+    margin-left: auto;
+    margin-right: auto;
+  }
   
