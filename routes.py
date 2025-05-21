@@ -656,8 +656,8 @@ def send_pokeball():
         "",
         f"{sender.username} just sent you a Pokéball!",
         "",
-        f"You want from them: {txt_me}",
-        #f"They want from you: {txt_them}",
+        f"You want from them: {txt_them}",
+        #f"They want from you: {txt_me}",
         "",
     ]
     if preferred_raw:
