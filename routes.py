@@ -11,6 +11,9 @@ from email.message import EmailMessage
 from datetime import datetime
 from textwrap import dedent
 from datetime import datetime, timedelta
+import re
+from sqlalchemy.exc import IntegrityError
+
 
 # Import dal file "models.py"
 from models import db, User, Offer, Search
@@ -39,18 +42,45 @@ def index():
 
 @routes_bp.route('/register', methods=['POST'])
 def register():
-    data = request.json
-    hashed_password = generate_password_hash(data['password'])
+    data = request.get_json(force=True) or {}
+
+    # ---- extract & strip -------------------------------------------------
+    username   = (data.get('username')   or '').strip()
+    email      = (data.get('email')      or '').strip().lower()
+    password   =  data.get('password')   or ''
+    pokemon_id = (data.get('pokemon_id') or '').strip()
+
+    # ---- quick validation ------------------------------------------------
+    if not (username and email and password and pokemon_id):
+        return jsonify(message="All fields are required."), 400
+
+    if not re.match(r'^[^@\s]+@[^@\s]+\.[^@\s]+$', email):
+        return jsonify(message="Invalid email address."), 400
+
+    if not (pokemon_id.isdigit() and len(pokemon_id) == 16):
+        return jsonify(message="Pokémon ID must be 16 digits."), 400
+
+    # ---- uniqueness ------------------------------------------------------
+    if User.query.filter_by(username=username).first():
+        return jsonify(message="Username already taken."), 409
+    if User.query.filter_by(email=email).first():
+        return jsonify(message="An account with this email already exists."), 409
+
+    # ---- create user -----------------------------------------------------
     new_user = User(
-        username=data['username'],
-        email=data['email'],
-        password=hashed_password,
-        pokemon_id=data['pokemon_id'],
+        username=username,
+        email=email,
+        password=generate_password_hash(password),
+        pokemon_id=pokemon_id,
         trade_condition="ALL",
         login_time=datetime.utcnow()
     )
     db.session.add(new_user)
-    db.session.commit()
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify(message="Username or email already registered."), 409
 
     mail_sent = send_mail_with_retry(
         new_user.email,
@@ -104,27 +134,29 @@ Cesco_t
 
 @routes_bp.route('/login', methods=['POST'])
 def login():
-    data = request.get_json()
-    email    = data.get('email')
-    password = data.get('password')
+    data = request.get_json(force=True) or {}
+    email    = (data.get('email')    or '').strip().lower()
+    password =  data.get('password') or ''
 
-    if not email or not password:
-        return jsonify({"message": "Email and password required"}), 400
+    if not (email and password):
+        return jsonify(message="Email and password required."), 400
 
     user = User.query.filter_by(email=email).first()
-    if user and check_password_hash(user.password, password):
-        # ─── Salva l’istante dell’accesso ───────────────────────
-        user.login_time = datetime.utcnow()
-        db.session.commit()
-        # ────────────────────────────────────────────────────────
-        return jsonify({
-            "message": "Login successful!",
-            "username": user.username,
-            "email": user.email,
-            "pokemon_id": user.pokemon_id,
-            "trade_condition": user.trade_condition
-        })
-    return jsonify({"message": "Invalid email or password"}), 401
+    if not user:
+        return jsonify(message="Email not found."), 404
+    if not check_password_hash(user.password, password):
+        return jsonify(message="Incorrect password."), 401
+
+    user.login_time = datetime.utcnow()
+    db.session.commit()
+
+    return jsonify({
+        "message": "Login successful.",
+        "username": user.username,
+        "email": user.email,
+        "pokemon_id": user.pokemon_id,
+        "trade_condition": user.trade_condition
+    })
 
 @routes_bp.route('/forgot-password', methods=['POST'])
 def forgot_password():
