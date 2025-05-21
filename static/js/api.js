@@ -700,16 +700,21 @@ function magicalMatch() {
           const lastLogin = item.other_user_last_login
             ? new Date(item.other_user_last_login).toLocaleString()
             : 'unknown';
-
+          const safeId = encodeURIComponent(item.other_user);
           resBox.insertAdjacentHTML('beforeend', `
             <div class="card my-3 position-relative">
-              <!-- padding-bottom extra per far spazio al pulsante -->
-              <div class="card-body" style="padding-bottom: 4rem;">
+              <div class="card-body" style="padding-bottom:5rem;">
                 <h5 class="card-title">Match with ${item.other_user}</h5>
-                <p><strong>Other User's Pokémon Pocket ID:</strong> ${item.other_user_pokemon_id}</p>
-                <p><strong>Last login:</strong> ${lastLogin}</p>
+                <p><strong>Other User's Pokémon ID:</strong> ${item.other_user_pokemon_id}</p>
                 <p><strong>You want from them:</strong> ${mySTO.join(', ')}</p>
                 <p><strong>They want from you:</strong> ${theirSMO.join(', ')}</p>
+          
+                <label class="form-label mt-2"><strong>Preferred Pokémon to receive:</strong></label>
+                <select id="pref_${safeId}" class="form-select form-select-sm mb-2">
+                  ${mySTO.map(p => `<option value="${p}">${p}</option>`).join('')}
+                </select>
+          
+                <!--  button: class, flex & pos unchanged  -->
                 <button
                   class="btn btn-primary btn-sm send-pokeball-btn d-flex align-items-center"
                   style="position:absolute; bottom:10px; right:10px; gap:4px;"
@@ -761,18 +766,24 @@ function magicalMatch() {
 /* ===================  NUOVA FUNZIONE sendPokeball  ===================== */
 
 function sendPokeball(otherUsername) {
+  // id HTML codificato come nell’inserimento card
+  const sel = document.getElementById(
+    'pref_' + encodeURIComponent(otherUsername)
+  );
+  const preferred = sel ? sel.value : '';
+
   axios.post('/send_pokeball', {
-    from_username: currentUser.username,
-    to_username  : otherUsername
+    from_username     : currentUser.username,
+    to_username       : otherUsername,
+    preferred_pokemon : preferred        // ← ora esiste sempre
   })
   .then(() => {
-    alert(`Pokéball sent to ${otherUsername} via email. Check your inbox or spam for received pokéballs!`);
-
-    if (window.goatcounter && typeof goatcounter.count === 'function') {
+    alert(`Pokéball sent to ${otherUsername}! Check your inbox (or spam) for received Pokéballs.`);
+    if (window.goatcounter?.count) {
       goatcounter.count({
-        path : '/event/pokeball',   // comparirà come “/event/pokeball”
+        path : '/event/pokeball',
         title: 'Send Pokéball',
-        event: true                // lo marca come evento, non page-view
+        event: true
       });
     }
   })

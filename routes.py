@@ -609,27 +609,74 @@ def get_all_cards():
     
 @routes_bp.route('/send_pokeball', methods=['POST'])
 def send_pokeball():
+    """
+    Send a Pokéball e-mail that shows:
+      · sender Pokémon-Pocket ID
+      · cards each side could trade (exact match)
+      · sender’s “Preferred Pokémon to receive” (optional)
+    """
     data = request.get_json(silent=True) or {}
-    from_username = data.get('from_username')
-    to_username   = data.get('to_username')
-    if not (from_username and to_username):
-        return jsonify({'message': 'Missing usernames'}), 400
+    from_username     = (data.get('from_username')      or '').strip()
+    to_username       = (data.get('to_username')        or '').strip()
+    preferred_raw     = (data.get('preferred_pokemon')  or '').strip()  # NEW
 
+    if not (from_username and to_username):
+        return jsonify({'message': 'from_username and to_username required'}), 400
+
+    sender    = User.query.filter_by(username=from_username).first()
     recipient = User.query.filter_by(username=to_username).first()
-    if not recipient or not recipient.email:
-        return jsonify({'message': 'Recipient not found'}), 404
+    if not sender or not recipient or not recipient.email:
+        return jsonify({'message': 'Sender or recipient not found'}), 404
+
+    # ------------------------------------------------------------------ #
+    #  Collect each side’s offers & wants                                #
+    # ------------------------------------------------------------------ #
+    s_offers = Offer .query.filter_by(user_id=sender.id)   .all()
+    s_wants  = Search.query.filter_by(user_id=sender.id)   .all()
+    r_offers = Offer .query.filter_by(user_id=recipient.id).all()
+    r_wants  = Search.query.filter_by(user_id=recipient.id).all()
+
+    # ------------------------------------------------------------------ #
+    #  Exact matches (same name, expansion, rarity)                      #
+    # ------------------------------------------------------------------ #
+    def pretty(card):
+        return f"{card.pokemon} ({card.expansion}, {card.rarity})"
+
+    give_me   = {pretty(o) for w in s_wants  for o in r_offers if is_same_card(o, w)}
+    give_them = {pretty(o) for w in r_wants for o in s_offers if is_same_card(o, w)}
+
+    txt_me   = ", ".join(sorted(give_me))   or "–"
+    txt_them = ", ".join(sorted(give_them)) or "–"
+
+    # ------------------------------------------------------------------ #
+    #  Compose e-mail                                                    #
+    # ------------------------------------------------------------------ #
+    lines = [
+        f"Hi {recipient.username},",
+        "",
+        f"{sender.username} just sent you a Pokéball!",
+        "",
+        f"You want from them: {txt_me}",
+        #f"They want from you: {txt_them}",
+        "",
+    ]
+    if preferred_raw:
+        lines.append(f"Preferred Pokémon they want from you: {preferred_raw}")
+    lines += [
+        "",
+        f"Open the official Pokémon Pocket app, add {sender.username} "
+        f"as a friend (Pokémon ID: {sender.pokemon_id}) and complete the trade.",
+        "",
+        "When the trade is done, update your Pokémon needs here:",
+        "https://cescot.pythonanywhere.com/",
+    ]
+    body = "\n".join(lines)
 
     try:
-        send_mail(
-            recipient.email,
-            'You received a pokéball!',
-            f'Hi {recipient.username},\n\n'
-            f'you just received a pokéball from {from_username}, check the match on Pokémon Trade Platform!\n\n'
-            'https://cescot.pythonanywhere.com/'
-        )
+        send_mail(recipient.email, "You received a Pokéball!", body)
         return jsonify({'message': 'Pokéball sent via email!'}), 200
     except Exception as exc:
-        return jsonify({'message': f'Error sending email: {exc}'}), 500
+        return jsonify({'message': f'Email error: {exc}'}), 500
     
 @routes_bp.route("/pokemon/offer_count", methods=["GET"])
 def offer_count():
