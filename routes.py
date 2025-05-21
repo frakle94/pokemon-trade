@@ -10,6 +10,7 @@ import smtplib
 from email.message import EmailMessage
 from datetime import datetime
 from textwrap import dedent
+from datetime import datetime, timedelta
 
 # Import dal file "models.py"
 from models import db, User, Offer, Search
@@ -406,6 +407,8 @@ def magical_match():
     # ------------------------------------------------------------------ #
     #  Iterate other users                                               #
     # ------------------------------------------------------------------ #
+    active_cutoff = datetime.utcnow() - timedelta(days=14)
+    
     matches = []
     for other in User.query:               # single query, ORM-cached
         if other.id == user.id:
@@ -413,6 +416,8 @@ def magical_match():
         if other.trade_condition == "NONE":
             continue
         if other.login_time is None:       # NEW filter: never logged in
+            continue
+        if other.login_time < active_cutoff:   # ultimo login >14 gg fa → skip
             continue
 
         other_offers = offers_by_user.get(other.id, [])
@@ -608,10 +613,13 @@ def offer_count():
     if not name:
         return jsonify({"message": "pokemon is required"}), 400
 
+    active_cutoff = datetime.utcnow() - timedelta(days=14)
+    
     q = (
         db.session.query(Offer.user_id)
         .join(User, User.id == Offer.user_id)
         .filter(User.login_time.isnot(None),      # filtra utenti “attivi”
+                User.login_time < active_cutoff,   # ultimo login >14 gg fa → skip
                 Offer.pokemon == name)
     )
     if expansion:
