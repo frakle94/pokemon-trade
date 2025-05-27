@@ -1,6 +1,7 @@
 # app.py
 import os
 from pathlib import Path
+from flask import request, redirect
 
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
@@ -31,6 +32,16 @@ class Config:
 
 def create_app():
     app = Flask(__name__)
+    
+    NEW_HOST = "www.pokemontcgptradeplatform.com"   # dominio finale
+
+    @app.before_request
+    def redirect_to_new_domain():
+        host = request.host.split(":")[0]           # toglie eventuale porta
+        if host.endswith(".pythonanywhere.com") and host != NEW_HOST:
+            # preserva path + query string
+            return redirect(f"https://{NEW_HOST}{request.full_path}", code=301)
+    
     app.config.from_object(Config)
 
     # Inizializza db e blueprint
