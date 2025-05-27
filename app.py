@@ -30,7 +30,7 @@ class Config:
     }
 
 # ------------ NEW: canonical host you want traffic to end up on ----
-CANONICAL_HOST = os.getenv("CANONICAL_HOST", "www.pokemontcgtradeplatform.com")
+CANONICAL_HOST = "www.pokemontcgptradeplatform.com"
 # ------------------------------------------------------------------ #
 
 def create_app():
@@ -43,8 +43,8 @@ def create_app():
 
     # ----------- NEW redirect from old pythonanywhere sub-domain ----
     @app.before_request
-    def redirect_old_domain():
-        host = request.host.split(":")[0]            # strip port if present
+    def redirect_from_old():
+        host = request.host.split(":")[0]
         if host.endswith(".pythonanywhere.com"):
             return redirect(
                 f"https://{CANONICAL_HOST}{request.full_path}", code=301
