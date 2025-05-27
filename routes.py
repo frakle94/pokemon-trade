@@ -616,9 +616,9 @@ def send_pokeball():
       · sender’s “Preferred Pokémon to receive” (optional)
     """
     data = request.get_json(silent=True) or {}
-    from_username     = (data.get('from_username')      or '').strip()
-    to_username       = (data.get('to_username')        or '').strip()
-    preferred_raw     = (data.get('preferred_pokemon')  or '').strip()  # NEW
+    from_username  = (data.get('from_username')     or '').strip()
+    to_username    = (data.get('to_username')       or '').strip()
+    preferred_raw  = (data.get('preferred_pokemon') or '').strip()
 
     if not (from_username and to_username):
         return jsonify({'message': 'from_username and to_username required'}), 400
@@ -657,7 +657,6 @@ def send_pokeball():
         f"{sender.username} just sent you a Pokéball!",
         "",
         f"You want from them: {txt_them}",
-        #f"They want from you: {txt_me}",
         "",
     ]
     if preferred_raw:
@@ -672,11 +671,18 @@ def send_pokeball():
     ]
     body = "\n".join(lines)
 
-    try:
-        send_mail(recipient.email, "You received a Pokéball!", body)
+    # ------------------------------------------------------------------ #
+    #  Send with automatic retries                                       #
+    # ------------------------------------------------------------------ #
+    subject = "You received a Pokéball!"
+    ok = send_mail_with_retry(recipient.email, subject, body,
+                              max_attempts=3, delay_sec=2)
+
+    if ok:
         return jsonify({'message': 'Pokéball sent via email!'}), 200
-    except Exception as exc:
-        return jsonify({'message': f'Email error: {exc}'}), 500
+    else:
+        return jsonify({'message': 'Permanent email delivery failure.'}), 500
+
     
 @routes_bp.route("/pokemon/offer_count", methods=["GET"])
 def offer_count():
