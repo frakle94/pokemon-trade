@@ -2,20 +2,20 @@
 import os
 from pathlib import Path
 
-from flask import Flask
+from flask import Flask, request, redirect        #  ← added request, redirect
 from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
 
-from models import db                 # il tuo oggetto SQLAlchemy
-from routes import routes_bp          # blueprint con tutte le route
+from models import db
+from routes import routes_bp
 
 # ------------------------------------------------------------------ #
-# 1.  Carica variabili d’ambiente da .env se esiste (dev-only)       #
+# 1.  Load environment variables                                     #
 # ------------------------------------------------------------------ #
-load_dotenv()                         # non fa nulla in produzione
+load_dotenv()
 
 # ------------------------------------------------------------------ #
-# 2.  Config comuni                                                  #
+# 2.  Common config                                                  #
 # ------------------------------------------------------------------ #
 BASEDIR          = Path(__file__).resolve().parent
 SQLITE_FALLBACK  = f"sqlite:///{BASEDIR / 'database.db'}"
@@ -25,9 +25,13 @@ class Config:
     SQLALCHEMY_DATABASE_URI = os.getenv("SQLALCHEMY_DATABASE_URI", SQLITE_FALLBACK)
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {
-        "pool_recycle": 280,       # evita ‘MySQL server has gone away’
+        "pool_recycle": 280,
         "pool_pre_ping": True
     }
+
+# ------------ NEW: canonical host you want traffic to end up on ----
+CANONICAL_HOST = os.getenv("CANONICAL_HOST", "www.pokemontcgtradeplatform.com")
+# ------------------------------------------------------------------ #
 
 def create_app():
     app = Flask(__name__)
@@ -37,13 +41,23 @@ def create_app():
     db.init_app(app)
     app.register_blueprint(routes_bp)
 
+    # ----------- NEW redirect from old pythonanywhere sub-domain ----
+    @app.before_request
+    def redirect_old_domain():
+        host = request.host.split(":")[0]            # strip port if present
+        if host.endswith(".pythonanywhere.com"):
+            return redirect(
+                f"https://{CANONICAL_HOST}{request.full_path}", code=301
+            )
+    # ----------------------------------------------------------------
+
     return app
 
 # ------------------------------------------------------------------ #
-# 3.  Avvio in locale                                                #
+# 3.  Local run                                                      #
 # ------------------------------------------------------------------ #
 if __name__ == "__main__":
     app = create_app()
     with app.app_context():
-        db.create_all()            # crea tabelle sul DB scelto
+        db.create_all()
     app.run(debug=os.getenv("FLASK_DEBUG", "0") == "1")
