@@ -31,7 +31,7 @@ class Config:
 # ------------------------------------------------------------------ #
 # 3. Redirect old PA domain to new custom domain                    #
 # ------------------------------------------------------------------ #
-NEW_DOMAIN = os.getenv("NEW_DOMAIN", "pokemontcgtradeplatform.com")
+NEW_DOMAIN = os.getenv("NEW_DOMAIN", "pokemontcgptradeplatform.com")
 OLD_SUFFIX = ".pythonanywhere.com"
 
 # ------------------------------------------------------------------ #
