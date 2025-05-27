@@ -29,8 +29,6 @@ class Config:
         "pool_pre_ping": True
     }
 
-# ------------ NEW: canonical host you want traffic to end up on ----
-CANONICAL_HOST = "www.pokemontcgptradeplatform.com"
 # ------------------------------------------------------------------ #
 
 def create_app():
@@ -40,15 +38,6 @@ def create_app():
     # Inizializza db e blueprint
     db.init_app(app)
     app.register_blueprint(routes_bp)
-
-    # ----------- NEW redirect from old pythonanywhere sub-domain ----
-    @app.before_request
-    def redirect_from_old():
-        host = request.host.split(":")[0]
-        if host.endswith(".pythonanywhere.com"):
-            return redirect(
-                f"https://{CANONICAL_HOST}{request.full_path}", code=301
-            )
     # ----------------------------------------------------------------
 
     return app
