@@ -94,7 +94,7 @@ Here are a few steps to help you get started:
 
 1. Eventually move this email out of your Spam folder.
 
-2. Log in to the platform: https://cescot.pythonanywhere.com/
+2. Log in to the platform: https://pokemontcgptradeplatform.com/
 
 3. Save the link so it becomes an app with its own icon on your smartphone:
     • iPhone video guide:  https://www.youtube.com/watch?v=_1p-rVIOjYA  
@@ -667,7 +667,7 @@ def send_pokeball():
         f"as a friend (Pokémon ID: {sender.pokemon_id}) and complete the trade.",
         "",
         "When the trade is done, update your Pokémon needs here:",
-        "https://cescot.pythonanywhere.com/",
+        "https://pokemontcgptradeplatform.com/",
     ]
     body = "\n".join(lines)
 
