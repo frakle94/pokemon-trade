@@ -439,7 +439,7 @@ def magical_match():
     # ------------------------------------------------------------------ #
     #  Iterate other users                                               #
     # ------------------------------------------------------------------ #
-    active_cutoff = datetime.utcnow() - timedelta(days=10)
+    active_cutoff = datetime.utcnow() - timedelta(days=7)
     
     matches = []
     for other in User.query:               # single query, ORM-cached
@@ -449,7 +449,7 @@ def magical_match():
             continue
         if other.login_time is None:       # NEW filter: never logged in
             continue
-        if other.login_time < active_cutoff:   # ultimo login >10 gg fa → skip
+        if other.login_time < active_cutoff:   # ultimo login >7 gg fa → skip
             continue
 
         other_offers = offers_by_user.get(other.id, [])
@@ -698,13 +698,13 @@ def offer_count():
     if not name:
         return jsonify({"message": "pokemon is required"}), 400
 
-    active_cutoff = datetime.utcnow() - timedelta(days=10)
+    active_cutoff = datetime.utcnow() - timedelta(days=7)
     
     q = (
         db.session.query(Offer.user_id)
         .join(User, User.id == Offer.user_id)
         .filter(User.login_time.isnot(None),      # filtra utenti “attivi”
-                User.login_time < active_cutoff,   # ultimo login >10 gg fa → skip
+                User.login_time < active_cutoff,   # ultimo login >7 gg fa → skip
                 Offer.pokemon == name)
     )
     if expansion:
