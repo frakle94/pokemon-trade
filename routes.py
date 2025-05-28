@@ -84,11 +84,11 @@ def register():
 
     mail_sent = send_mail_with_retry(
         new_user.email,
-        'Welcome to the Pokémon Trade Platform!',
+        'Welcome to the Pokémon TCGP Trade Platform!',
         dedent(f"""\
 Hi {new_user.username},
 
-Welcome to the Pokémon Trade Platform!
+Welcome to the Pokémon TCGP Trade Platform!
 
 Here are a few steps to help you get started:
 
@@ -173,7 +173,7 @@ def forgot_password():
     token = s.dumps(email, salt='password-reset')
     reset_url = f"{request.host_url.rstrip('/')}/reset-password/{token}"
 
-    subject = "Pokémon Trade – reset your password"
+    subject = "Pokémon TCGP Trade Platform – reset your password"
     body    = (
         f"Hi {user.username},\n\n"
         "Click the link below to reset your password (valid for 1 hour):\n"

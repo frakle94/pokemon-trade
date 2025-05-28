@@ -121,7 +121,7 @@ function showInfo() {
   infoViewContainer.innerHTML = `
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
       <div class="container">
-        <a class="navbar-brand">Pokémon Trade Platform</a>
+        <a class="navbar-brand">Pokémon TCGP Trade Platform</a>
         <div class="ms-auto">
           <button class="btn btn-secondary btn-sm me-2" onclick="backFromProfile()">Back</button>
         </div>
