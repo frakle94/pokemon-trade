@@ -1,5 +1,5 @@
 # routes.py
-
+from sqlalchemy import func 
 import os
 import csv
 from flask import Blueprint, request, jsonify, render_template, current_app
@@ -16,7 +16,7 @@ from sqlalchemy.exc import IntegrityError
 
 
 # Import dal file "models.py"
-from models import db, User, Offer, Search
+from models import db, User, Offer, Search, GoodTrader
 
 # Import delle funzioni di utilità
 from utils import (
@@ -381,17 +381,24 @@ def delete_search():
 @routes_bp.route('/pokemon/magical_match', methods=['GET'])
 def magical_match():
     """
-    Return 1-for-1 matches for <username>, honouring rarity-parity and
-    filtering out users that never logged in (login_time is NULL).
+    1-for-1 matches that respect rarity-parity, skip inactive users,
+    and expose Good-Trader info:
+
+    • user_has_badged        → True se il caller ha già marcato l’utente
+    • count_badges_received  → badge totali ricevuti da chiunque
+
+    Ordine finale:
+        1) user_has_badged == True        (miei preferiti)
+        2) count_badges_received  > 0     (buona reputazione, ord. decresc.)
+        3) resto
     """
-    username = request.args.get('username')
+    username = request.args.get("username", "").strip()
     if not username:
         return jsonify({"message": "Please specify ?username=<value>"}), 400
 
     user = User.query.filter_by(username=username).first()
     if not user:
         return jsonify({"message": f"User '{username}' not found"}), 404
-
     if user.trade_condition == "NONE":
         return jsonify({
             "message": (
@@ -400,99 +407,94 @@ def magical_match():
             )
         }), 403
 
-    # ------------------------------------------------------------------ #
-    #  Load ALL offers & wants once → no per-user queries                #
-    # ------------------------------------------------------------------ #
+    # ───────────────────────────────────────────────────────────────────
+    # 1. pre-carica offerte / ricerche
+    # ───────────────────────────────────────────────────────────────────
     from collections import defaultdict
+    offers_by_user, wants_by_user = defaultdict(list), defaultdict(list)
+    for o in Offer.query:  offers_by_user[o.user_id].append(o)
+    for s in Search.query: wants_by_user[s.user_id].append(s)
 
-    offers_by_user:  dict[int, list[Offer]]   = defaultdict(list)
-    wants_by_user:   dict[int, list[Search]]  = defaultdict(list)
-
-    for off in Offer.query.all():
-        offers_by_user[off.user_id].append(off)
-    for srh in Search.query.all():
-        wants_by_user[srh.user_id].append(srh)
-
-    COMMON_RAR = {"♦", "♦♦", "♦♦♦"}
-
-    def card_key(card) -> tuple[str, str, str]:
-        """Return (pokemon, expansion, rarity) tuple — hashable key."""
-        return (card.pokemon, card.expansion, card.rarity)
-
-    # Caller’s own sets / buckets
-    user_offers = offers_by_user[user.id]
-    user_wants  = wants_by_user[user.id]
-
-    if user.trade_condition == "COMMON":
-        user_offers = [o for o in user_offers if o.rarity in COMMON_RAR]
-
-    # bucket by rarity so we can enforce cardA.rarity == cardB.rarity
-    def bucket_by_rarity(cards):
-        buckets = defaultdict(set)
+    COMMON = {"♦", "♦♦", "♦♦♦"}
+    def card_key(c): return (c.pokemon, c.expansion, c.rarity)
+    def bucket(cards):
+        b = defaultdict(set)
         for c in cards:
-            buckets[c.rarity].add(card_key(c))
-        return buckets
+            b[c.rarity].add(card_key(c))
+        return b
 
-    user_offer_buckets = bucket_by_rarity(user_offers)
-    user_want_buckets  = bucket_by_rarity(user_wants)
+    my_offers = offers_by_user[user.id]
+    my_wants  = wants_by_user [user.id]
+    if user.trade_condition == "COMMON":
+        my_offers = [o for o in my_offers if o.rarity in COMMON]
 
-    # ------------------------------------------------------------------ #
-    #  Iterate other users                                               #
-    # ------------------------------------------------------------------ #
-    active_cutoff = datetime.utcnow() - timedelta(days=7)
-    
+    my_offer_bkt = bucket(my_offers)
+    my_want_bkt  = bucket(my_wants)
+
+    # ───────────────────────────────────────────────────────────────────
+    # 2. Good-Trader info (una singola query)
+    # ───────────────────────────────────────────────────────────────────
+    received_cnt = {rid: cnt for rid, cnt in
+                    db.session.query(GoodTrader.receiver_id,
+                                     func.count(GoodTrader.id))
+                               .group_by(GoodTrader.receiver_id)}
+    mine_badged = {gt.receiver_id
+                   for gt in GoodTrader.query
+                                       .filter_by(giver_id=user.id).all()}
+
+    # ───────────────────────────────────────────────────────────────────
+    # 3. loop altri utenti
+    # ───────────────────────────────────────────────────────────────────
+    cutoff = datetime.utcnow() - timedelta(days=7)
     matches = []
-    for other in User.query:               # single query, ORM-cached
-        if other.id == user.id:
-            continue
-        if other.trade_condition == "NONE":
-            continue
-        if other.login_time is None:       # NEW filter: never logged in
-            continue
-        if other.login_time < active_cutoff:   # ultimo login >7 gg fa → skip
-            continue
+    for other in User.query:                         # ORM-cached
+        if other.id == user.id:                 continue
+        if other.trade_condition == "NONE":     continue
+        if not other.login_time or other.login_time < cutoff:  continue
 
-        other_offers = offers_by_user.get(other.id, [])
-        other_wants  = wants_by_user .get(other.id, [])
-
+        o_offers = offers_by_user.get(other.id, [])
+        o_wants  = wants_by_user .get(other.id, [])
+        if not o_offers or not o_wants:         continue
         if other.trade_condition == "COMMON":
-            other_offers = [o for o in other_offers if o.rarity in COMMON_RAR]
+            o_offers = [o for o in o_offers if o.rarity in COMMON]
 
-        if not other_offers or not other_wants:
+        o_offer_bkt = bucket(o_offers)
+        o_want_bkt  = bucket(o_wants)
+
+        give_me, give_them = set(), set()
+        for rar in set(my_offer_bkt) | set(o_offer_bkt):
+            me_need   = my_want_bkt.get(rar, set())
+            other_av  = o_offer_bkt.get(rar, set())
+            other_need= o_want_bkt.get(rar, set())
+            me_av     = my_offer_bkt.get(rar, set())
+
+            if (match1 := other_av & me_need) and (match2 := me_av & other_need):
+                give_me   |= match1
+                give_them |= match2
+
+        if not (give_me and give_them):
             continue
 
-        other_offer_buckets = bucket_by_rarity(other_offers)
-        other_want_buckets  = bucket_by_rarity(other_wants)
+        matches.append({
+            "other_user"           : other.username,
+            "other_user_pokemon_id": other.pokemon_id,
+            "other_user_last_login": other.login_time.isoformat(),
+            "mySearch_TheirOffer"  : sorted(f"{p} ({e}, {r})" for p,e,r in give_me),
+            "theirSearch_MyOffer"  : sorted(f"{p} ({e}, {r})" for p,e,r in give_them),
+            "user_has_badged"      : other.id in mine_badged,
+            "count_badges_received": received_cnt.get(other.id, 0)
+        })
 
-        give_me   = set()   # what *I* want from them
-        give_them = set()   # what *they* want from me
-
-        # Enforce same-rarity swap exactly as old logic did
-        for rar in set(user_offer_buckets) | set(other_offer_buckets):
-            want_from_other = user_want_buckets .get(rar, set())
-            off_from_other  = other_offer_buckets.get(rar, set())
-            want_from_me    = other_want_buckets .get(rar, set())
-            off_from_me     = user_offer_buckets.get(rar, set())
-
-            rar_give_me   = off_from_other & want_from_other
-            rar_give_them = off_from_me    & want_from_me
-
-            if rar_give_me and rar_give_them:
-                give_me   |= rar_give_me
-                give_them |= rar_give_them
-
-        if give_me and give_them:          # at least one balanced pair
-            matches.append({
-                "other_user"           : other.username,
-                "other_user_pokemon_id": other.pokemon_id,
-                "other_user_last_login": (
-                    other.login_time.isoformat() if other.login_time else None
-                ),
-                "mySearch_TheirOffer"  : sorted(f"{p} ({e}, {r})"
-                                                for p, e, r in give_me),
-                "theirSearch_MyOffer"  : sorted(f"{p} ({e}, {r})"
-                                                for p, e, r in give_them)
-            })
+    # ───────────────────────────────────────────────────────────────────
+    # 4. ordinamento personalizzato
+    # ───────────────────────────────────────────────────────────────────
+    def sort_key(m):
+        if m["user_has_badged"]:
+            return (2, 0)                      # top
+        if m["count_badges_received"] > 0:
+            return (1, m["count_badges_received"])
+        return (0, 0)
+    matches.sort(key=sort_key, reverse=True)
 
     return jsonify(matches)
 
@@ -704,7 +706,7 @@ def offer_count():
         db.session.query(Offer.user_id)
         .join(User, User.id == Offer.user_id)
         .filter(User.login_time.isnot(None),      # filtra utenti “attivi”
-                User.login_time < active_cutoff,   # ultimo login >7 gg fa → skip
+                User.login_time > active_cutoff,   # ultimo login >7 gg fa → skip
                 Offer.pokemon == name)
     )
     if expansion:
@@ -714,3 +716,28 @@ def offer_count():
 
     count = q.distinct().count()
     return jsonify({"count": count})
+
+#  --- Good-Trader : add / remove ------------------------------------
+@routes_bp.route('/user/badge', methods=['POST'])
+def add_badge():
+    data      = request.get_json() or {}
+    giver     = User.query.filter_by(username=data.get('from_username')).first()
+    receiver  = User.query.filter_by(username=data.get('target_username')).first()
+    if not (giver and receiver):
+        return jsonify({"message": "invalid users"}), 404
+    if GoodTrader.query.filter_by(giver_id=giver.id, receiver_id=receiver.id).first():
+        return jsonify({"message": "already present"}), 200
+    db.session.add(GoodTrader(giver_id=giver.id, receiver_id=receiver.id))
+    db.session.commit()
+    return jsonify({"message": "badge added"}), 200
+
+@routes_bp.route('/user/badge/remove', methods=['POST'])
+def remove_badge():
+    data      = request.get_json() or {}
+    giver     = User.query.filter_by(username=data.get('from_username')).first()
+    receiver  = User.query.filter_by(username=data.get('target_username')).first()
+    row = GoodTrader.query.filter_by(giver_id=giver.id, receiver_id=receiver.id).first()
+    if not row:
+        return jsonify({"message": "nothing to remove"}), 404
+    db.session.delete(row); db.session.commit()
+    return jsonify({"message": "badge removed"}), 200

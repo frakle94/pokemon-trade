@@ -619,106 +619,107 @@ function deleteSearch(searchId) {
     });
 }
 
+/* ===========================  MAGICAL MATCH  =========================== */
 function magicalMatch() {
   /* ------------------------------------------------------------------ */
-  /*  pulizia dei listener esterni                                       */
+  /*  pulizia listener esterni                                           */
   /* ------------------------------------------------------------------ */
-  if (handleOfferOutsideClick) {
-    document.removeEventListener('mousedown', handleOfferOutsideClick);
-    handleOfferOutsideClick = null;
-  }
-  if (handleSearchOutsideClick) {
-    document.removeEventListener('mousedown', handleSearchOutsideClick);
-    handleSearchOutsideClick = null;
-  }
+  if (handleOfferOutsideClick)  { document.removeEventListener('mousedown', handleOfferOutsideClick);  handleOfferOutsideClick  = null; }
+  if (handleSearchOutsideClick) { document.removeEventListener('mousedown', handleSearchOutsideClick); handleSearchOutsideClick = null; }
 
   /* ------------------------------------------------------------------ */
-  /*  struttura fissa dell’area Match                                    */
+  /*  gancio area azioni                                                 */
   /* ------------------------------------------------------------------ */
   const actionArea = document.getElementById('actionArea');
   actionArea.innerHTML = `
-  <!-- Box Trade Status identico a quelli del profilo -->
-  <div class="mb-3" style="max-width: 300px;">
-    <label for="match_trade_condition" class="form-label">Trade Status:</label>
+    <div class="mb-3" style="max-width:300px;">
+      <label for="match_trade_condition" class="form-label">Trade Status:</label>
+      <select id="match_trade_condition" class="form-control" required>
+        <option value="NONE">Cannot trade</option>
+        <option value="COMMON">Can trade up to ♦♦♦</option>
+        <option value="ALL">Can trade all cards</option>
+      </select>
+    </div>
+    <div id="matchResults"></div>
+  `;
 
-    <select id="match_trade_condition"
-            class="form-control"
-            required>
-      <option value="NONE">Cannot trade</option>
-      <option value="COMMON">Can trade up to ♦♦♦</option>
-      <option value="ALL">Can trade all cards</option>
-    </select>
-  </div>
+  /* ------------------------------ helper badge APIs ------------------ */
+  const giveBadge   = user => axios.post('/user/badge',        {from_username:currentUser.username, target_username:user});
+  const removeBadge = user => axios.post('/user/badge/remove', {from_username:currentUser.username, target_username:user});
+  const alertErr    = err  => alert(err.response?.data?.message || err.message);
 
-  <!-- Risultati dei match verranno inseriti qui -->
-  <div id="matchResults"></div>
-`;
-
-  /* ------------------------------------------------------------------ */
-  /*  inizializza il selettore                                           */
-  /* ------------------------------------------------------------------ */
+  /* ------------------------------ UI refresh ------------------------- */
   const tradeSel = document.getElementById('match_trade_condition');
   tradeSel.value = currentUser.trade_condition || 'ALL';
 
-  /* ------------------------------------------------------------------ */
-  /*  ricarica risultati (o messaggio)                                   */
-  /* ------------------------------------------------------------------ */
   function loadMatchResults() {
     const resBox = document.getElementById('matchResults');
-    resBox.innerHTML = '';               // svuota sempre
+    resBox.innerHTML = '';
 
-    // se lo stato è NONE, mostra solo il messaggio e basta
     if (currentUser.trade_condition === 'NONE') {
-      resBox.innerHTML =
-        '<p>Your Trade Status is set to "<strong>Cannot trade</strong>".<br>' +
-        'Change it to see potential matches.</p>';
+      resBox.innerHTML = '<p>Your Trade Status is set to "<strong>Cannot trade</strong>".<br>Change it to see potential matches.</p>';
       return;
     }
 
-    // altrimenti interroga il backend per i match
-    axios
-      .get(`/pokemon/magical_match?username=${currentUser.username}`)
+    axios.get(`/pokemon/magical_match?username=${currentUser.username}`)
       .then(({ data }) => {
-        if (!data || (data.message && !Array.isArray(data))) {
-          // caso “COMMON” senza match o risposta vuota
-          resBox.innerHTML =
-            `<p>${data.message || 'No users up for a trade at the moment.'}</p>`;
-          return;
+        if (!Array.isArray(data) || !data.length) {
+          const msg = data.message || 'No users up for a trade at the moment.<br>Try adding ALL Pokémons you can trade and ALL Pokémons you look for.';
+          resBox.innerHTML = `<p>${msg}</p>`; return;
         }
 
-        if (Array.isArray(data) && data.length === 0) {
-          resBox.innerHTML =
-            '<p>No users up for a trade at the moment.<br>' +
-            'Try adding ALL Pokémons you can trade and ALL Pokémons you look for.</p>';
-          return;
-        }
-
-        // costruiamo le card dei match
         data.forEach(item => {
-          const mySTO  = item.mySearch_TheirOffer  || [];
-          const theirSMO = item.theirSearch_MyOffer || [];
-          const lastLogin = item.other_user_last_login
-            ? new Date(item.other_user_last_login).toLocaleString()
-            : 'unknown';
-          const safeId = encodeURIComponent(item.other_user);
+          const mySTO      = item.mySearch_TheirOffer  || [];
+          const theirSMO   = item.theirSearch_MyOffer || [];
+          const lastLogin  = item.other_user_last_login ? new Date(item.other_user_last_login).toLocaleString() : 'unknown';
+          const safeId     = encodeURIComponent(item.other_user);
+
+          /* ---------- badge visuale accanto al nome ---------- */
+          /* ---------- badge visuale accanto al nome ---------- */
+          let badgeHTML = '';
+          if (item.user_has_badged) {
+            // verde: ho assegnato io il badge
+            badgeHTML = `<span class="badge bg-success ms-2">🥇</span>`;
+          } else if (item.count_badges_received > 0) {
+            // grigio: badge ricevuti da altri, con contatore
+            badgeHTML = `<span class="badge bg-secondary ms-2">🥇 ${item.count_badges_received}</span>`;
+          }
+
+          /* ---------- pulsante verde / giallo (in alto a destra) ---------- */
+          const badgeBtn = item.user_has_badged
+            ? `<button class="btn btn-warning btn-sm position-absolute d-flex align-items-center"
+                      style="position:absolute; top:10px; right:10px; gap:4px;"
+                      onclick="removeBadge('${item.other_user}').then(loadMatchResults).catch(alertErr)">
+                  Remove&nbsp;Badge&nbsp;🥇
+              </button>`
+            : `<button class="btn btn-success btn-sm position-absolute d-flex align-items-center"
+                      style="position:absolute; top:10px; right:10px; gap:4px;"
+                      onclick="giveBadge('${item.other_user}').then(loadMatchResults).catch(alertErr)">
+                  Assign&nbsp;Badge&nbsp;🥇
+              </button>`;
+
+          /* ---------- card HTML ---------- */
           resBox.insertAdjacentHTML('beforeend', `
             <div class="card my-3 position-relative">
               <div class="card-body" style="padding-bottom:5rem;">
-                <h5 class="card-title">Match with ${item.other_user}</h5>
+                <h5 class="card-title">
+                  Match with ${item.other_user} ${badgeHTML}
+                </h5>
                 <p><strong>Other User's Pokémon ID:</strong> ${item.other_user_pokemon_id}</p>
+                <p><strong>Last login:</strong> ${lastLogin}</p>
                 <p><strong>You want from them:</strong> ${mySTO.join(', ')}</p>
                 <p><strong>They want from you:</strong> ${theirSMO.join(', ')}</p>
-          
+
                 <label class="form-label mt-2"><strong>Preferred Pokémon to receive:</strong></label>
                 <select id="pref_${safeId}" class="form-select form-select-sm mb-2">
                   ${mySTO.map(p => `<option value="${p}">${p}</option>`).join('')}
                 </select>
-          
-                <!--  button: class, flex & pos unchanged  -->
-                <button
-                  class="btn btn-primary btn-sm send-pokeball-btn d-flex align-items-center"
-                  style="position:absolute; bottom:10px; right:10px; gap:4px;"
-                  onclick="sendPokeball('${item.other_user}')">
+
+                ${badgeBtn}
+
+                <button class="btn btn-primary btn-sm send-pokeball-btn d-flex align-items-center"
+                        style="position:absolute; bottom:10px; right:10px; gap:4px;"
+                        onclick="sendPokeball('${item.other_user}')">
                   Send&nbsp;Pokéball <span style="font-size:1.1rem;">◓</span>
                 </button>
               </div>
@@ -727,39 +728,19 @@ function magicalMatch() {
         });
       })
       .catch(err => {
-        // caso 403 (utente in NONE dal server) o altri errori imprevisti
-        const msg = err.response?.data?.message ||
-                    'Unexpected error while fetching matches.';
+        const msg = err.response?.data?.message || 'Unexpected error while fetching matches.';
         resBox.innerHTML = `<p>${msg}</p>`;
       });
   }
 
-  /* ------------------------------------------------------------------ */
-  /*  listener sul cambio di Trade Status                                */
-  /* ------------------------------------------------------------------ */
+  /* ------------------------------ cambio Trade-Status --------------- */
   tradeSel.addEventListener('change', e => {
     const newVal = e.target.value;
-
-    axios.put('/user/trade_condition', {
-      username: currentUser.username,
-      trade_condition: newVal
-    })
-    .then(() => {
-      currentUser.trade_condition = newVal;   // memorizza a client-side
-      loadMatchResults();                     // ricarica in base al nuovo stato
-    })
-    .catch(err => {
-      alert(
-        'Error updating Trade Status: ' +
-        (err.response?.data?.message || err.message)
-      );
-      tradeSel.value = currentUser.trade_condition; // ripristina selettore
-    });
+    axios.put('/user/trade_condition', {username: currentUser.username, trade_condition: newVal})
+         .then(() => { currentUser.trade_condition = newVal; loadMatchResults(); })
+         .catch(err => { alert('Error updating Trade Status: ' + (err.response?.data?.message || err.message)); tradeSel.value = currentUser.trade_condition; });
   });
 
-  /* ------------------------------------------------------------------ */
-  /*  prima visualizzazione                                              */
-  /* ------------------------------------------------------------------ */
   loadMatchResults();
 }
 
@@ -1039,4 +1020,14 @@ function copySearchedList() {
       console.error("Failed to copy searched list:", err);
       alert("Unable to copy the searched list to clipboard.");
     });
+}
+
+function giveBadge(other){axios.post('/user/badge',
+  {from_username: currentUser.username, target_username: other})
+  .then(magicalMatch).catch(alertErr);}
+function removeBadge(other){axios.post('/user/badge/remove',
+  {from_username: currentUser.username, target_username: other})
+  .then(magicalMatch).catch(alertErr);}
+function alertErr(err){
+  alert(err.response?.data?.message || err.message);
 }
