@@ -686,16 +686,24 @@ function magicalMatch() {
           }
 
           /* ---------- pulsante verde / giallo (in alto a destra) ---------- */
+          const medal = '<span style="font-size:1.1rem;">🏅</span>';
+
           const badgeBtn = item.user_has_badged
-            ? `<button class="btn btn-warning btn-sm position-absolute d-flex align-items-center"
-                      style="position:absolute; top:10px; right:10px; gap:4px;"
-                      onclick="removeBadge('${item.other_user}').then(loadMatchResults).catch(alertErr)">
-                  Remove&nbsp;Badge&nbsp;🥇
+            ? `<button
+                class="btn btn-warning btn-sm d-flex align-items-center"
+                style="position:absolute; bottom:10px; left:10px; gap:4px;"
+                onclick="removeBadge('${item.other_user}')
+                            .then(loadMatchResults)
+                            .catch(alertErr)">
+                Remove&nbsp;Badge&nbsp;${medal}
               </button>`
-            : `<button class="btn btn-success btn-sm position-absolute d-flex align-items-center"
-                      style="position:absolute; top:10px; right:10px; gap:4px;"
-                      onclick="giveBadge('${item.other_user}').then(loadMatchResults).catch(alertErr)">
-                  Assign&nbsp;Badge&nbsp;🥇
+            : `<button
+                class="btn btn-success btn-sm d-flex align-items-center"
+                style="position:absolute; bottom:10px; left:10px; gap:4px;"
+                onclick="giveBadge('${item.other_user}')
+                            .then(loadMatchResults)
+                            .catch(alertErr)">
+                Assign&nbsp;Badge&nbsp;${medal}
               </button>`;
 
           /* ---------- card HTML ---------- */
