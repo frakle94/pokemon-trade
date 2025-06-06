@@ -618,9 +618,9 @@ def send_pokeball():
       · sender’s “Preferred Pokémon to receive” (optional)
     """
     data = request.get_json(silent=True) or {}
-    from_username  = (data.get('from_username')     or '').strip()
-    to_username    = (data.get('to_username')       or '').strip()
-    preferred_raw  = (data.get('preferred_pokemon') or '').strip()
+    from_username = (data.get('from_username')     or '').strip()
+    to_username   = (data.get('to_username')       or '').strip()
+    preferred_raw = (data.get('preferred_pokemon') or '').strip()
 
     if not (from_username and to_username):
         return jsonify({'message': 'from_username and to_username required'}), 400
@@ -646,6 +646,19 @@ def send_pokeball():
 
     give_me   = {pretty(o) for w in s_wants  for o in r_offers if is_same_card(o, w)}
     give_them = {pretty(o) for w in r_wants for o in s_offers if is_same_card(o, w)}
+
+    # ------------------------------------------------------------------ #
+    #  Filter “You want from them” by preferred rarity (if any)          #
+    # ------------------------------------------------------------------ #
+    preferred_rarity = None
+    if preferred_raw:
+        # estrae la rarità dall’ultima parte fra parentesi: “(..., RARITY)”
+        m = re.search(r'\([^,]+,\s*([^)]+)\)', preferred_raw)
+        if m:
+            preferred_rarity = m.group(1).strip()
+
+    if preferred_rarity:
+        give_them = {c for c in give_them if c.endswith(f", {preferred_rarity})")}
 
     txt_me   = ", ".join(sorted(give_me))   or "–"
     txt_them = ", ".join(sorted(give_them)) or "–"
