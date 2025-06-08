@@ -40,7 +40,7 @@ function handleRegistration(e) {
         'Please check your email inbox or your spam folder.'
         );
       const tc = response.data.trade_condition || 'ALL';
-      navigateToFeatures(response.data.username, email, pokemonId, password, tc);
+      navigateToFeatures(response.data.username, email, pokemonId, password, tc, 0);
     })
     .catch(error => {
       alert('Error: ' + (error.response?.data?.message || error.message));
@@ -54,13 +54,16 @@ function handleLogin(e) {
 
   axios.post('/login', { email, password })
     .then(response => {
-      const tc = response.data.trade_condition || 'ALL';
+      const tc     = response.data.trade_condition || 'ALL';
+      const badges = response.data.badges_received || 0;
+
       navigateToFeatures(
         response.data.username,
         response.data.email,
         response.data.pokemon_id,
         password,
-        tc
+        tc,
+        badges
       );
     })
     .catch(() => {
@@ -838,7 +841,8 @@ function updateProfile(event) {
       currentUser.email,
       currentUser.pokemonId,
       currentUser.password,
-      currentUser.trade_condition
+      currentUser.trade_condition,
+      currentUser.badgesReceived
     );
   })
   .catch(err => {

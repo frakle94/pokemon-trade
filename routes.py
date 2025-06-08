@@ -129,7 +129,8 @@ Cesco_t
         "username": new_user.username,
         "email": new_user.email,
         "pokemon_id": new_user.pokemon_id,
-        "trade_condition": new_user.trade_condition
+        "trade_condition": new_user.trade_condition,
+        "badges_received": 0
     })
 
 @routes_bp.route('/login', methods=['POST'])
@@ -150,12 +151,15 @@ def login():
     user.login_time = datetime.utcnow()
     db.session.commit()
 
+    badges_received = GoodTrader.query.filter_by(receiver_id=user.id).count()
+
     return jsonify({
         "message": "Login successful.",
         "username": user.username,
         "email": user.email,
         "pokemon_id": user.pokemon_id,
-        "trade_condition": user.trade_condition
+        "trade_condition": user.trade_condition,
+        "badges_received": badges_received
     })
 
 @routes_bp.route('/forgot-password', methods=['POST'])

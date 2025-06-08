@@ -5,22 +5,25 @@ function navigateToFeatures(
   email,
   pokemonId,
   password,
-  tradeCondition = 'ALL'
+  tradeCondition = 'ALL',
+  badgesReceived = 0
 ) {
+  /* ─── salva l’utente in cache ─────────────────────────────────── */
   currentUser = {
     username,
     email,
     pokemonId,
     password,
-    trade_condition: tradeCondition
+    trade_condition: tradeCondition,
+    badgesReceived
   };
 
   /* ─── nascondi autenticazione + landing steps ─────────────────── */
   const authContainer  = document.getElementById('authContainer');
   if (authContainer)   authContainer.classList.add('hidden');
 
-  const heroSection    = document.getElementById('heroSection');   // NEW
-  if (heroSection)     heroSection.classList.add('hidden');        // NEW
+  const heroSection    = document.getElementById('heroSection');
+  if (heroSection)     heroSection.classList.add('hidden');
 
   const profileViewContainer = document.getElementById('profileViewContainer');
   if (profileViewContainer)  profileViewContainer.classList.add('hidden');
@@ -31,9 +34,14 @@ function navigateToFeatures(
   const mainAppContainer = document.getElementById('mainAppContainer');
   if (mainAppContainer)  mainAppContainer.classList.remove('hidden');
 
-  const userSpan = document.getElementById('username');
-  if (userSpan) userSpan.textContent = username;
+  /* ─── aggiorna nome utente e badge ─────────────────────────────── */
+  const userSpan  = document.getElementById('username');
+  if (userSpan)   userSpan.textContent = username;
 
+  const badgeSpan = document.getElementById('badgeCount');
+  if (badgeSpan)  badgeSpan.textContent = `🏅 ${badgesReceived}`;
+
+  /* ─── collega i pulsanti di navigazione ───────────────────────── */
   const offerBtn  = document.getElementById('offerPokemonBtn');
   const searchBtn = document.getElementById('searchPokemonBtn');
   const matchBtn  = document.getElementById('magicalMatchBtn');
@@ -42,6 +50,7 @@ function navigateToFeatures(
   if (searchBtn) searchBtn.onclick = () => setActiveButton('search');
   if (matchBtn)  matchBtn.onclick  = () => setActiveButton('match');
 
+  /* ─── apri la vista “For Trade” di default ─────────────────────── */
   setActiveButton('offer');
 }
 
@@ -86,7 +95,8 @@ function backFromProfile() {
       currentUser.email,
       currentUser.pokemonId,
       currentUser.password,
-      currentUser.trade_condition
+      currentUser.trade_condition,
+      currentUser.badgesReceived
     );
   } else {
     location.reload();
